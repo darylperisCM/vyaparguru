@@ -2,41 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Business English Guru Design System - Hindi & English Typography */
+@import '@fontsource/noto-sans-devanagari/400.css';
+@import '@fontsource/noto-sans-devanagari/500.css';
+@import '@fontsource/noto-sans-devanagari/600.css';
+@import '@fontsource/noto-sans-devanagari/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core Brand Colors - Based on Reference Design */
+    --background: 32 18% 98%;  /* Light cream/off-white */
+    --foreground: 210 11% 17%;  /* Dark charcoal for headings */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;  /* Pure white for cards */
+    --card-foreground: 210 11% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 210 11% 17%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary Coral Accent */
+    --primary: 11 100% 60%;  /* Coral #FF6B35 */
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 11 100% 55%;
+    --primary-glow: 11 100% 70%;
 
+    /* Secondary Neutral */
     --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 11% 17%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;  /* Light neutral */
+    --muted-foreground: 215 16% 47%;  /* Medium gray for body text */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 11 100% 60%;  /* Using coral as accent */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Status Colors */
+    --success: 142 76% 36%;  /* Soft green */
+    --success-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* UI Elements */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 11 100% 60%;  /* Coral focus ring */
 
-    --radius: 0.5rem;
+    /* Design System Tokens */
+    --radius: 0.75rem;  /* 12px rounded corners */
+    
+    /* Beautiful Gradients */
+    --gradient-coral-blue: linear-gradient(135deg, hsl(11 100% 60%), hsl(220 100% 70%));
+    --gradient-coral-purple: linear-gradient(135deg, hsl(11 100% 60%), hsl(280 100% 70%));
+    --gradient-coral-green: linear-gradient(135deg, hsl(11 100% 60%), hsl(142 76% 36%));
+    --gradient-coral-teal: linear-gradient(135deg, hsl(11 100% 60%), hsl(180 100% 60%));
+    --gradient-subtle: linear-gradient(180deg, hsl(32 18% 98%), hsl(220 14% 96%));
+    --gradient-hero: linear-gradient(135deg, hsl(11 100% 60%) 0%, hsl(220 100% 70%) 50%, hsl(280 100% 70%) 100%);
+    
+    /* Elegant Shadows */
+    --shadow-card: 0 4px 6px -1px hsl(220 13% 91% / 0.1), 0 2px 4px -1px hsl(220 13% 91% / 0.06);
+    --shadow-card-hover: 0 10px 15px -3px hsl(220 13% 91% / 0.1), 0 4px 6px -2px hsl(220 13% 91% / 0.05);
+    --shadow-coral-glow: 0 0 0 1px hsl(11 100% 60% / 0.1), 0 0 20px hsl(11 100% 60% / 0.2);
+    
+    /* Typography Scale */
+    --font-hindi: 'Noto Sans Devanagari', sans-serif;
+    --font-english: 'Inter', sans-serif;
+    
+    /* Smooth Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease-out;
 
     --sidebar-background: 0 0% 98%;
 
@@ -101,5 +138,44 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-english);
   }
+  
+  /* Hindi Text Styling */
+  .hindi-text {
+    font-family: var(--font-hindi);
+    font-feature-settings: 'kern' 1, 'liga' 1;
+  }
+  
+  /* Beautiful Cards */
+  .card-elegant {
+    @apply bg-card shadow-[var(--shadow-card)] rounded-[var(--radius)] border-0 transition-all duration-300;
+  }
+  
+  .card-elegant:hover {
+    @apply shadow-[var(--shadow-card-hover)];
+    transform: translateY(-2px);
+  }
+  
+  /* Gradient Backgrounds */
+  .gradient-coral-blue {
+    background: var(--gradient-coral-blue);
+  }
+  
+  .gradient-coral-purple {
+    background: var(--gradient-coral-purple);
+  }
+  
+  .gradient-coral-green {
+    background: var(--gradient-coral-green);
+  }
+  
+  .gradient-coral-teal {
+    background: var(--gradient-coral-teal);
+  }
+  
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+}
 }
