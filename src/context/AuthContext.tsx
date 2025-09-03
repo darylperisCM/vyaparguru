@@ -9,6 +9,8 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  requestOtp: (phone: string) => Promise<{ error: any }>;
+  verifyOtp: (phone: string, otp: string) => Promise<{ error: any }>;
   loading: boolean;
 }
 
@@ -72,6 +74,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
+  const requestOtp = async (phone: string) => {
+    // Mock implementation - no actual OTP sent
+    return { error: null };
+  };
+
+  const verifyOtp = async (phone: string, otp: string) => {
+    if (otp === "123456") {
+      const { error } = await supabase.auth.signInAnonymously();
+      if (error) {
+        return { error: error.message.includes('Anonymous') ? 
+          new Error('Please enable Anonymous sign-ins in Supabase Authentication settings') : error };
+      }
+      return { error: null };
+    }
+    return { error: new Error('Invalid OTP. Use 123456 in preview mode.') };
+  };
+
   const value = {
     isAuthenticated: !!session,
     user,
@@ -79,6 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signIn,
     signOut,
+    requestOtp,
+    verifyOtp,
     loading,
   };
 
