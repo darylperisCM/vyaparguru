@@ -80,7 +80,7 @@ serve(async (req) => {
       });
 
     } else if (action === 'transcribe') {
-      // Speech-to-Text (mock implementation)
+      // Speech-to-Text using Azure Speech API
       const { audioData, language = 'hi-IN' }: TranscriptionRequest = await req.json();
 
       if (!audioData) {
@@ -89,10 +89,40 @@ serve(async (req) => {
 
       console.log('Azure Speech transcription:', { language });
 
-      // Mock transcription for now - Azure Speech SDK requires more complex setup
+      // Convert base64 audio data to binary
+      const binaryAudio = Uint8Array.from(atob(audioData), c => c.charCodeAt(0));
+      
+      // Azure Speech-to-Text endpoint
+      const region = 'eastus'; // Adjust region as needed
+      const endpoint = `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1`;
+      
+      const params = new URLSearchParams({
+        language: language,
+        format: 'simple'
+      });
+
+      const response = await fetch(`${endpoint}?${params}`, {
+        method: 'POST',
+        headers: {
+          'Ocp-Apim-Subscription-Key': AZURE_API_KEY,
+          'Content-Type': 'audio/webm;codecs=opus',
+          'Accept': 'application/json'
+        },
+        body: binaryAudio
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Azure Speech STT error:', errorData);
+        throw new Error(`Speech transcription failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('Azure STT result:', result);
+
       return new Response(JSON.stringify({ 
-        transcription: "यह एक उदाहरण ट्रांसक्रिप्शन है।",
-        confidence: 0.85,
+        transcription: result.DisplayText || result.NBest?.[0]?.Display || '',
+        confidence: result.NBest?.[0]?.Confidence || 0.0,
         language: language
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

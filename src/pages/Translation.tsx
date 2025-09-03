@@ -15,6 +15,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAudioRecording } from '@/hooks/useAudioRecording';
 import { APIService } from '@/services/apiService';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -22,6 +23,7 @@ import { useAuth } from '@/context/AuthContext';
 export default function Translation() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isRecording, startRecording, stopRecording, error: recordingError } = useAudioRecording();
   const [hindiText, setHindiText] = useState('');
   const [englishText, setEnglishText] = useState('');
   const [confidence, setConfidence] = useState(0);
@@ -97,20 +99,49 @@ export default function Translation() {
     }
   };
 
-  const handleVoiceInput = () => {
-    setIsListening(!isListening);
-    
+  const handleVoiceInput = async () => {
     if (!isListening) {
-      toast({
-        title: "Voice Input",
-        description: "Voice recording will be available in the next update",
-      });
-      
-      // Mock voice input for demo
-      setTimeout(() => {
+      try {
+        await startRecording();
+        setIsListening(true);
+        toast({
+          title: "Recording Started",
+          description: "Speak now in Hindi...",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to start recording. Please check microphone permissions.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      try {
+        const audioData = await stopRecording();
         setIsListening(false);
-        setHindiText("नमस्ते, आपका व्यवसाय कैसा चल रहा है?");
-      }, 2000);
+        
+        if (audioData) {
+          toast({
+            title: "Processing Audio",
+            description: "Converting speech to text...",
+          });
+          
+          const result = await APIService.transcribeSpeech(audioData, 'hi-IN');
+          setHindiText(result.transcription);
+          
+          toast({
+            title: "Speech Recognized",
+            description: `Confidence: ${Math.round(result.confidence * 100)}%`,
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to process audio",
+          variant: "destructive"
+        });
+        setIsListening(false);
+      }
     }
   };
 
@@ -132,13 +163,13 @@ export default function Translation() {
       if (result.success) {
         // Convert base64 to audio blob and play
         const audioData = result.audioData;
-        const byteCharacters = atob(audioData);
+        const byteCharacters = atob(audioData.split(',')[1]); // Remove data:audio/mp3;base64, prefix
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], {type: 'audio/wav'});
+        const blob = new Blob([byteArray], {type: 'audio/mp3'});
         const audio = new Audio(URL.createObjectURL(blob));
         
         audio.onended = () => setIsSpeaking(false);
