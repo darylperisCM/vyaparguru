@@ -26,11 +26,22 @@ serve(async (req) => {
 
     const { message, context, purpose }: ChatRequest = await req.json();
 
-    if (!message || !context) {
-      throw new Error('Missing required fields: message, context');
+    // Input validation
+    if (!message || typeof message !== 'string' || message.length > 2000) {
+      throw new Error('Invalid message: must be a string under 2000 characters');
+    }
+    if (!context || typeof context !== 'string' || context.length > 500) {
+      throw new Error('Invalid context: must be a string under 500 characters');
+    }
+    if (purpose && (typeof purpose !== 'string' || purpose.length > 100)) {
+      throw new Error('Invalid purpose: must be a string under 100 characters');
     }
 
-    console.log('OpenAI Chat request:', { message, context, purpose });
+    console.log('OpenAI Chat request:', { 
+      messageLength: message.length, 
+      contextLength: context.length,
+      purpose 
+    });
 
     const systemPrompt = `You are VyaparGuru, a business communication assistant specializing in Hindi-English business communications.
 

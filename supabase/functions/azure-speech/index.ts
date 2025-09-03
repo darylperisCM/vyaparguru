@@ -36,11 +36,22 @@ serve(async (req) => {
       // Text-to-Speech
       const { text, language = 'hi-IN', voice = 'hi-IN-MadhurNeural' }: SpeechRequest = await req.json();
 
-      if (!text) {
-        throw new Error('Missing required field: text');
+      // Input validation
+      if (!text || typeof text !== 'string' || text.length > 1000) {
+        throw new Error('Invalid text: must be a string under 1000 characters');
+      }
+      if (language && (typeof language !== 'string' || language.length > 10)) {
+        throw new Error('Invalid language: must be a valid language code');
+      }
+      if (voice && (typeof voice !== 'string' || voice.length > 50)) {
+        throw new Error('Invalid voice: must be a valid voice name');
       }
 
-      console.log('Azure Speech synthesis:', { text, language, voice });
+      console.log('Azure Speech synthesis:', { 
+        textLength: text.length, 
+        language, 
+        voice 
+      });
 
       const ssml = `
         <speak version='1.0' xml:lang='${language}'>
@@ -83,11 +94,18 @@ serve(async (req) => {
       // Speech-to-Text using Azure Speech API
       const { audioData, language = 'hi-IN' }: TranscriptionRequest = await req.json();
 
-      if (!audioData) {
-        throw new Error('Missing required field: audioData');
+      // Input validation
+      if (!audioData || typeof audioData !== 'string' || audioData.length > 10000000) { // ~7.5MB limit
+        throw new Error('Invalid audioData: must be base64 string under 10MB');
+      }
+      if (language && (typeof language !== 'string' || language.length > 10)) {
+        throw new Error('Invalid language: must be a valid language code');
       }
 
-      console.log('Azure Speech transcription:', { language });
+      console.log('Azure Speech transcription:', { 
+        audioDataLength: audioData.length,
+        language 
+      });
 
       // Convert base64 audio data to binary
       const binaryAudio = Uint8Array.from(atob(audioData), c => c.charCodeAt(0));

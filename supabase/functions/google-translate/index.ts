@@ -26,11 +26,22 @@ serve(async (req) => {
 
     const { text, sourceLang, targetLang }: TranslateRequest = await req.json();
 
-    if (!text || !sourceLang || !targetLang) {
-      throw new Error('Missing required fields: text, sourceLang, targetLang');
+    // Input validation
+    if (!text || typeof text !== 'string' || text.length > 5000) {
+      throw new Error('Invalid text: must be a string under 5000 characters');
+    }
+    if (!sourceLang || typeof sourceLang !== 'string' || sourceLang.length > 10) {
+      throw new Error('Invalid sourceLang: must be a valid language code');
+    }
+    if (!targetLang || typeof targetLang !== 'string' || targetLang.length > 10) {
+      throw new Error('Invalid targetLang: must be a valid language code');
     }
 
-    console.log('Translating:', { text, sourceLang, targetLang });
+    console.log('Translation request:', { 
+      textLength: text.length, 
+      sourceLang, 
+      targetLang 
+    });
 
     const response = await fetch(
       `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_API_KEY}`,
