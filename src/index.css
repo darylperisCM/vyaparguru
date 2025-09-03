@@ -24,11 +24,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 11% 17%;
 
-    /* Primary Coral Accent */
-    --primary: 11 100% 60%;  /* Coral #FF6B35 */
+    /* Primary Coral Accent - Darkened for WCAG AA compliance */
+    --primary: 11 100% 47%;  /* Darker coral for 4.5:1 contrast with white */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 11 100% 55%;
-    --primary-glow: 11 100% 70%;
+    --primary-hover: 11 100% 42%;
+    --primary-glow: 11 100% 60%;
 
     /* Secondary Neutral */
     --secondary: 210 40% 96.1%;
