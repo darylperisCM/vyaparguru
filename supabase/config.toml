@@ -1,13 +1,13 @@
 project_id = "pkngmgdspvttmddvtask"
 
 [functions.google-translate]
-verify_jwt = false
+verify_jwt = true
 
 [functions.openai-chat]
-verify_jwt = false
+verify_jwt = true
 
 [functions.azure-speech]
-verify_jwt = false
+verify_jwt = true
 
 [functions.bhashini-translate]
-verify_jwt = false
+verify_jwt = true
