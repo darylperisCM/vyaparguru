@@ -14,7 +14,249 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_messages: {
+        Row: {
+          context: string | null
+          created_at: string
+          generated_text: string
+          id: string
+          message: string
+          model_used: string | null
+          purpose: string | null
+          tokens_used: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          generated_text: string
+          id?: string
+          message: string
+          model_used?: string | null
+          purpose?: string | null
+          tokens_used?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          generated_text?: string
+          id?: string
+          message?: string
+          model_used?: string | null
+          purpose?: string | null
+          tokens_used?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_drafts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          subject: string
+          template_id: string | null
+          tone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          subject: string
+          template_id?: string | null
+          tone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          subject?: string
+          template_id?: string | null
+          tone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      favorite_translations: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          english_text: string
+          hindi_text: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          english_text: string
+          hindi_text: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          english_text?: string
+          hindi_text?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      industry_scenario_progress: {
+        Row: {
+          created_at: string
+          id: string
+          industry_id: string
+          is_completed: boolean
+          scenario_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          industry_id: string
+          is_completed?: boolean
+          scenario_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          industry_id?: string
+          is_completed?: boolean
+          scenario_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      industry_vocab_progress: {
+        Row: {
+          created_at: string
+          id: string
+          industry_id: string
+          is_learned: boolean
+          updated_at: string
+          user_id: string
+          vocab_item: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          industry_id: string
+          is_learned?: boolean
+          updated_at?: string
+          user_id: string
+          vocab_item: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          industry_id?: string
+          is_learned?: boolean
+          updated_at?: string
+          user_id?: string
+          vocab_item?: string
+        }
+        Relationships: []
+      }
+      speech_events: {
+        Row: {
+          audio_duration: number | null
+          created_at: string
+          id: string
+          input_text: string | null
+          language: string
+          operation_type: Database["public"]["Enums"]["speech_operation"]
+          output_text: string | null
+          success: boolean
+          updated_at: string
+          user_id: string
+          voice_id: string | null
+        }
+        Insert: {
+          audio_duration?: number | null
+          created_at?: string
+          id?: string
+          input_text?: string | null
+          language?: string
+          operation_type: Database["public"]["Enums"]["speech_operation"]
+          output_text?: string | null
+          success?: boolean
+          updated_at?: string
+          user_id: string
+          voice_id?: string | null
+        }
+        Update: {
+          audio_duration?: number | null
+          created_at?: string
+          id?: string
+          input_text?: string | null
+          language?: string
+          operation_type?: Database["public"]["Enums"]["speech_operation"]
+          output_text?: string | null
+          success?: boolean
+          updated_at?: string
+          user_id?: string
+          voice_id?: string | null
+        }
+        Relationships: []
+      }
+      translation_events: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          source_language: string
+          source_text: string
+          target_language: string
+          translated_text: string
+          translation_source: Database["public"]["Enums"]["translation_source"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          source_language: string
+          source_text: string
+          target_language: string
+          translated_text: string
+          translation_source: Database["public"]["Enums"]["translation_source"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          source_language?: string
+          source_text?: string
+          target_language?: string
+          translated_text?: string
+          translation_source?: Database["public"]["Enums"]["translation_source"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +265,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      speech_operation: "synthesis" | "transcription"
+      translation_source: "google" | "bhashini" | "hybrid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +393,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      speech_operation: ["synthesis", "transcription"],
+      translation_source: ["google", "bhashini", "hybrid"],
+    },
   },
 } as const
