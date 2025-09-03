@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { HomeButton } from '@/components/ui/home-button';
 import { 
   MessageCircle, 
   Send, 
@@ -10,9 +11,11 @@ import {
   Lightbulb, 
   Clock,
   CheckCheck,
-  Phone
+  Phone,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { APIService } from '@/services/apiService';
 
 interface Message {
   id: string;
@@ -27,6 +30,7 @@ export default function WhatsAppPro() {
   const [currentMessage, setCurrentMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedPurpose, setSelectedPurpose] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const quickReplies = [
     { id: 'acknowledge', text: 'Acknowledgment', hindi: 'पावती', purpose: 'confirm receipt' },
@@ -58,34 +62,31 @@ export default function WhatsAppPro() {
     }
   ];
 
-  const generateSuggestion = (hindiText: string, purpose?: string) => {
-    // Mock suggestions - will be replaced with AI API
-    const suggestions: Record<string, string> = {
-      'धन्यवाद': 'Thank you very much!',
-      'नमस्ते': 'Hello! How can I help you?',
-      'कैसे हैं आप?': 'How are you doing?',
-      'व्यवसाय कैसा चल रहा है?': 'How is business going?',
-      'मीटिंग कल है': 'The meeting is tomorrow',
-      'पैसे कब मिलेंगे?': 'When will the payment be received?',
-      'ऑर्डर तैयार है': 'Your order is ready',
-      'डिलीवरी कब होगी?': 'When will the delivery be?'
-    };
-
-    const baseSuggestion = suggestions[hindiText] || `Professional English: "${hindiText}"`;
-    
-    // Modify based on purpose
-    if (purpose === 'payment') {
-      return `${baseSuggestion}\n\nPayment link: [Your payment link here]`;
-    } else if (purpose === 'appointment') {
-      return `${baseSuggestion}\n\nShall we schedule a meeting to discuss this further?`;
+  const generateSuggestion = async (hindiText: string, purpose?: string) => {
+    try {
+      const context = `WhatsApp Business Assistant - Convert Hindi business message to professional English`;
+      const message = `Hindi Message: ${hindiText}${purpose ? `\nPurpose: ${purpose}` : ''}\nPlease convert this to a professional English WhatsApp business message.`;
+      
+      const result = await APIService.generateWithOpenAI(message, context, purpose);
+      return result.generatedText;
+    } catch (error) {
+      console.error('Message generation error:', error);
+      // Fallback to basic translation
+      try {
+        const result = await APIService.translate(hindiText, 'hi', 'en');
+        return result.translatedText;
+      } catch (translationError) {
+        console.error('Translation fallback error:', translationError);
+        return `Professional English: "${hindiText}"`;
+      }
     }
-    
-    return baseSuggestion;
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!currentMessage.trim()) return;
 
+    setIsGenerating(true);
+    
     const hindiMessage: Message = {
       id: Date.now().toString(),
       type: 'hindi',
@@ -97,22 +98,34 @@ export default function WhatsAppPro() {
       status: 'sent'
     };
 
-    const englishSuggestion = generateSuggestion(currentMessage, selectedPurpose);
-    
-    const englishMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      type: 'english',
-      text: englishSuggestion,
-      timestamp: new Date().toLocaleTimeString('en-IN', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      }),
-      status: 'delivered'
-    };
+    setMessages(prev => [...prev, hindiMessage]);
 
-    setMessages(prev => [...prev, hindiMessage, englishMessage]);
-    setCurrentMessage('');
-    setSelectedPurpose('');
+    try {
+      const englishSuggestion = await generateSuggestion(currentMessage, selectedPurpose);
+      
+      const englishMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'english',
+        text: englishSuggestion,
+        timestamp: new Date().toLocaleTimeString('en-IN', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }),
+        status: 'delivered'
+      };
+
+      setMessages(prev => [...prev, englishMessage]);
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setCurrentMessage('');
+      setSelectedPurpose('');
+      setIsGenerating(false);
+    }
   };
 
   const handleCopyToClipboard = (text: string) => {
@@ -137,13 +150,18 @@ export default function WhatsAppPro() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-2">
-            <Phone className="h-8 w-8" />
-            WhatsApp Business Pro
-          </h1>
-          <p className="text-muted-foreground">
-            Professional business communication made easy
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-2">
+                <Phone className="h-8 w-8" />
+                WhatsApp Business Pro
+              </h1>
+              <p className="text-muted-foreground">
+                Professional business communication made easy
+              </p>
+            </div>
+            <HomeButton />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -234,8 +252,12 @@ export default function WhatsAppPro() {
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                     className="flex-1"
                   />
-                  <Button onClick={handleSendMessage} disabled={!currentMessage.trim()}>
-                    <Send className="h-4 w-4" />
+                  <Button onClick={handleSendMessage} disabled={!currentMessage.trim() || isGenerating}>
+                    {isGenerating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { HomeButton } from '@/components/ui/home-button';
 import { 
   Mic, 
   Copy, 
@@ -10,9 +11,11 @@ import {
   Volume2, 
   ArrowRight, 
   Heart,
-  BookOpen 
+  BookOpen,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { APIService } from '@/services/apiService';
 
 export default function Translation() {
   const { toast } = useToast();
@@ -20,26 +23,32 @@ export default function Translation() {
   const [englishText, setEnglishText] = useState('');
   const [confidence, setConfidence] = useState(0);
   const [isListening, setIsListening] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [favorites, setFavorites] = useState<Array<{hindi: string, english: string}>>([]);
 
-  // Mock translation function - will be replaced with API call
-  const handleTranslate = () => {
+  const handleTranslate = async () => {
     if (!hindiText.trim()) return;
     
-    // Mock translations for demo
-    const mockTranslations: Record<string, string> = {
-      'नमस्ते, आपका व्यवसाय कैसा चल रहा है?': 'Hello, how is your business going?',
-      'कृपया अपना प्रस्ताव भेजें': 'Please send your proposal',
-      'हमें आपके उत्पाद में रुचि है': 'We are interested in your product',
-      'बैठक कल 3 बजे रखी गई है': 'The meeting is scheduled for tomorrow at 3 PM',
-      'धन्यवाद आपके समय के लिए': 'Thank you for your time'
-    };
-    
-    const translation = mockTranslations[hindiText] || 
-      `Professional English translation of: "${hindiText}"`;
-    
-    setEnglishText(translation);
-    setConfidence(Math.floor(Math.random() * 20) + 80); // 80-100%
+    setIsTranslating(true);
+    try {
+      const result = await APIService.translate(hindiText, 'hi', 'en');
+      setEnglishText(result.translatedText);
+      setConfidence(Math.round(result.confidence * 100));
+      
+      toast({
+        title: "Translation Complete",
+        description: `Translated using ${result.source === 'bhashini-api' ? 'Bhashini' : 'Google Translate'}`
+      });
+    } catch (error) {
+      console.error('Translation error:', error);
+      toast({
+        title: "Translation Failed", 
+        description: "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   const handleVoiceInput = () => {
@@ -96,13 +105,18 @@ export default function Translation() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-2">
-            <BookOpen className="h-8 w-8" />
-            Real-Time Translation Coach
-          </h1>
-          <p className="text-muted-foreground">
-            Translate Hindi to professional English instantly
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-2">
+                <BookOpen className="h-8 w-8" />
+                Real-Time Translation Coach
+              </h1>
+              <p className="text-muted-foreground">
+                Translate Hindi to professional English instantly
+              </p>
+            </div>
+            <HomeButton />
+          </div>
         </div>
 
         {/* Main Translation Interface */}
@@ -133,10 +147,14 @@ export default function Translation() {
                 onClick={handleTranslate}
                 className="w-full mt-4"
                 variant="hero"
-                disabled={!hindiText.trim()}
+                disabled={!hindiText.trim() || isTranslating}
               >
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Translate to English
+                {isTranslating ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                )}
+                {isTranslating ? 'Translating...' : 'Translate to English'}
               </Button>
             </CardContent>
           </Card>

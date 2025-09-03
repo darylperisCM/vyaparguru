@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Badge } from '@/components/ui/badge';
+import { HomeButton } from '@/components/ui/home-button';
 import { 
   Mail, 
   Copy, 
@@ -14,9 +15,11 @@ import {
   HandHeart,
   AlertCircle,
   TrendingUp,
-  Clock
+  Clock,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { APIService } from '@/services/apiService';
 
 interface EmailTemplate {
   id: string;
@@ -34,6 +37,7 @@ export default function EmailAssistant() {
   const [subject, setSubject] = useState('');
   const [keyPoints, setKeyPoints] = useState('');
   const [generatedEmail, setGeneratedEmail] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   const [recentDrafts, setRecentDrafts] = useState<Array<{subject: string, preview: string}>>([]);
 
   const templates: EmailTemplate[] = [
@@ -98,7 +102,7 @@ export default function EmailAssistant() {
     '{CustomerName}', '{CompanyName}', '{OrderId}', '{Date}', '{Amount}', '{ProductName}'
   ];
 
-  const handleGenerateEmail = () => {
+  const handleGenerateEmail = async () => {
     if (!selectedTemplate || !subject || !keyPoints) {
       toast({
         title: "Missing Information",
@@ -108,75 +112,29 @@ export default function EmailAssistant() {
       return;
     }
 
-    // Mock email generation - will be replaced with AI API
-    const mockEmails: Record<string, string> = {
-      inquiry: `Subject: ${subject}
+    setIsGenerating(true);
+    try {
+      const template = templates.find(t => t.id === selectedTemplate);
+      const context = `Email Assistant - Generate a ${tone} ${template?.title} email`;
+      const message = `Subject: ${subject}\nKey Points: ${keyPoints}\nTone: ${tone}\nPlease generate a professional business email.`;
 
-Dear Sir/Madam,
-
-I hope this email finds you well. I am writing to inquire about ${keyPoints}.
-
-Could you please provide me with more information regarding:
-- Product specifications and pricing
-- Availability and delivery timeline
-- Terms and conditions
-
-I would appreciate if you could send me a detailed quotation at your earliest convenience.
-
-Thank you for your time and consideration.
-
-Best regards,
-[Your Name]`,
+      const result = await APIService.generateWithOpenAI(message, context, template?.category);
+      setGeneratedEmail(result.generatedText);
       
-      followup: `Subject: ${subject}
-
-Dear [Recipient Name],
-
-I hope you are doing well. I am writing to follow up on ${keyPoints}.
-
-As discussed previously, I wanted to check on the status and see if you need any additional information from my side.
-
-Please let me know if there are any updates or if I can assist in moving this forward.
-
-Looking forward to your response.
-
-Best regards,
-[Your Name]`,
-      
-      proposal: `Subject: ${subject}
-
-Dear [Recipient Name],
-
-I trust this email finds you in good health and spirits.
-
-I am pleased to submit our proposal for ${keyPoints}.
-
-Our proposal includes:
-- Comprehensive solution overview
-- Competitive pricing structure
-- Implementation timeline
-- Support and maintenance details
-
-We believe this partnership will be mutually beneficial and look forward to discussing this opportunity further.
-
-Please feel free to contact me if you have any questions.
-
-Warm regards,
-[Your Name]`
-    };
-
-    const template = templates.find(t => t.id === selectedTemplate);
-    let email = mockEmails[selectedTemplate] || mockEmails.inquiry;
-    
-    // Apply tone adjustments
-    if (tone === 'friendly') {
-      email = email.replace('Dear Sir/Madam', 'Hi there!');
-      email = email.replace('Best regards', 'Warm regards');
-    } else if (tone === 'concise') {
-      email = email.split('\n').filter(line => line.trim() !== '').slice(0, -2).join('\n') + '\n\nRegards,\n[Your Name]';
+      toast({
+        title: "Email Generated",
+        description: "Professional email created successfully"
+      });
+    } catch (error) {
+      console.error('Email generation error:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
     }
-
-    setGeneratedEmail(email);
   };
 
   const handleCopyEmail = () => {
@@ -212,13 +170,18 @@ Warm regards,
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-2">
-            <Mail className="h-8 w-8" />
-            Email Writing Assistant
-          </h1>
-          <p className="text-muted-foreground">
-            Create professional business emails in perfect English
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-2">
+                <Mail className="h-8 w-8" />
+                Email Writing Assistant
+              </h1>
+              <p className="text-muted-foreground">
+                Create professional business emails in perfect English
+              </p>
+            </div>
+            <HomeButton />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -310,8 +273,11 @@ Warm regards,
                   </div>
                 </div>
 
-                <Button onClick={handleGenerateEmail} className="w-full" variant="hero">
-                  Generate Professional Email
+                <Button onClick={handleGenerateEmail} className="w-full" variant="hero" disabled={isGenerating}>
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : null}
+                  {isGenerating ? 'Generating Email...' : 'Generate Professional Email'}
                 </Button>
               </CardContent>
             </Card>

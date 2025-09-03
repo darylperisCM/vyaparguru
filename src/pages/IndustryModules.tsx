@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { HomeButton } from '@/components/ui/home-button';
 import { 
   Building2, 
   ShoppingCart, 
@@ -265,13 +266,18 @@ export default function IndustryModules() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-2">
-            <Building2 className="h-8 w-8" />
-            Industry-Specific Learning
-          </h1>
-          <p className="text-muted-foreground">
-            Master business English for your specific industry
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-2">
+                <Building2 className="h-8 w-8" />
+                Industry-Specific Learning
+              </h1>
+              <p className="text-muted-foreground">
+                Master business English for your specific industry
+              </p>
+            </div>
+            <HomeButton />
+          </div>
         </div>
 
         {!selectedIndustry ? (
