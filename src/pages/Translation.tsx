@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,15 +16,48 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { APIService } from '@/services/apiService';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Translation() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [hindiText, setHindiText] = useState('');
   const [englishText, setEnglishText] = useState('');
   const [confidence, setConfidence] = useState(0);
   const [isListening, setIsListening] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
-  const [favorites, setFavorites] = useState<Array<{hindi: string, english: string}>>([]);
+  const [favorites, setFavorites] = useState<Array<{id: string, hindi: string, english: string}>>([]);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Load favorites on component mount
+  useEffect(() => {
+    if (user) {
+      loadFavorites();
+    }
+  }, [user]);
+
+  const loadFavorites = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('favorite_translations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      setFavorites(data?.map(item => ({
+        id: item.id,
+        hindi: item.hindi_text,
+        english: item.english_text
+      })) || []);
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
+  };
 
   const handleTranslate = async () => {
     if (!hindiText.trim()) return;
@@ -35,9 +68,22 @@ export default function Translation() {
       setEnglishText(result.translatedText);
       setConfidence(Math.round(result.confidence * 100));
       
+      // Save translation event to database
+      if (user) {
+        await supabase.from('translation_events').insert({
+          user_id: user.id,
+          source_text: hindiText,
+          translated_text: result.translatedText,
+          source_language: 'hi',
+          target_language: 'en',
+          translation_source: 'google',
+          confidence: result.confidence
+        });
+      }
+      
       toast({
         title: "Translation Complete",
-        description: `Translated using ${result.source === 'bhashini-api' ? 'Bhashini' : 'Google Translate'}`
+        description: "Translated using Google Translate"
       });
     } catch (error) {
       console.error('Translation error:', error);
@@ -76,18 +122,88 @@ export default function Translation() {
     });
   };
 
-  const handleFavorite = () => {
-    if (hindiText && englishText) {
-      const newFavorite = { hindi: hindiText, english: englishText };
-      setFavorites(prev => [...prev, newFavorite]);
+  const handlePlayAudio = async () => {
+    if (!englishText || !user) return;
+    
+    setIsSpeaking(true);
+    try {
+      const result = await APIService.synthesizeSpeech(englishText, 'en-US', 'en-US-JennyNeural');
       
-      // Save to localStorage
-      const existingFavorites = JSON.parse(localStorage.getItem('beg_favorites') || '[]');
-      localStorage.setItem('beg_favorites', JSON.stringify([...existingFavorites, newFavorite]));
+      if (result.success) {
+        // Convert base64 to audio blob and play
+        const audioData = result.audioData;
+        const byteCharacters = atob(audioData);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], {type: 'audio/wav'});
+        const audio = new Audio(URL.createObjectURL(blob));
+        
+        audio.onended = () => setIsSpeaking(false);
+        await audio.play();
+        
+        // Log speech event
+        await supabase.from('speech_events').insert({
+          user_id: user.id,
+          input_text: englishText,
+          language: 'en-US',
+          voice_id: 'en-US-JennyNeural',
+          operation_type: 'synthesis',
+          success: true
+        });
+        
+        toast({
+          title: "Playing Audio",
+          description: "Text-to-speech generated successfully"
+        });
+      }
+    } catch (error) {
+      console.error('Speech synthesis error:', error);
+      toast({
+        title: "Speech Failed",
+        description: "Could not generate audio",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSpeaking(false);
+    }
+  };
+
+  const handleFavorite = async () => {
+    if (!hindiText || !englishText || !user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('favorite_translations')
+        .insert({
+          user_id: user.id,
+          hindi_text: hindiText,
+          english_text: englishText,
+          confidence: confidence / 100
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      setFavorites(prev => [{
+        id: data.id,
+        hindi: data.hindi_text,
+        english: data.english_text
+      }, ...prev]);
       
       toast({
         title: "Added to Favorites",
         description: "Translation saved for future reference",
+      });
+    } catch (error) {
+      console.error('Error saving favorite:', error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save to favorites",
+        variant: "destructive"
       });
     }
   };
@@ -168,10 +284,14 @@ export default function Translation() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => toast({ title: "Text-to-Speech", description: "Audio playback coming soon!" })}
-                    disabled={!englishText}
+                    onClick={handlePlayAudio}
+                    disabled={!englishText || isSpeaking}
                   >
-                    <Volume2 className="h-4 w-4" />
+                    {isSpeaking ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Volume2 className="h-4 w-4" />
+                    )}
                   </Button>
                   <Button
                     variant="outline"
@@ -250,14 +370,14 @@ export default function Translation() {
                   No saved translations yet. Click the star icon to save your favorites!
                 </p>
               ) : (
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {favorites.map((item, index) => (
-                    <div key={index} className="p-3 border rounded-lg hover:bg-accent/50 cursor-pointer">
-                      <p className="text-sm font-medium mb-1">{item.hindi}</p>
-                      <p className="text-xs text-muted-foreground">{item.english}</p>
-                    </div>
-                  ))}
-                </div>
+                 <div className="space-y-3 max-h-64 overflow-y-auto">
+                   {favorites.map((item) => (
+                     <div key={item.id} className="p-3 border rounded-lg hover:bg-accent/50 cursor-pointer">
+                       <p className="text-sm font-medium mb-1">{item.hindi}</p>
+                       <p className="text-xs text-muted-foreground">{item.english}</p>
+                     </div>
+                   ))}
+                 </div>
               )}
             </CardContent>
           </Card>

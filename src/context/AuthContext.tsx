@@ -1,20 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface User {
-  id: string;
-  email?: string;
-  phone?: string;
-  name: string;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (user: User, token: string) => void;
-  logout: () => void;
-  sendEmailOtp: (email: string) => Promise<{ success: boolean; message: string }>;
-  sendSmsOtp: (phone: string) => Promise<{ success: boolean; message: string }>;
-  verifyOtp: (otp: string, identifier: string, type: 'email' | 'sms') => Promise<{ success: boolean; user?: User; token?: string; message: string }>;
+  session: Session | null;
+  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,99 +23,63 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session on app load
-    const token = localStorage.getItem('beg_auth_token');
-    const userData = localStorage.getItem('beg_user');
-    
-    if (token && userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      } catch (error) {
-        // Clear invalid data
-        localStorage.removeItem('beg_auth_token');
-        localStorage.removeItem('beg_user');
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
-    }
+    );
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = (user: User, token: string) => {
-    localStorage.setItem('beg_auth_token', token);
-    localStorage.setItem('beg_user', JSON.stringify(user));
-    setUser(user);
-    setIsAuthenticated(true);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('beg_auth_token');
-    localStorage.removeItem('beg_user');
-    setUser(null);
-    setIsAuthenticated(false);
-  };
-
-  // Mock OTP functions - will be replaced with Supabase later
-  const sendEmailOtp = async (email: string): Promise<{ success: boolean; message: string }> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ 
-          success: true, 
-          message: `OTP sent to ${email}` 
-        });
-      }, 1000);
+  const signUp = async (email: string, password: string) => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl
+      }
     });
+    return { error };
   };
 
-  const sendSmsOtp = async (phone: string): Promise<{ success: boolean; message: string }> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ 
-          success: true, 
-          message: `OTP sent to ${phone}` 
-        });
-      }, 1000);
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
     });
+    return { error };
   };
 
-  const verifyOtp = async (otp: string, identifier: string, type: 'email' | 'sms'): Promise<{ success: boolean; user?: User; token?: string; message: string }> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (otp === '123456') {
-          const mockUser: User = {
-            id: '1',
-            [type === 'email' ? 'email' : 'phone']: identifier,
-            name: 'Test User'
-          };
-          const mockToken = 'mock-jwt-token-' + Date.now();
-          
-          resolve({
-            success: true,
-            user: mockUser,
-            token: mockToken,
-            message: 'Successfully verified!'
-          });
-        } else {
-          resolve({
-            success: false,
-            message: 'Invalid OTP. Try 123456 for demo.'
-          });
-        }
-      }, 1000);
-    });
+  const signOut = async () => {
+    await supabase.auth.signOut();
   };
 
   const value = {
-    isAuthenticated,
+    isAuthenticated: !!session,
     user,
-    login,
-    logout,
-    sendEmailOtp,
-    sendSmsOtp,
-    verifyOtp,
+    session,
+    signUp,
+    signIn,
+    signOut,
+    loading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

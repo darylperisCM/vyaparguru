@@ -1,252 +1,261 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, NavLink } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, ArrowLeft } from 'lucide-react';
+import { HomeButton } from '@/components/ui/home-button';
+import { Loader2, Mail, UserPlus, LogIn } from 'lucide-react';
 
 export default function AuthSignIn() {
-  const { isAuthenticated, sendEmailOtp, sendSmsOtp, verifyOtp, login } = useAuth();
+  const { signIn, signUp, isAuthenticated, loading } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
-  
-  const [step, setStep] = useState<'input' | 'verify'>('input');
-  const [activeTab, setActiveTab] = useState('email');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [resendTimer, setResendTimer] = useState(0);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [activeTab, setActiveTab] = useState('signin');
 
-  // Redirect if already authenticated
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const handleSendOtp = async () => {
-    setLoading(true);
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+
+    setIsSigningIn(true);
     try {
-      const result = activeTab === 'email' 
-        ? await sendEmailOtp(email)
-        : await sendSmsOtp(phone);
-      
-      if (result.success) {
-        setStep('verify');
-        setResendTimer(30);
-        const countdown = setInterval(() => {
-          setResendTimer(prev => {
-            if (prev <= 1) {
-              clearInterval(countdown);
-              return 0;
-            }
-            return prev - 1;
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast({
+          title: "Sign In Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Sign In Failed",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password || !confirmPassword) return;
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSigningUp(true);
+    try {
+      const { error } = await signUp(email, password);
+      if (error) {
+        if (error.message.includes("already registered")) {
+          toast({
+            title: "Account Exists",
+            description: "This email is already registered. Please sign in instead.",
+            variant: "destructive"
           });
-        }, 1000);
-        
-        toast({
-          title: "OTP Sent",
-          description: result.message,
-        });
+          setActiveTab('signin');
+        } else {
+          toast({
+            title: "Sign Up Failed",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
       } else {
         toast({
-          title: "Error",
-          description: result.message,
-          variant: "destructive",
+          title: "Account Created!",
+          description: "Please check your email to verify your account"
         });
+        setActiveTab('signin');
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to send OTP. Please try again.",
-        variant: "destructive",
+        title: "Sign Up Failed",
+        description: "An unexpected error occurred",
+        variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsSigningUp(false);
     }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 6) return;
-    
-    setLoading(true);
-    try {
-      const identifier = activeTab === 'email' ? email : phone;
-      const result = await verifyOtp(otp, identifier, activeTab as 'email' | 'sms');
-      
-      if (result.success && result.user && result.token) {
-        login(result.user, result.token);
-        toast({
-          title: "Success",
-          description: result.message,
-        });
-        navigate('/dashboard');
-      } else {
-        toast({
-          title: "Error",
-          description: result.message,
-          variant: "destructive",
-        });
-        setOtp('');
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to verify OTP. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBack = () => {
-    setStep('input');
-    setOtp('');
-    setResendTimer(0);
-  };
-
-  const isInputValid = () => {
-    if (activeTab === 'email') {
-      return email.includes('@') && email.includes('.');
-    }
-    return phone.length >= 10;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background to-accent/5 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">व्यापार इंग्लिश गुरु</h1>
-          <p className="text-muted-foreground">Sign in to continue your English journey</p>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-primary mb-2">
+            व्यापार इंग्लिश गुरु
+          </h1>
+          <p className="text-muted-foreground">
+            Sign in to continue your English learning journey
+          </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              {step === 'verify' && (
-                <Button variant="ghost" size="icon" onClick={handleBack}>
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-              )}
-              <div>
-                <CardTitle>
-                  {step === 'input' ? 'Sign In' : 'Verify OTP'}
-                </CardTitle>
-                <CardDescription>
-                  {step === 'input' 
-                    ? 'Enter your email or mobile number' 
-                    : `Enter the 6-digit code sent to your ${activeTab}`}
-                </CardDescription>
-              </div>
+        <Card className="gradient-card">
+          <CardHeader className="text-center pb-4">
+            <div className="flex justify-center mb-4">
+              <Mail className="h-12 w-12 text-primary" />
             </div>
+            <CardTitle className="text-2xl">
+              {activeTab === 'signin' ? 'Welcome Back' : 'Create Account'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {step === 'input' ? (
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="email" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </TabsTrigger>
-                  <TabsTrigger value="phone" className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    Mobile
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="email" className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Email Address</label>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="signin" className="flex items-center gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Sign Up
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="signin">
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div>
+                    <Label htmlFor="signin-email">Email</Label>
                     <Input
+                      id="signin-email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="your@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && isInputValid() && handleSendOtp()}
+                      required
                     />
                   </div>
-                </TabsContent>
-                
-                <TabsContent value="phone" className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Mobile Number</label>
+                  <div>
+                    <Label htmlFor="signin-password">Password</Label>
                     <Input
-                      type="tel"
-                      placeholder="+91 98765 43210"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && isInputValid() && handleSendOtp()}
+                      id="signin-password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
                     />
                   </div>
-                </TabsContent>
-                
-                <Button 
-                  onClick={handleSendOtp} 
-                  className="w-full" 
-                  disabled={!isInputValid() || loading}
-                  variant="hero"
-                >
-                  {loading ? 'Sending...' : 'Send OTP'}
-                </Button>
-              </Tabs>
-            ) : (
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Enter OTP</label>
-                  <div className="flex justify-center">
-                    <InputOTP
-                      value={otp}
-                      onChange={setOtp}
-                      maxLength={6}
-                    >
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Demo: Use 123456 as OTP
-                  </p>
-                </div>
-                
-                <Button 
-                  onClick={handleVerifyOtp} 
-                  className="w-full" 
-                  disabled={otp.length !== 6 || loading}
-                  variant="hero"
-                >
-                  {loading ? 'Verifying...' : 'Verify OTP'}
-                </Button>
-                
-                <div className="text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={handleSendOtp}
-                    disabled={resendTimer > 0 || loading}
-                    className="text-sm"
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    variant="hero"
+                    disabled={isSigningIn || !email || !password}
                   >
-                    {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
+                    {isSigningIn ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <LogIn className="h-4 w-4 mr-2" />
+                    )}
+                    {isSigningIn ? 'Signing In...' : 'Sign In'}
                   </Button>
-                </div>
-              </div>
-            )}
+                </form>
+              </TabsContent>
+
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div>
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="Choose a password (min 6 characters)"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      placeholder="Confirm your password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    variant="hero"
+                    disabled={isSigningUp || !email || !password || !confirmPassword}
+                  >
+                    {isSigningUp ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <UserPlus className="h-4 w-4 mr-2" />
+                    )}
+                    {isSigningUp ? 'Creating Account...' : 'Create Account'}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+
+            <div className="mt-6 text-center">
+              <NavLink to="/">
+                <Button variant="ghost" className="text-muted-foreground">
+                  <HomeButton />
+                  Back to Home
+                </Button>
+              </NavLink>
+            </div>
           </CardContent>
         </Card>
-        
-        <div className="text-center mt-6">
-          <Button variant="ghost" onClick={() => navigate('/')}>
-            ← Back to Home
-          </Button>
-        </div>
       </div>
     </div>
   );

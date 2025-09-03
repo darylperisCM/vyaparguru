@@ -9,7 +9,7 @@ import whatsappIcon from "@/assets/whatsapp-icon.jpg";
 import industryIcon from "@/assets/industry-icon.jpg";
 
 export default function Index() {
-  const { isAuthenticated, logout, user } = useAuth();
+  const { isAuthenticated, signOut, user } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/5">
@@ -58,10 +58,10 @@ export default function Index() {
               <>
                 <NavLink to="/dashboard">
                   <Button variant="ghost">
-                    Welcome, {user?.name}
+                    Welcome, {user?.email}
                   </Button>
                 </NavLink>
-                <Button variant="outline" onClick={logout}>
+                <Button variant="outline" onClick={signOut}>
                   Logout
                 </Button>
               </>

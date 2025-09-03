@@ -92,17 +92,12 @@ export class APIService {
     return data;
   }
 
-  // Hybrid translation - tries Google first, falls back to Bhashini
+  // Translation using Google Translate only (Bhashini temporarily disabled)
   static async translate(
     text: string,
     sourceLang: string,
     targetLang: string
   ): Promise<TranslationResponse> {
-    try {
-      return await this.translateWithGoogle(text, sourceLang, targetLang);
-    } catch (error) {
-      console.warn('Google Translate failed, trying Bhashini:', error);
-      return await this.translateWithBhashini(text, sourceLang, targetLang);
-    }
+    return await this.translateWithGoogle(text, sourceLang, targetLang);
   }
 }

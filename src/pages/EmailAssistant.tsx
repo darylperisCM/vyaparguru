@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { APIService } from '@/services/apiService';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 interface EmailTemplate {
   id: string;
@@ -32,13 +34,14 @@ interface EmailTemplate {
 
 export default function EmailAssistant() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [tone, setTone] = useState<string>('formal');
   const [subject, setSubject] = useState('');
   const [keyPoints, setKeyPoints] = useState('');
   const [generatedEmail, setGeneratedEmail] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [recentDrafts, setRecentDrafts] = useState<Array<{subject: string, preview: string}>>([]);
+  const [recentDrafts, setRecentDrafts] = useState<Array<{id: string, subject: string, preview: string}>>([]);
 
   const templates: EmailTemplate[] = [
     {
@@ -98,6 +101,36 @@ export default function EmailAssistant() {
     { value: 'concise', label: 'Concise', labelHindi: 'संक्षिप्त' }
   ];
 
+  // Load recent drafts on component mount
+  useEffect(() => {
+    if (user) {
+      loadRecentDrafts();
+    }
+  }, [user]);
+
+  const loadRecentDrafts = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('email_drafts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      
+      setRecentDrafts(data?.map(item => ({
+        id: item.id,
+        subject: item.subject,
+        preview: item.content.substring(0, 100) + '...'
+      })) || []);
+    } catch (error) {
+      console.error('Error loading drafts:', error);
+    }
+  };
+
   const variables = [
     '{CustomerName}', '{CompanyName}', '{OrderId}', '{Date}', '{Amount}', '{ProductName}'
   ];
@@ -120,6 +153,18 @@ export default function EmailAssistant() {
 
       const result = await APIService.generateWithOpenAI(message, context, template?.category);
       setGeneratedEmail(result.generatedText);
+      
+      // Save AI message to database
+      if (user) {
+        await supabase.from('ai_messages').insert({
+          user_id: user.id,
+          message: message,
+          context: context,
+          purpose: template?.category,
+          generated_text: result.generatedText,
+          model_used: 'gpt-4o-mini'
+        });
+      }
       
       toast({
         title: "Email Generated",
@@ -145,22 +190,42 @@ export default function EmailAssistant() {
     });
   };
 
-  const handleSaveEmail = () => {
-    if (generatedEmail && subject) {
-      const draft = {
-        subject: subject,
-        preview: generatedEmail.substring(0, 100) + '...'
+  const handleSaveEmail = async () => {
+    if (!generatedEmail || !subject || !user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('email_drafts')
+        .insert({
+          user_id: user.id,
+          subject: subject,
+          content: generatedEmail,
+          tone: tone,
+          template_id: selectedTemplate
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      const newDraft = {
+        id: data.id,
+        subject: data.subject,
+        preview: data.content.substring(0, 100) + '...'
       };
       
-      setRecentDrafts(prev => [draft, ...prev.slice(0, 4)]);
-      
-      // Save to localStorage
-      const existingDrafts = JSON.parse(localStorage.getItem('beg_recent_emails') || '[]');
-      localStorage.setItem('beg_recent_emails', JSON.stringify([draft, ...existingDrafts.slice(0, 4)]));
+      setRecentDrafts(prev => [newDraft, ...prev.slice(0, 4)]);
       
       toast({
         title: "Saved!",
         description: "Email saved to drafts"
+      });
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save email draft",
+        variant: "destructive"
       });
     }
   };
@@ -324,14 +389,14 @@ export default function EmailAssistant() {
                     No saved drafts yet
                   </p>
                 ) : (
-                  <div className="space-y-3">
-                    {recentDrafts.map((draft, index) => (
-                      <div key={index} className="p-3 border rounded-lg hover:bg-accent/50 cursor-pointer">
-                        <p className="font-medium text-sm mb-1">{draft.subject}</p>
-                        <p className="text-xs text-muted-foreground">{draft.preview}</p>
-                      </div>
-                    ))}
-                  </div>
+                   <div className="space-y-3">
+                     {recentDrafts.map((draft) => (
+                       <div key={draft.id} className="p-3 border rounded-lg hover:bg-accent/50 cursor-pointer">
+                         <p className="font-medium text-sm mb-1">{draft.subject}</p>
+                         <p className="text-xs text-muted-foreground">{draft.preview}</p>
+                       </div>
+                     ))}
+                   </div>
                 )}
               </CardContent>
             </Card>
