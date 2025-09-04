@@ -72,7 +72,7 @@ export default function Dashboard() {
         {/* Welcome Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-primary mb-2">
-            Welcome back, {user?.email}! 🙏
+            Welcome back{user?.email ? `, ${user.email}` : ''}! 🙏
           </h1>
           <p className="text-muted-foreground">
             Continue your English business journey today

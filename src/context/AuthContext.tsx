@@ -83,8 +83,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (otp === "123456") {
       const { error } = await supabase.auth.signInAnonymously();
       if (error) {
-        return { error: error.message.includes('Anonymous') ? 
-          new Error('Please enable Anonymous sign-ins in Supabase Authentication settings') : error };
+        // Return the exact Supabase error message for better debugging
+        return { 
+          error: error.message.includes('Anonymous') ? 
+            new Error('Please enable Anonymous sign-ins in Supabase Authentication settings') : 
+            error 
+        };
       }
       return { error: null };
     }
