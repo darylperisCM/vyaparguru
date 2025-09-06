@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Helmet } from "react-helmet-async";
 import { 
   Languages, 
   Mail, 
@@ -73,7 +74,17 @@ const features = [
 
 export default function Features() {
   return (
-    <div className="min-h-screen bg-gradient-subtle">
+    <>
+      <Helmet>
+        <title>Features - AI English Training Tools | VyaparGuru</title>
+        <meta name="description" content="Discover our AI-powered features: Real-time translation, email assistant, WhatsApp integration, and industry-specific modules for Hindi business owners." />
+        <meta name="keywords" content="AI english training, real-time translation, email assistant, WhatsApp business, industry modules, व्यापार अंग्रेजी, AI सुविधाएं" />
+        <meta property="og:title" content="Features - AI English Training Tools | VyaparGuru" />
+        <meta property="og:description" content="Discover our AI-powered features for Hindi business owners." />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://vyaparguru.com/features" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-subtle">
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
@@ -108,12 +119,12 @@ export default function Features() {
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                     <Icon className="w-6 h-6 text-primary" />
                   </div>
-                  <CardTitle className="text-xl font-semibold">
+                  <h3 className="text-xl font-semibold mb-2">
                     {feature.title}
-                  </CardTitle>
-                  <CardTitle className="text-base font-medium hindi-text text-primary">
+                  </h3>
+                  <h4 className="text-base font-medium hindi-text text-primary">
                     {feature.titleHindi}
-                  </CardTitle>
+                  </h4>
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-muted-foreground mb-3">
@@ -152,6 +163,7 @@ export default function Features() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

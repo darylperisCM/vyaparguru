@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Check, Star } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 const pricingFeatures = [
   {
@@ -49,7 +50,17 @@ const pricingFeatures = [
 
 export default function Pricing() {
   return (
-    <div className="min-h-screen bg-gradient-subtle">
+    <>
+      <Helmet>
+        <title>Pricing - Just ₹99/month | VyaparGuru</title>
+        <meta name="description" content="Affordable English training for Hindi businesses. Complete access to all features for ₹99/month. Start your 7-day free trial today." />
+        <meta name="keywords" content="english training pricing, ₹99 monthly, business english cost, hindi speakers training, व्यापार अंग्रेजी मूल्य, affordable english" />
+        <meta property="og:title" content="Pricing - Just ₹99/month | VyaparGuru" />
+        <meta property="og:description" content="Affordable English training for Hindi businesses at just ₹99/month." />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://vyaparguru.com/pricing" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-subtle">
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
@@ -80,12 +91,12 @@ export default function Pricing() {
             </div>
             
             <CardHeader className="text-center pb-6">
-              <CardTitle className="text-3xl font-bold">
+              <h2 className="text-3xl font-bold">
                 Business English Pro
-              </CardTitle>
-              <CardTitle className="text-xl hindi-text text-primary font-semibold">
+              </h2>
+              <h3 className="text-xl hindi-text text-primary font-semibold">
                 बिजनेस इंग्लिश प्रो
-              </CardTitle>
+              </h3>
               
               <div className="mt-6">
                 <div className="flex items-baseline justify-center gap-2">
@@ -149,8 +160,8 @@ export default function Pricing() {
           <div className="grid gap-8">
             <Card className="card-elegant">
               <CardHeader>
-                <CardTitle className="text-lg">How does the free trial work?</CardTitle>
-                <CardTitle className="text-base hindi-text text-primary">मुफ्त परीक्षण कैसे काम करता है?</CardTitle>
+                <h3 className="text-lg">How does the free trial work?</h3>
+                <h4 className="text-base hindi-text text-primary">मुफ्त परीक्षण कैसे काम करता है?</h4>
               </CardHeader>
               <CardContent>
                 <CardDescription>
@@ -164,8 +175,8 @@ export default function Pricing() {
 
             <Card className="card-elegant">
               <CardHeader>
-                <CardTitle className="text-lg">Can I cancel anytime?</CardTitle>
-                <CardTitle className="text-base hindi-text text-primary">क्या मैं कभी भी रद्द कर सकता हूं?</CardTitle>
+                <h3 className="text-lg">Can I cancel anytime?</h3>
+                <h4 className="text-base hindi-text text-primary">क्या मैं कभी भी रद्द कर सकता हूं?</h4>
               </CardHeader>
               <CardContent>
                 <CardDescription>
@@ -179,8 +190,8 @@ export default function Pricing() {
 
             <Card className="card-elegant">
               <CardHeader>
-                <CardTitle className="text-lg">Is this suitable for beginners?</CardTitle>
-                <CardTitle className="text-base hindi-text text-primary">क्या यह नए लोगों के लिए उपयुक्त है?</CardTitle>
+                <h3 className="text-lg">Is this suitable for beginners?</h3>
+                <h4 className="text-base hindi-text text-primary">क्या यह नए लोगों के लिए उपयुक्त है?</h4>
               </CardHeader>
               <CardContent>
                 <CardDescription>
@@ -211,6 +222,7 @@ export default function Pricing() {
           </Button>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { NavLink } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import heroImage from "@/assets/hero-illustration.jpg";
 import translationIcon from "@/assets/translation-icon.jpg";
 import emailIcon from "@/assets/email-icon.jpg";
@@ -12,7 +13,17 @@ export default function Index() {
   const { isAuthenticated, signOut, user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
+    <>
+      <Helmet>
+        <title>VyaparGuru - Business English for Hindi Speakers | ₹99/month</title>
+        <meta name="description" content="Learn professional English communication for your business. AI-powered training for Hindi speakers. Start your free trial today - just ₹99/month." />
+        <meta name="keywords" content="business english, hindi speakers, व्यापारी अंग्रेजी, professional communication, AI training, english learning, व्यापार अंग्रेजी" />
+        <meta property="og:title" content="VyaparGuru - Business English for Hindi Speakers" />
+        <meta property="og:description" content="Learn professional English communication for your business. AI-powered training for Hindi speakers." />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://vyaparguru.com/" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-subtle">
 
       {/* Hero Section */}
       <section className="py-20 px-4">
@@ -216,6 +227,7 @@ export default function Index() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }
