@@ -119,11 +119,11 @@ export function SiteHeader() {
         <div className="md:hidden ml-auto">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
                 {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+            <SheetContent side="right" className="w-[280px] sm:w-[320px]">
               <nav className="flex flex-col space-y-4">
                 <div className="flex flex-col space-y-3 py-4">
                   {navigation.map((item) => (
@@ -132,14 +132,14 @@ export function SiteHeader() {
                       to={item.href}
                       onClick={() => setIsOpen(false)}
                       className={({ isActive }) =>
-                        `flex flex-col p-2 rounded-md transition-colors ${
+                        `flex flex-col p-3 rounded-md transition-colors min-h-[48px] justify-center ${
                           isActive
                             ? "bg-primary/10 text-primary font-semibold"
                             : "text-muted-foreground hover:text-primary hover:bg-accent"
                         }`
                       }
                     >
-                      <span>{item.name}</span>
+                      <span className="text-base">{item.name}</span>
                       <span className="hindi-text text-sm opacity-70">{item.nameHindi}</span>
                     </NavLink>
                   ))}
@@ -148,17 +148,17 @@ export function SiteHeader() {
                       to="/dashboard"
                       onClick={() => setIsOpen(false)}
                       className={({ isActive }) =>
-                        `flex items-center px-3 py-2 rounded-md font-semibold transition-all duration-300 ${
+                        `flex items-center px-3 py-3 rounded-md font-semibold transition-all duration-300 min-h-[48px] ${
                           isActive 
                             ? "gradient-coral-blue text-white ring-2 ring-ring shadow-lg" 
-                            : "gradient-coral-blue text-white shadow-md"
+                            : "gradient-coral-blue text-white shadow-md active:scale-95"
                         }`
                       }
                     >
-                      <LayoutDashboard className="h-4 w-4 mr-2" />
-                      <div className="flex flex-col">
-                        <span>Dashboard</span>
-                        <span className="hindi-text text-xs opacity-90">डैशबोर्ड</span>
+                      <LayoutDashboard className="h-5 w-5 mr-3 flex-shrink-0" />
+                      <div className="flex flex-col flex-1">
+                        <span className="text-base">Dashboard</span>
+                        <span className="hindi-text text-sm opacity-90">डैशबोर्ड</span>
                       </div>
                     </NavLink>
                   )}
