@@ -1,0 +1,142 @@
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Menu, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/context/AuthContext";
+
+const navigation = [
+  { name: "Home", nameHindi: "होम", href: "/" },
+  { name: "Features", nameHindi: "सुविधाएं", href: "/features" },
+  { name: "Pricing", nameHindi: "मूल्य", href: "/pricing" },
+];
+
+export function SiteHeader() {
+  const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const AuthButtons = ({ isMobile = false }) => {
+    if (user) {
+      return (
+        <div className={`flex items-center gap-2 ${isMobile ? 'flex-col w-full' : ''}`}>
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/dashboard")}
+            className={isMobile ? 'w-full justify-start' : ''}
+          >
+            Welcome{user.email ? `, ${user.email.split('@')[0]}` : ''}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleSignOut}
+            className={isMobile ? 'w-full justify-start' : ''}
+          >
+            Logout
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`flex items-center gap-2 ${isMobile ? 'flex-col w-full' : ''}`}>
+        <Button 
+          variant="ghost" 
+          asChild 
+          className={isMobile ? 'w-full justify-start' : ''}
+        >
+          <NavLink to="/auth/sign-in">Sign In</NavLink>
+        </Button>
+        <Button 
+          variant="hero" 
+          asChild 
+          className={isMobile ? 'w-full justify-start' : ''}
+        >
+          <NavLink to="/auth/sign-in">Start Free Trial</NavLink>
+        </Button>
+      </div>
+    );
+  };
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center">
+        {/* Logo */}
+        <div className="mr-6 flex items-center space-x-2">
+          <NavLink to="/" className="flex items-center space-x-2">
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-primary">VyaparGuru</span>
+              <span className="text-sm text-muted-foreground hindi-text">व्यापार गुरु</span>
+            </div>
+          </NavLink>
+        </div>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium flex-1">
+          {navigation.map((item) => (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              className={({ isActive }) =>
+                `transition-colors hover:text-primary ${
+                  isActive ? "text-primary font-semibold" : "text-muted-foreground"
+                }`
+              }
+            >
+              <span className="mr-1">{item.name}</span>
+              <span className="hindi-text text-xs">({item.nameHindi})</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Desktop Auth */}
+        <div className="hidden md:flex">
+          <AuthButtons />
+        </div>
+
+        {/* Mobile Menu */}
+        <div className="md:hidden ml-auto">
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <nav className="flex flex-col space-y-4">
+                <div className="flex flex-col space-y-3 py-4">
+                  {navigation.map((item) => (
+                    <NavLink
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className={({ isActive }) =>
+                        `flex flex-col p-2 rounded-md transition-colors ${
+                          isActive
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-muted-foreground hover:text-primary hover:bg-accent"
+                        }`
+                      }
+                    >
+                      <span>{item.name}</span>
+                      <span className="hindi-text text-sm opacity-70">{item.nameHindi}</span>
+                    </NavLink>
+                  ))}
+                </div>
+                
+                <div className="border-t pt-4">
+                  <AuthButtons isMobile />
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  );
+}

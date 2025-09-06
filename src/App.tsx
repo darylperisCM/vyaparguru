@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SiteHeader } from "@/components/SiteHeader";
 import Index from "./pages/Index";
 import AuthSignIn from "./pages/AuthSignIn";
 import Dashboard from "./pages/Dashboard";
@@ -12,6 +13,8 @@ import Translation from "./pages/Translation";
 import EmailAssistant from "./pages/EmailAssistant";
 import WhatsAppPro from "./pages/WhatsAppPro";
 import IndustryModules from "./pages/IndustryModules";
+import Features from "./pages/Features";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,8 +26,11 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <SiteHeader />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/features" element={<Features />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/auth/sign-in" element={<AuthSignIn />} />
             <Route path="/dashboard" element={
               <ProtectedRoute>

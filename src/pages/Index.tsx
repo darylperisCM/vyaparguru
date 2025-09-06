@@ -12,72 +12,7 @@ export default function Index() {
   const { isAuthenticated, signOut, user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/5">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center space-x-8">
-            <NavLink to="/" className="text-xl font-bold text-primary">व्यापार इंग्लिश गुरु</NavLink>
-            <nav className="hidden md:flex space-x-6">
-              <NavLink 
-                to="/translation" 
-                className={({ isActive }) => 
-                  `text-sm font-medium transition-colors ${isActive ? 'text-primary' : 'hover:text-primary'}`
-                }
-              >
-                Translation
-              </NavLink>
-              <NavLink 
-                to="/email" 
-                className={({ isActive }) => 
-                  `text-sm font-medium transition-colors ${isActive ? 'text-primary' : 'hover:text-primary'}`
-                }
-              >
-                Email Assistant
-              </NavLink>
-              <NavLink 
-                to="/whatsapp" 
-                className={({ isActive }) => 
-                  `text-sm font-medium transition-colors ${isActive ? 'text-primary' : 'hover:text-primary'}`
-                }
-              >
-                WhatsApp Pro
-              </NavLink>
-              <NavLink 
-                to="/industry" 
-                className={({ isActive }) => 
-                  `text-sm font-medium transition-colors ${isActive ? 'text-primary' : 'hover:text-primary'}`
-                }
-              >
-                Industry Modules
-              </NavLink>
-            </nav>
-          </div>
-          <div className="flex items-center space-x-4">
-            {isAuthenticated ? (
-              <>
-                <NavLink to="/dashboard">
-                  <Button variant="ghost">
-                    Welcome, {user?.email}
-                  </Button>
-                </NavLink>
-                <Button variant="outline" onClick={signOut}>
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <NavLink to="/auth/sign-in">
-                  <Button variant="ghost">Sign In</Button>
-                </NavLink>
-                <NavLink to="/auth/sign-in">
-                  <Button variant="hero">Start Free Trial</Button>
-                </NavLink>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-subtle">
 
       {/* Hero Section */}
       <section className="py-20 px-4">
