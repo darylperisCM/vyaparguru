@@ -3,15 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { 
-  MessageSquare, 
+  Languages, 
   Mail, 
   Phone, 
-  BookOpen, 
+  Grid3x3, 
   TrendingUp, 
   Clock,
   Target,
-  Award
+  Award,
+  Activity
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -39,177 +41,205 @@ export default function Dashboard() {
     {
       title: 'Start Translating',
       description: 'Hindi to English translation',
-      icon: MessageSquare,
+      icon: Languages,
       route: '/translation',
-      color: 'bg-primary'
+      color: 'bg-destructive',
+      textColor: 'text-destructive-foreground'
     },
     {
       title: 'Write an Email',
       description: 'Professional email assistant',
       icon: Mail,
       route: '/email',
-      color: 'bg-success'
+      color: 'bg-success',
+      textColor: 'text-success-foreground'
     },
     {
       title: 'WhatsApp Pro',
       description: 'Business communication',
       icon: Phone,
       route: '/whatsapp',
-      color: 'bg-accent'
+      color: 'bg-accent',
+      textColor: 'text-accent-foreground'
     },
     {
       title: 'Industry Modules',
       description: 'Sector-specific learning',
-      icon: BookOpen,
+      icon: Grid3x3,
       route: '/industry',
-      color: 'bg-secondary'
+      color: 'bg-blue-500',
+      textColor: 'text-white'
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/5 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Welcome Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">
-            Welcome back{user?.email ? `, ${user.email}` : ''}! 🙏
-          </h1>
-          <p className="text-muted-foreground">
-            Continue your English business journey today
-          </p>
-        </div>
+    <>
+      <Helmet>
+        <title>Dashboard - VyaparGuru | Your Business English Learning Hub</title>
+        <meta name="description" content="Access your personalized dashboard for business English learning. Track progress, quick actions for translation, email writing, WhatsApp communication and industry modules." />
+        <meta name="keywords" content="dashboard, business english, learning progress, translation, email writing, whatsapp business, industry modules" />
+        <link rel="canonical" href="/dashboard" />
+      </Helmet>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="gradient-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Today's Translations</p>
-                  <p className="text-2xl font-bold text-primary">{stats.translationsToday}</p>
-                </div>
-                <MessageSquare className="h-8 w-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen bg-background">
+        <div className="container py-8">
+          {/* Welcome Header */}
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl font-bold text-primary mb-2">
+              Welcome back! 🙏
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Continue your English business journey today
+            </p>
+          </div>
 
-          <Card className="gradient-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Emails Generated</p>
-                  <p className="text-2xl font-bold text-success">{stats.emailsGenerated}</p>
-                </div>
-                <Mail className="h-8 w-8 text-success" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="gradient-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">WhatsApp Messages</p>
-                  <p className="text-2xl font-bold text-accent">{stats.whatsappMessages}</p>
-                </div>
-                <Phone className="h-8 w-8 text-accent" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="gradient-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Learning Streak</p>
-                  <p className="text-2xl font-bold text-primary">{stats.streak} days</p>
-                </div>
-                <Award className="h-8 w-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Progress Card */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Weekly Progress
-              </CardTitle>
-              <CardDescription>
-                Your learning progress this week
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Overall Progress</span>
-                  <span>{stats.weeklyProgress}%</span>
-                </div>
-                <Progress value={stats.weeklyProgress} className="h-2" />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                <div className="text-center p-4 bg-accent/10 rounded-lg">
-                  <Target className="h-6 w-6 mx-auto mb-2 text-accent" />
-                  <p className="text-sm font-medium">Daily Goal</p>
-                  <p className="text-xs text-muted-foreground">15/20 tasks</p>
-                </div>
-                <div className="text-center p-4 bg-success/10 rounded-lg">
-                  <Clock className="h-6 w-6 mx-auto mb-2 text-success" />
-                  <p className="text-sm font-medium">Learning Time</p>
-                  <p className="text-xs text-muted-foreground">{stats.totalLearningHours} hours</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your latest learning sessions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{activity.text}</p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+          {/* Quick Actions Section */}
+          <section className="mb-12">
+            <h2 className="text-2xl font-semibold text-primary mb-6">Quick Actions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {quickActions.map((action, index) => (
+                <Card 
+                  key={index}
+                  className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                  onClick={() => navigate(action.route)}
+                >
+                  <CardContent className="p-6 text-center">
+                    <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg ${action.color} ${action.textColor} mb-4`}>
+                      <action.icon className="h-6 w-6" />
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                    <h3 className="font-semibold text-lg mb-2">{action.title}</h3>
+                    <p className="text-sm text-muted-foreground">{action.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
 
-        {/* Quick Actions */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickActions.map((action) => (
-              <Card 
-                key={action.route}
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
-                onClick={() => navigate(action.route)}
-              >
-                <CardContent className="p-6 text-center">
-                  <div className={`w-12 h-12 rounded-lg ${action.color} flex items-center justify-center mx-auto mb-3`}>
-                    <action.icon className="h-6 w-6 text-white" />
+          {/* Progress Stats Section */}
+          <section className="mb-12">
+            <h2 className="text-2xl font-semibold text-primary mb-6">Today's Progress</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Today's Translations</p>
+                      <p className="text-2xl font-bold">{stats.translationsToday}</p>
+                    </div>
+                    <Languages className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="font-semibold mb-1">{action.title}</h3>
-                  <p className="text-sm text-muted-foreground">{action.description}</p>
                 </CardContent>
               </Card>
-            ))}
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Emails Generated</p>
+                      <p className="text-2xl font-bold">{stats.emailsGenerated}</p>
+                    </div>
+                    <Mail className="h-8 w-8 text-success" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">WhatsApp Messages</p>
+                      <p className="text-2xl font-bold">{stats.whatsappMessages}</p>
+                    </div>
+                    <Phone className="h-8 w-8 text-primary" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Learning Streak</p>
+                      <p className="text-2xl font-bold">{stats.streak} days</p>
+                    </div>
+                    <Award className="h-8 w-8 text-primary" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Weekly Progress Section */}
+            <section className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    📈 Weekly Progress
+                  </CardTitle>
+                  <CardDescription>Your learning progress this week</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium">Overall Progress</span>
+                        <span className="text-sm text-muted-foreground">{stats.weeklyProgress}%</span>
+                      </div>
+                      <Progress value={stats.weeklyProgress} className="h-2" />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/10">
+                        <Target className="h-8 w-8 text-primary" />
+                        <div>
+                          <p className="text-sm font-medium">Daily Goal</p>
+                          <p className="text-lg font-semibold">15/20 tasks</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/10">
+                        <Clock className="h-8 w-8 text-primary" />
+                        <div>
+                          <p className="text-sm font-medium">Learning Time</p>
+                          <p className="text-lg font-semibold">{stats.totalLearningHours} hours</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Recent Activity Section */}
+            <section>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-primary" />
+                    Recent Activity
+                  </CardTitle>
+                  <CardDescription>Your latest learning sessions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {recentActivity.map((activity, index) => (
+                      <div key={index} className="flex items-start gap-3 pb-3 border-b border-border/50 last:border-0">
+                        <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium leading-relaxed">{activity.text}</p>
+                          <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

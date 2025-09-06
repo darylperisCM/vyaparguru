@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
@@ -92,6 +92,22 @@ export function SiteHeader() {
               <span className="hindi-text text-xs">({item.nameHindi})</span>
             </NavLink>
           ))}
+          {user && (
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) =>
+                `inline-flex items-center px-3 py-1.5 rounded-md font-semibold transition-all duration-300 ${
+                  isActive 
+                    ? "gradient-coral-blue text-white ring-2 ring-ring shadow-lg" 
+                    : "gradient-coral-blue text-white shadow-md hover:shadow-lg"
+                }`
+              }
+            >
+              <LayoutDashboard className="h-4 w-4 mr-1.5" />
+              <span className="mr-1">Dashboard</span>
+              <span className="hindi-text text-xs opacity-90">(डैशबोर्ड)</span>
+            </NavLink>
+          )}
         </nav>
 
         {/* Desktop Auth */}
@@ -127,6 +143,25 @@ export function SiteHeader() {
                       <span className="hindi-text text-sm opacity-70">{item.nameHindi}</span>
                     </NavLink>
                   ))}
+                  {user && (
+                    <NavLink
+                      to="/dashboard"
+                      onClick={() => setIsOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center px-3 py-2 rounded-md font-semibold transition-all duration-300 ${
+                          isActive 
+                            ? "gradient-coral-blue text-white ring-2 ring-ring shadow-lg" 
+                            : "gradient-coral-blue text-white shadow-md"
+                        }`
+                      }
+                    >
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      <div className="flex flex-col">
+                        <span>Dashboard</span>
+                        <span className="hindi-text text-xs opacity-90">डैशबोर्ड</span>
+                      </div>
+                    </NavLink>
+                  )}
                 </div>
                 
                 <div className="border-t pt-4">
