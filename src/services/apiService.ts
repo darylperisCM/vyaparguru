@@ -66,13 +66,13 @@ export class APIService {
     return data;
   }
 
-  // Azure Speech Services
+  // Google Cloud Speech Services
   static async synthesizeSpeech(
     text: string,
-    language = 'hi-IN',
-    voice = 'hi-IN-MadhurNeural'
+    language = 'en-IN',
+    voice = 'en-IN-Wavenet-A'
   ): Promise<SpeechResponse> {
-    const { data, error } = await supabase.functions.invoke('azure-speech', {
+    const { data, error } = await supabase.functions.invoke('google-speech', {
       body: { text, language, voice }
     });
 
@@ -84,7 +84,7 @@ export class APIService {
     audioData: string,
     language = 'hi-IN'
   ): Promise<TranscriptionResponse> {
-    const { data, error } = await supabase.functions.invoke('azure-speech?action=transcribe', {
+    const { data, error } = await supabase.functions.invoke('google-speech?action=transcribe', {
       body: { audioData, language }
     });
 

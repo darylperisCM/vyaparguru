@@ -158,7 +158,7 @@ export default function Translation() {
     
     setIsSpeaking(true);
     try {
-      const result = await APIService.synthesizeSpeech(englishText, 'en-US', 'en-US-JennyNeural');
+      const result = await APIService.synthesizeSpeech(englishText, 'en-IN', 'en-IN-Wavenet-A');
       
       if (result.success) {
         // Convert base64 to audio blob and play
@@ -179,8 +179,8 @@ export default function Translation() {
         await supabase.from('speech_events').insert({
           user_id: user.id,
           input_text: englishText,
-          language: 'en-US',
-          voice_id: 'en-US-JennyNeural',
+          language: 'en-IN',
+          voice_id: 'en-IN-Wavenet-A',
           operation_type: 'synthesis',
           success: true
         });
