@@ -6,7 +6,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -25,40 +24,32 @@ serve(async (req) => {
 
     if (action === 'transcribe') {
       // Speech-to-Text
-      const { audioData, language = 'hi-IN' } = body
+      const { audioData, language = 'hi-IN', container = 'webm' } = body
+      if (!audioData) throw new Error('audioData required')
 
-      if (!audioData) {
-        throw new Error('Audio data is required for transcription')
-      }
+      // Accept data URLs or raw base64
+      const base64 = audioData.includes(',') ? audioData.split(',')[1] : audioData
 
-      // Convert base64 to binary for Google API
-      const binaryAudio = atob(audioData)
-      const audioBytes = new Uint8Array(binaryAudio.length)
-      for (let i = 0; i < binaryAudio.length; i++) {
-        audioBytes[i] = binaryAudio.charCodeAt(i)
-      }
+      // Map container to encoding
+      const encoding = container.includes('ogg') ? 'OGG_OPUS' : 'WEBM_OPUS'
 
       const requestBody = {
         config: {
-          encoding: 'WEBM_OPUS',
-          sampleRateHertz: 16000,
+          encoding,
           languageCode: language,
-          enableAutomaticPunctuation: true
+          enableAutomaticPunctuation: true,
         },
-        audio: {
-          content: btoa(String.fromCharCode(...audioBytes))
-        }
+        audio: { content: base64 },
       }
 
-      console.log('Sending STT request to Google Speech API')
-      
-      const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      })
+      const response = await fetch(
+        `https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }
+      )
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -67,52 +58,32 @@ serve(async (req) => {
       }
 
       const result = await response.json()
-      console.log('Google Speech API STT response:', result)
-
       const transcription = result.results?.[0]?.alternatives?.[0]?.transcript || ''
       const confidence = result.results?.[0]?.alternatives?.[0]?.confidence || 0
 
       return new Response(
-        JSON.stringify({
-          transcription,
-          confidence,
-          language: language
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
+        JSON.stringify({ transcription, confidence, language }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
-
     } else {
       // Text-to-Speech
       const { text, language = 'en-IN', voice = 'en-IN-Wavenet-A', speakingRate = 1.0, pitch = 0.0 } = body
-
-      if (!text) {
-        throw new Error('Text is required for synthesis')
-      }
+      if (!text) throw new Error('Text is required for synthesis')
 
       const requestBody = {
         input: { text },
-        voice: {
-          languageCode: language,
-          name: voice
-        },
-        audioConfig: {
-          audioEncoding: 'MP3',
-          speakingRate,
-          pitch
-        }
+        voice: { languageCode: language, name: voice },
+        audioConfig: { audioEncoding: 'MP3', speakingRate, pitch },
       }
 
-      console.log('Sending TTS request to Google Speech API')
-
-      const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      })
+      const response = await fetch(
+        `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }
+      )
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -121,27 +92,20 @@ serve(async (req) => {
       }
 
       const result = await response.json()
-      console.log('Google Speech API TTS response received')
 
       return new Response(
         JSON.stringify({
           success: true,
-          audioData: `data:audio/mp3;base64,${result.audioContent}`
+          audioData: `data:audio/mp3;base64,${result.audioContent}`,
         }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
-  } catch (error) {
+  } catch (error: any) {
     console.error('Google Speech API error:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    )
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 })
