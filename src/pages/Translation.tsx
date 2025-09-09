@@ -153,17 +153,45 @@ export default function Translation() {
     });
   };
 
-  const handlePlayAudio = async () => {
-    if (!englishText || !user) return;
-    
-    setIsSpeaking(true);
-    try {
-      const result = await APIService.synthesizeSpeech(englishText, 'en-IN', 'en-IN-Wavenet-A');
+ const handlePlayAudio = async () => {
+  if (!englishText || !user) return;
 
-if (result.success) {
-  const audio = new Audio(result.audioData); // it's already a "data:audio/mp3;base64,..." URL
-  audio.onended = () => setIsSpeaking(false);
-  await audio.play();
+  setIsSpeaking(true);
+  try {
+    const result = await APIService.synthesizeSpeech(englishText, 'en-IN', 'en-IN-Wavenet-A');
+
+    if (result.success) {
+      // Directly play the returned data URL
+      const audio = new Audio(result.audioData);
+      audio.onended = () => setIsSpeaking(false);
+      await audio.play();
+
+      await supabase.from('speech_events').insert({
+        user_id: user.id,
+        input_text: englishText,
+        language: 'en-IN',
+        voice_id: 'en-IN-Wavenet-A',
+        operation_type: 'synthesis',
+        success: true
+      });
+
+      toast({
+        title: "Playing Audio",
+        description: "Text-to-speech generated successfully"
+      });
+    }
+  } catch (error) {
+    console.error('Speech synthesis error:', error);
+    toast({
+      title: "Speech Failed",
+      description: "Could not generate audio",
+      variant: "destructive"
+    });
+  } finally {
+    setIsSpeaking(false);
+  }
+};
+
   // ...log event as you already do
 }
 
