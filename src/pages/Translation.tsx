@@ -159,21 +159,14 @@ export default function Translation() {
     setIsSpeaking(true);
     try {
       const result = await APIService.synthesizeSpeech(englishText, 'en-IN', 'en-IN-Wavenet-A');
-      
-      if (result.success) {
-        // Convert base64 to audio blob and play
-        const audioData = result.audioData;
-        const byteCharacters = atob(audioData.split(',')[1]); // Remove data:audio/mp3;base64, prefix
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], {type: 'audio/mp3'});
-        const audio = new Audio(URL.createObjectURL(blob));
-        
-        audio.onended = () => setIsSpeaking(false);
-        await audio.play();
+
+if (result.success) {
+  const audio = new Audio(result.audioData); // it's already a "data:audio/mp3;base64,..." URL
+  audio.onended = () => setIsSpeaking(false);
+  await audio.play();
+  // ...log event as you already do
+}
+
         
         // Log speech event
         await supabase.from('speech_events').insert({
