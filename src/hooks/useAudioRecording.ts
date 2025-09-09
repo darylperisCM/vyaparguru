@@ -3,7 +3,7 @@ import { useState, useRef, useCallback } from 'react';
 export interface AudioRecordingHook {
   isRecording: boolean;
   startRecording: () => Promise<void>;
-  stopRecording: () => Promise<string | null>; // returns base64 only
+  stopRecording: () => Promise<string | null>; // base64 string only
   error: string | null;
 }
 
