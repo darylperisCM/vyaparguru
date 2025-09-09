@@ -15,7 +15,7 @@ serve(async (req) => {
     const action = url.searchParams.get('action') || 'synthesize'
     const body = await req.json()
 
-    console.log(`Google Speech API - Action: ${action}`, { body })
+    console.log(`Google Speech API - Action: ${action}`)
 
     const apiKey = Deno.env.get('GOOGLE_CLOUD_API_KEY')
     if (!apiKey) {
@@ -37,7 +37,8 @@ serve(async (req) => {
         config: {
           encoding,
           languageCode: language,
-          enableAutomaticPunctuation: true,
+          enableAutomaticPunctuation: true
+          // sampleRateHertz intentionally omitted for container formats
         },
         audio: { content: base64 },
       }
