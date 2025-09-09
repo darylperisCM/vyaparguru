@@ -193,7 +193,6 @@ export default function Translation() {
 };
 
   // ...log event as you already do
-}
 
         
         // Log speech event
