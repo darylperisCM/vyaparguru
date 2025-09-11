@@ -17,6 +17,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         hero: "bg-primary text-primary-foreground hover:bg-primary-hover shadow-lg hover:shadow-xl font-semibold",
         success: "bg-success text-success-foreground hover:bg-success/90 shadow-md",
+        "coral-outline": "border-2 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",

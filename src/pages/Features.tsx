@@ -155,7 +155,7 @@ export default function Features() {
                 Start Free Trial • मुफ्त परीक्षण शुरू करें
               </NavLink>
             </Button>
-            <Button variant="outline" size="xl" asChild>
+            <Button variant="coral-outline" size="xl" asChild>
               <NavLink to="/pricing">
                 View Pricing • मूल्य देखें
               </NavLink>
