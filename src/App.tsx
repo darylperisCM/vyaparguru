@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SiteHeader } from "@/components/SiteHeader";
+import Footer from "@/components/Footer";
 import Index from "./pages/Index";
 import AuthSignIn from "./pages/AuthSignIn";
 import Dashboard from "./pages/Dashboard";
@@ -16,6 +17,11 @@ import WhatsAppPro from "./pages/WhatsAppPro";
 import IndustryModules from "./pages/IndustryModules";
 import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import RefundPolicy from "./pages/RefundPolicy";
+import CookiePolicy from "./pages/CookiePolicy";
+import AcceptableUsePolicy from "./pages/AcceptableUsePolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,9 +65,15 @@ const App = () => (
                   <IndustryModules />
                 </ProtectedRoute>
               } />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/refund-policy" element={<RefundPolicy />} />
+              <Route path="/cookie-policy" element={<CookiePolicy />} />
+              <Route path="/acceptable-use-policy" element={<AcceptableUsePolicy />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <Footer />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

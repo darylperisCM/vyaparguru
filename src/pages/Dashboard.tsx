@@ -1,10 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useCountUp } from '@/hooks/useCountUp';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Languages, 
   Mail, 
@@ -15,12 +17,14 @@ import {
   Target,
   Award,
   Activity,
-  Zap
+  Zap,
+  UserX
 } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Mock data - will be replaced with real data from Supabase
   const stats = {
@@ -79,6 +83,14 @@ export default function Dashboard() {
       hoverGradient: 'hover:from-muted-foreground/80 hover:to-muted-foreground'
     }
   ];
+
+  const handleUnsubscribe = () => {
+    toast({
+      title: "Subscription Will End",
+      description: "Your subscription will end at the end of current billing cycle.",
+      duration: 5000,
+    });
+  };
 
   return (
     <>
@@ -268,6 +280,37 @@ export default function Dashboard() {
               </Card>
             </section>
           </div>
+
+          {/* Unsubscribe Section */}
+          <section className="mt-8 sm:mt-10 lg:mt-12 text-center">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  className="gap-2"
+                >
+                  <UserX className="h-4 w-4" />
+                  Unsubscribe
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure you want to unsubscribe?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action will cancel your subscription at the end of your current billing cycle. 
+                    You will continue to have access until then.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleUnsubscribe}>
+                    Yes, Unsubscribe
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </section>
         </div>
       </div>
     </>
