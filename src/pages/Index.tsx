@@ -45,11 +45,18 @@ export default function Index() {
                   </Button>
                 </NavLink>
               ) : (
-                <NavLink to="/auth/sign-in">
-                  <Button size="xl" variant="hero">
-                    7-Day Free Trial
-                  </Button>
-                </NavLink>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <NavLink to="/auth/sign-up">
+                    <Button size="xl" variant="hero">
+                      Start Free Trial • मुफ्त शुरुआत करें
+                    </Button>
+                  </NavLink>
+                  <NavLink to="/auth/sign-in">
+                    <Button size="xl" variant="outline">
+                      Sign In • साइन इन करें
+                    </Button>
+                  </NavLink>
+                </div>
               )}
             </div>
           </div>

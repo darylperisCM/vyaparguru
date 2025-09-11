@@ -176,6 +176,42 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          age: number
+          created_at: string
+          email: string | null
+          id: string
+          location: string | null
+          mobile_number: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          location?: string | null
+          mobile_number: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          location?: string | null
+          mobile_number?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       speech_events: {
         Row: {
           audio_duration: number | null

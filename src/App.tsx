@@ -10,6 +10,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import Footer from "@/components/Footer";
 import Index from "./pages/Index";
 import AuthSignIn from "./pages/AuthSignIn";
+import AuthSignUp from "./pages/AuthSignUp";
 import Dashboard from "./pages/Dashboard";
 import Translation from "./pages/Translation";
 import EmailAssistant from "./pages/EmailAssistant";
@@ -39,12 +40,13 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/features" element={<Features />} />
               <Route path="/pricing" element={<Pricing />} />
-              <Route path="/auth/sign-in" element={<AuthSignIn />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
+            <Route path="/auth/sign-in" element={<AuthSignIn />} />
+            <Route path="/auth/sign-up" element={<AuthSignUp />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
               <Route path="/translation" element={
                 <ProtectedRoute>
                   <Translation />
