@@ -24,6 +24,19 @@ import RefundPolicy from "./pages/RefundPolicy";
 import CookiePolicy from "./pages/CookiePolicy";
 import AcceptableUsePolicy from "./pages/AcceptableUsePolicy";
 import NotFound from "./pages/NotFound";
+import FeedbackWidget from "@/components/FeedbackWidget";
+
+export default function App() {
+  return (
+    <>
+      {/* your header/nav/router/outlet etc */}
+      {/* <Router> … </Router> or your pages */}
+
+      {/* Render globally, after the app content */}
+      <FeedbackWidget />
+    </>
+  );
+}
 
 const queryClient = new QueryClient();
 
