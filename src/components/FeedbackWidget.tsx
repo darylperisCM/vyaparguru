@@ -9,10 +9,11 @@ export default function FeedbackWidget() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Vertical Floating Button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed right-4 top-1/2 -translate-y-1/2 bg-red-500 text-white px-3 py-2 rounded-full shadow-lg z-[100000]"
+        className="fixed right-0 top-1/2 -translate-y-1/2 bg-red-500 text-white px-2 py-4 rounded-l-md shadow-lg z-[100000]"
+        style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
       >
         Feedback
       </button>
