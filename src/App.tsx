@@ -8,6 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SiteHeader } from "@/components/SiteHeader";
 import Footer from "@/components/Footer";
+
 import Index from "./pages/Index";
 import AuthSignIn from "./pages/AuthSignIn";
 import Dashboard from "./pages/Dashboard";
@@ -26,74 +27,78 @@ import AcceptableUsePolicy from "./pages/AcceptableUsePolicy";
 import NotFound from "./pages/NotFound";
 import FeedbackWidget from "@/components/FeedbackWidget";
 
-export default function App() {
-  return (
-    <>
-      {/* your header/nav/router/outlet etc */}
-      {/* <Router> … </Router> or your pages */}
-
-      {/* Render globally, after the app content */}
-      <FeedbackWidget />
-    </>
-  );
-}
-
 const queryClient = new QueryClient();
 
-const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <SiteHeader />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/pricing" element={<Pricing />} />
-            <Route path="/auth/sign-in" element={<AuthSignIn />} />
-            <Route path="/auth/sign-up" element={<AuthSignUp />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-              <Route path="/translation" element={
-                <ProtectedRoute>
-                  <Translation />
-                </ProtectedRoute>
-              } />
-              <Route path="/email" element={
-                <ProtectedRoute>
-                  <EmailAssistant />
-                </ProtectedRoute>
-              } />
-              <Route path="/whatsapp" element={
-                <ProtectedRoute>
-                  <WhatsAppPro />
-                </ProtectedRoute>
-              } />
-              <Route path="/industry" element={
-                <ProtectedRoute>
-                  <IndustryModules />
-                </ProtectedRoute>
-              } />
-              <Route path="/terms-of-service" element={<TermsOfService />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/refund-policy" element={<RefundPolicy />} />
-              <Route path="/cookie-policy" element={<CookiePolicy />} />
-              <Route path="/acceptable-use-policy" element={<AcceptableUsePolicy />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Footer />
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </HelmetProvider>
-);
-
-export default App;
+export default function App() {
+  return (
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <SiteHeader />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/features" element={<Features />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/auth/sign-in" element={<AuthSignIn />} />
+                <Route path="/auth/sign-up" element={<AuthSignUp />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/translation"
+                  element={
+                    <ProtectedRoute>
+                      <Translation />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/email"
+                  element={
+                    <ProtectedRoute>
+                      <EmailAssistant />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/whatsapp"
+                  element={
+                    <ProtectedRoute>
+                      <WhatsAppPro />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/industry"
+                  element={
+                    <ProtectedRoute>
+                      <IndustryModules />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/refund-policy" element={<RefundPolicy />} />
+                <Route path="/cookie-policy" element={<CookiePolicy />} />
+                <Route path="/acceptable-use-policy" element={<AcceptableUsePolicy />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Footer />
+              {/* ✅ Always visible on every page */}
+              <FeedbackWidget />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
+  );
+}
