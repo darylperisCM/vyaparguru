@@ -11,6 +11,20 @@ const navigation = [
   { name: "Pricing", nameHindi: "मूल्य", href: "/pricing" },
 ];
 
+import FeedbackWidget from "@/components/FeedbackWidget";
+
+function App() {
+  return (
+    <>
+      {/* ...existing site code... */}
+      <FeedbackWidget />
+    </>
+  );
+}
+
+export default App;
+
+
 export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
