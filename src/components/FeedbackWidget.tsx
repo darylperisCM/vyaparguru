@@ -20,8 +20,14 @@ export default function FeedbackWidget() {
 
       {/* Overlay Modal */}
       {open && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100001]">
-          <div className="relative bg-white rounded-lg max-w-lg w-[90vw] max-h-[85vh] p-4 shadow-xl overflow-auto">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100001]
+                     animate-fadeIn"
+        >
+          <div
+            className="relative bg-white rounded-lg max-w-lg w-[90vw] max-h-[85vh] p-4 shadow-xl overflow-auto
+                       animate-slideInUp"
+          >
             {/* Close */}
             <button
               onClick={() => setOpen(false)}
