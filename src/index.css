@@ -12,6 +12,32 @@
 @import '@fontsource/inter/600.css';
 @import '@fontsource/inter/700.css';
 
+/* Floating Elfsight widget: middle-right */
+#elfsight-float {
+  position: fixed;
+  top: 50%;
+  right: 16px;          /* tweak spacing from edge */
+  transform: translateY(-50%);
+  z-index: 2147483000;  /* very high so it stays above content */
+  pointer-events: auto; /* allow interactions */
+}
+
+/* Optional: size constraints so it doesn’t overwhelm the layout */
+#elfsight-float .elfsight-app-7e915384-2ea3-4868-a577-899d188fc9f4 {
+  max-width: 360px;     /* adjust to taste */
+}
+
+/* Mobile: dock lower-right to avoid covering content */
+@media (max-width: 640px) {
+  #elfsight-float {
+    top: auto;
+    bottom: 16px;
+    right: 12px;
+    transform: none;
+  }
+}
+
+
 @layer base {
   :root {
     /* Core Brand Colors - Based on Reference Design */
