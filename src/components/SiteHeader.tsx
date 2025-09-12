@@ -4,6 +4,7 @@ import { Menu, X, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
+import FeedbackWidget from "@/components/FeedbackWidget";
 
 const navigation = [
   { name: "Home", nameHindi: "होम", href: "/" },
@@ -11,18 +12,19 @@ const navigation = [
   { name: "Pricing", nameHindi: "मूल्य", href: "/pricing" },
 ];
 
-import FeedbackWidget from "@/components/FeedbackWidget";
 
-function App() {
+
+export default function App() {
   return (
     <>
-      {/* ...existing site code... */}
+      {/* your header/nav/router/outlet etc */}
+      {/* <Router> … </Router> or your pages */}
+
+      {/* Render globally, after the app content */}
       <FeedbackWidget />
     </>
   );
 }
-
-export default App;
 
 
 export function SiteHeader() {
