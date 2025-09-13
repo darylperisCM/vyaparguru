@@ -6,7 +6,6 @@ import { Helmet } from "react-helmet-async";
 import heroImage from "@/assets/hero-illustration.jpg";
 import translationIcon from "@/assets/translation-icon.jpg";
 import emailIcon from "@/assets/email-icon.jpg";
-import whatsappIcon from "@/assets/whatsapp-icon.jpg";
 import industryIcon from "@/assets/industry-icon.jpg";
 
 export default function Index() {
@@ -131,7 +130,7 @@ export default function Index() {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <NavLink to="/features" className="block">
               <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer h-full">
                 <CardContent className="pt-6">
@@ -148,16 +147,6 @@ export default function Index() {
                   <img src={emailIcon} alt="Email Assistant" className="w-12 h-12 rounded-lg mx-auto mb-4" />
                   <h3 className="font-semibold text-lg mb-2 text-primary">ईमेल सहायक</h3>
                   <p className="text-sm text-muted-foreground">Generate professional business emails from your Hindi ideas</p>
-                </CardContent>
-              </Card>
-            </NavLink>
-
-            <NavLink to="/features" className="block">
-              <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer h-full">
-                <CardContent className="pt-6">
-                  <img src={whatsappIcon} alt="WhatsApp Business" className="w-12 h-12 rounded-lg mx-auto mb-4" />
-                  <h3 className="font-semibold text-lg mb-2 text-primary">व्हाट्सऐप प्रो</h3>
-                  <p className="text-sm text-muted-foreground">Professional WhatsApp communication templates and coaching</p>
                 </CardContent>
               </Card>
             </NavLink>

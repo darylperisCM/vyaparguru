@@ -15,10 +15,6 @@ const pricingFeatures = [
     hindi: "पेशेवर ईमेल टेम्प्लेट और सहायता"
   },
   {
-    english: "WhatsApp Business message optimization",
-    hindi: "व्हाट्सऐप बिजनेस मैसेज अनुकूलन"
-  },
-  {
     english: "Industry-specific vocabulary modules",
     hindi: "उद्योग-विशिष्ट शब्दावली मॉड्यूल"
   },

@@ -30,7 +30,6 @@ export default function Dashboard() {
   const stats = {
     translationsToday: 12,
     emailsGenerated: 5,
-    whatsappMessages: 8,
     totalLearningHours: 24,
     weeklyProgress: 68,
     streak: 7
@@ -39,13 +38,11 @@ export default function Dashboard() {
   // Count-up animations with staggered delays
   const animatedTranslations = useCountUp(stats.translationsToday, 1500, 400);
   const animatedEmails = useCountUp(stats.emailsGenerated, 1500, 600);
-  const animatedWhatsApp = useCountUp(stats.whatsappMessages, 1500, 800);
-  const animatedStreak = useCountUp(stats.streak, 1500, 1000);
+  const animatedStreak = useCountUp(stats.streak, 1500, 800);
 
   const recentActivity = [
     { type: 'translation', text: 'Translated business proposal', time: '2 hours ago' },
     { type: 'email', text: 'Generated follow-up email', time: '4 hours ago' },
-    { type: 'whatsapp', text: 'Practiced customer responses', time: '6 hours ago' },
     { type: 'industry', text: 'Completed retail vocabulary', time: '1 day ago' },
   ];
 
@@ -65,14 +62,6 @@ export default function Dashboard() {
       route: '/email',
       gradient: 'from-success to-success/80',
       hoverGradient: 'hover:from-success/80 hover:to-success'
-    },
-    {
-      title: 'WhatsApp Pro',
-      description: 'Business communication',
-      icon: MessageSquare,
-      route: '/whatsapp',
-      gradient: 'from-accent to-accent/80',
-      hoverGradient: 'hover:from-accent/80 hover:to-accent'
     },
     {
       title: 'Industry Modules',
@@ -96,8 +85,8 @@ export default function Dashboard() {
     <>
       <Helmet>
         <title>Dashboard - VyaparGuru | Your Business English Learning Hub</title>
-        <meta name="description" content="Access your personalized dashboard for business English learning. Track progress, quick actions for translation, email writing, WhatsApp communication and industry modules." />
-        <meta name="keywords" content="dashboard, business english, learning progress, translation, email writing, whatsapp business, industry modules" />
+        <meta name="description" content="Access your personalized dashboard for business English learning. Track progress, quick actions for translation, email writing and industry modules." />
+        <meta name="keywords" content="dashboard, business english, learning progress, translation, email writing, industry modules" />
         <link rel="canonical" href="/dashboard" />
       </Helmet>
 
@@ -113,13 +102,13 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Quick Actions Section */}
+            {/* Quick Actions Section */}
           <section className="mb-8 sm:mb-10 lg:mb-12">
             <h2 className="text-xl sm:text-2xl font-semibold text-primary mb-4 sm:mb-6 flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
               Quick Actions
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {quickActions.map((action, index) => (
                 <Card 
                   key={index}
@@ -144,7 +133,7 @@ export default function Dashboard() {
               <Activity className="h-5 w-5 text-primary" />
               Today's Progress
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               <Card className="group min-h-[100px] sm:min-h-[120px] hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1">
                 <CardContent className="p-4 sm:p-6 h-full flex items-center">
                   <div className="flex items-center justify-between w-full">
@@ -168,20 +157,6 @@ export default function Dashboard() {
                     </div>
                     <div className="flex-shrink-0 ml-2 p-2 rounded-lg bg-success/10 group-hover:bg-success/20 transition-colors duration-300">
                       <Mail className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="group min-h-[100px] sm:min-h-[120px] hover:shadow-lg hover:shadow-accent/5 transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-4 sm:p-6 h-full flex items-center">
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex-1">
-                      <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">WhatsApp Messages</p>
-                      <p className="text-xl sm:text-2xl font-bold tabular-nums">{animatedWhatsApp}</p>
-                    </div>
-                    <div className="flex-shrink-0 ml-2 p-2 rounded-lg bg-accent/10 group-hover:bg-accent/20 transition-colors duration-300">
-                      <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-accent" />
                     </div>
                   </div>
                 </CardContent>

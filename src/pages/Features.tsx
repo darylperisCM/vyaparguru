@@ -29,13 +29,6 @@ const features = [
     descriptionHindi: "पूर्ण व्यापारिक ईमेल के लिए पेशेवर ईमेल टेम्प्लेट और AI-संचालित लेखन सहायता।"
   },
   {
-    icon: MessageCircle,
-    title: "WhatsApp Business Pro",
-    titleHindi: "व्हाट्सऐप बिजनेस प्रो",
-    description: "Enhance your WhatsApp business communication with professional message templates and suggestions.",
-    descriptionHindi: "पेशेवर संदेश टेम्प्लेट और सुझावों के साथ अपने व्हाट्सऐप व्यापारिक संवाद को बेहतर बनाएं।"
-  },
-  {
     icon: Building2,
     title: "Industry-Specific Modules",
     titleHindi: "उद्योग-विशिष्ट मॉड्यूल",
@@ -77,8 +70,8 @@ export default function Features() {
     <>
       <Helmet>
         <title>Features - AI English Training Tools | VyaparGuru</title>
-        <meta name="description" content="Discover our AI-powered features: Real-time translation, email assistant, WhatsApp integration, and industry-specific modules for Hindi business owners." />
-        <meta name="keywords" content="AI english training, real-time translation, email assistant, WhatsApp business, industry modules, व्यापार अंग्रेजी, AI सुविधाएं" />
+        <meta name="description" content="Discover our AI-powered features: Real-time translation, email assistant, and industry-specific modules for Hindi business owners." />
+        <meta name="keywords" content="AI english training, real-time translation, email assistant, industry modules, व्यापार अंग्रेजी, AI सुविधाएं" />
         <meta property="og:title" content="Features - AI English Training Tools | VyaparGuru" />
         <meta property="og:description" content="Discover our AI-powered features for Hindi business owners." />
         <meta property="og:type" content="website" />

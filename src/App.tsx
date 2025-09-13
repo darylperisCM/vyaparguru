@@ -15,7 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import AuthSignUp from "./pages/AuthSignUp";
 import Translation from "./pages/Translation";
 import EmailAssistant from "./pages/EmailAssistant";
-import WhatsAppPro from "./pages/WhatsAppPro";
+
 import IndustryModules from "./pages/IndustryModules";
 import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
@@ -66,14 +66,6 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <EmailAssistant />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/whatsapp"
-                  element={
-                    <ProtectedRoute>
-                      <WhatsAppPro />
                     </ProtectedRoute>
                   }
                 />

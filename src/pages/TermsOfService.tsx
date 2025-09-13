@@ -40,7 +40,6 @@ export default function TermsOfService() {
                   <li>Professional email writing assistance</li>
                   <li>Voice pronunciation training</li>
                   <li>Business English learning modules</li>
-                  <li>WhatsApp communication enhancement tools</li>
                 </ul>
               </section>
 
