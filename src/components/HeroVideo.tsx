@@ -51,25 +51,26 @@ export default function HeroVideo() {
               }}
             />
             <span
-              style={{
-                position: "relative",
-                display: "inline-flex",
-                width: 84,
-                height: 84,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.9)",
-                boxShadow: "0 6px 24px rgba(0,0,0,0.25)",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
-                <polygon points="24,18 24,46 46,32" fill="#000" />
-              </svg>
-            </span>
+  style={{
+    position: "absolute",        // <-- was "relative"
+    display: "inline-flex",
+    width: 84,
+    height: 84,
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.9)",
+    boxShadow: "0 6px 24px rgba(0,0,0,0.25)",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+>
+  <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+    <polygon points="24,18 24,46 46,32" fill="#000" />
+  </svg>
+</span>
+            
           </button>
         )}
 
