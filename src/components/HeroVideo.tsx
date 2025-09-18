@@ -2,8 +2,8 @@ import { useState } from "react";
 
 export default function HeroVideo() {
   const [play, setPlay] = useState(false);
-  const videoId = "y818qiCzKCk"; // your ID
-  const poster = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`; // fallback if maxres isn't available
+  const videoId = "y818qiCzKCk"; // Your demo video ID
+  const poster = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 
   return (
     <div className="mx-auto" style={{ maxWidth: 1200 }}>
@@ -11,7 +11,7 @@ export default function HeroVideo() {
         style={{
           position: "relative",
           width: "100%",
-          paddingBottom: "56.25%", // 16:9
+          paddingBottom: "56.25%", // 16:9 ratio
           borderRadius: 16,
           overflow: "hidden",
           background: "#000",
@@ -71,7 +71,13 @@ export default function HeroVideo() {
           <iframe
             title="VyaparGuru Demo"
             src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&modestbranding=1&rel=0&playsinline=1&controls=1`}
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              border: 0,
+            }}
             loading="lazy"
             allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
