@@ -57,49 +57,48 @@ export default function Index() {
       <div className="min-h-screen bg-gradient-subtle">
 
       {/* Hero Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
-              <span className="hindi-text text-foreground">सिर्फ ₹99/महीना</span>
-              <br />
-              <span className="text-primary">व्यापारी अंग्रेजी में बात करना सीखें</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-lg">
-              Just ₹99/month - Learn Business English for Hindi Speakers
-            </p>
-            <div className="flex gap-4">
-              {isAuthenticated ? (
-                <NavLink to="/dashboard">
-                  <Button size="xl" variant="hero">
-                    Go to Dashboard
-                  </Button>
-                </NavLink>
-              ) : (
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <NavLink to="/auth/sign-up">
-                    <Button size="xl" variant="hero">
-                      Start Free Trial • मुफ्त शुरुआत करें
-                    </Button>
-                  </NavLink>
-                  <NavLink to="/auth/sign-in">
-                    <Button size="xl" variant="outline">
-                      Sign In • साइन इन करें
-                    </Button>
-                  </NavLink>
-                </div>
-              )}
-            </div>
+<section className="py-20 px-4">
+  <div className="container mx-auto grid lg:grid-cols-2 gap-12 items-center">
+    <div className="space-y-6">
+      <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
+        <span className="hindi-text text-foreground">सिर्फ ₹99/महीना</span>
+        <br />
+        <span className="text-primary">व्यापारी अंग्रेजी में बात करना सीखें</span>
+      </h1>
+      <p className="text-xl text-muted-foreground max-w-lg">
+        Just ₹99/month - Learn Business English for Hindi Speakers
+      </p>
+      <div className="flex gap-4">
+        {isAuthenticated ? (
+          <NavLink to="/dashboard">
+            <Button size="xl" variant="hero">
+              Go to Dashboard
+            </Button>
+          </NavLink>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-4">
+            <NavLink to="/auth/sign-up">
+              <Button size="xl" variant="hero">
+                Start Free Trial • मुफ्त शुरुआत करें
+              </Button>
+            </NavLink>
+            <NavLink to="/auth/sign-in">
+              <Button size="xl" variant="outline">
+                Sign In • साइन इन करें
+              </Button>
+            </NavLink>
           </div>
-          <div className="relative max-w-full mx-auto">
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl">
-              {/* Poster + Play Button Overlay */}
-              <button 
-                ref={playButtonRef}
-                aria-label="Play demo video"
-                className="absolute inset-0 flex items-center justify-center w-full h-full cursor-pointer border-0 bg-transparent"
-              >
-                <HeroVideo />
+        )}
+      </div>
+    </div>
+
+    {/* Hero Video */}
+    <div className="relative max-w-full mx-auto">
+      <HeroVideo />
+    </div>
+  </div>
+</section>
+
 
                 <span className="relative inline-flex w-20 h-20 rounded-full bg-white/90 shadow-2xl">
                   <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true" className="m-auto self-center">
