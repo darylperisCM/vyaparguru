@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { NavLink } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { useEffect, useRef } from "react";
 
 import translationIcon from "@/assets/translation-icon.jpg";
 import emailIcon from "@/assets/email-icon.jpg";
@@ -10,6 +11,36 @@ import industryIcon from "@/assets/industry-icon.jpg";
 
 export default function Index() {
   const { isAuthenticated, signOut, user } = useAuth();
+  const playButtonRef = useRef<HTMLButtonElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const playButton = playButtonRef.current;
+    const iframe = iframeRef.current;
+    
+    if (!playButton || !iframe) {
+      console.log('Video elements not found:', { playButton: !!playButton, iframe: !!iframe });
+      return;
+    }
+
+    const handlePlayClick = () => {
+      console.log('Play button clicked');
+      const src = "https://www.youtube.com/embed/y818qiCzKCk" +
+        "?autoplay=1&mute=1&loop=1&playlist=y818qiCzKCk" +
+        "&modestbranding=1&rel=0&playsinline=1&controls=1";
+      
+      iframe.src = src;
+      iframe.style.display = 'block';
+      playButton.style.display = 'none';
+    };
+
+    playButton.addEventListener('click', handlePlayClick);
+
+    // Cleanup
+    return () => {
+      playButton.removeEventListener('click', handlePlayClick);
+    };
+  }, []);
 
   return (
     <>
@@ -63,7 +94,7 @@ export default function Index() {
             <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl">
               {/* Poster + Play Button Overlay */}
               <button 
-                id="yg-play" 
+                ref={playButtonRef}
                 aria-label="Play demo video"
                 className="absolute inset-0 flex items-center justify-center w-full h-full cursor-pointer border-0 bg-transparent"
               >
@@ -73,7 +104,7 @@ export default function Index() {
                   className="absolute inset-0 w-full h-full object-cover brightness-85" 
                   loading="lazy" 
                 />
-                <span className="relative inline-flex w-21 h-21 rounded-full bg-white/90 shadow-2xl">
+                <span className="relative inline-flex w-20 h-20 rounded-full bg-white/90 shadow-2xl">
                   <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true" className="m-auto self-center">
                     <polygon points="24,18 24,46 46,32" fill="#000"></polygon>
                   </svg>
@@ -82,7 +113,7 @@ export default function Index() {
 
               {/* Iframe injected on click */}
               <iframe 
-                id="yg-iframe" 
+                ref={iframeRef}
                 title="VyaparGuru Demo"
                 className="absolute top-0 left-0 w-full h-full border-0 hidden"
                 loading="lazy"
@@ -91,25 +122,6 @@ export default function Index() {
                 allowFullScreen
               ></iframe>
             </div>
-            
-            <script dangerouslySetInnerHTML={{
-              __html: `
-                (function () {
-                  var btn = document.getElementById('yg-play');
-                  var iframe = document.getElementById('yg-iframe');
-                  if (!btn || !iframe) return;
-
-                  btn.addEventListener('click', function () {
-                    var src = "https://www.youtube.com/embed/y818qiCzKCk"
-                      + "?autoplay=1&mute=1&loop=1&playlist=y818qiCzKCk"
-                      + "&modestbranding=1&rel=0&playsinline=1&controls=1";
-                    iframe.src = src;
-                    iframe.style.display = 'block';
-                    btn.style.display = 'none';
-                  });
-                })();
-              `
-            }} />
           </div>
         </div>
       </section>
