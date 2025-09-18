@@ -11,36 +11,7 @@ import industryIcon from "@/assets/industry-icon.jpg";
 
 export default function Index() {
   const { isAuthenticated, signOut, user } = useAuth();
-  const playButtonRef = useRef<HTMLButtonElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  useEffect(() => {
-    const playButton = playButtonRef.current;
-    const iframe = iframeRef.current;
-    
-    if (!playButton || !iframe) {
-      console.log('Video elements not found:', { playButton: !!playButton, iframe: !!iframe });
-      return;
-    }
-
-    const handlePlayClick = () => {
-      console.log('Play button clicked');
-      const src = "https://www.youtube.com/embed/y818qiCzKCk" +
-        "?autoplay=1&mute=1&loop=1&playlist=y818qiCzKCk" +
-        "&modestbranding=1&rel=0&playsinline=1&controls=1";
-      
-      iframe.src = src;
-      iframe.style.display = 'block';
-      playButton.style.display = 'none';
-    };
-
-    playButton.addEventListener('click', handlePlayClick);
-
-    // Cleanup
-    return () => {
-      playButton.removeEventListener('click', handlePlayClick);
-    };
-  }, []);
 
   return (
     <>
