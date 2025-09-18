@@ -66,7 +66,7 @@ export default function Index() {
     </div>
 
     {/* Hero Video */}
-    <div className="relative w-full mx-auto border-4 border-red-500">
+    <div className="relative w-full mx-auto">
       <HeroVideo />
     </div>
   </div>
