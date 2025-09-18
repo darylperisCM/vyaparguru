@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { NavLink } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useEffect, useRef } from "react";
+import HeroVideo from "@/components/HeroVideo";
 
 import translationIcon from "@/assets/translation-icon.jpg";
 import emailIcon from "@/assets/email-icon.jpg";
@@ -98,12 +99,8 @@ export default function Index() {
                 aria-label="Play demo video"
                 className="absolute inset-0 flex items-center justify-center w-full h-full cursor-pointer border-0 bg-transparent"
               >
-                <img 
-                  src="https://img.youtube.com/vi/y818qiCzKCk/maxresdefault.jpg" 
-                  alt="VyaparGuru demo poster" 
-                  className="absolute inset-0 w-full h-full object-cover brightness-85" 
-                  loading="lazy" 
-                />
+                <HeroVideo />
+
                 <span className="relative inline-flex w-20 h-20 rounded-full bg-white/90 shadow-2xl">
                   <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true" className="m-auto self-center">
                     <polygon points="24,18 24,46 46,32" fill="#000"></polygon>
