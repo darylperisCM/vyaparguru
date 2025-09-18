@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { NavLink } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { useEffect, useRef } from "react";
 import HeroVideo from "@/components/HeroVideo";
 
 import translationIcon from "@/assets/translation-icon.jpg";
@@ -56,7 +55,7 @@ export default function Index() {
       </Helmet>
       <div className="min-h-screen bg-gradient-subtle">
 
-      {/* Hero Section */}
+     {/* Hero Section */}
 <section className="py-20 px-4">
   <div className="container mx-auto grid lg:grid-cols-2 gap-12 items-center">
     <div className="space-y-6">
@@ -99,28 +98,6 @@ export default function Index() {
   </div>
 </section>
 
-
-                <span className="relative inline-flex w-20 h-20 rounded-full bg-white/90 shadow-2xl">
-                  <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true" className="m-auto self-center">
-                    <polygon points="24,18 24,46 46,32" fill="#000"></polygon>
-                  </svg>
-                </span>
-              </button>
-
-              {/* Iframe injected on click */}
-              <iframe 
-                ref={iframeRef}
-                title="VyaparGuru Demo"
-                className="absolute top-0 left-0 w-full h-full border-0 hidden"
-                loading="lazy"
-                src=""
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Problem Section */}
       <section className="py-16 bg-muted/30">
