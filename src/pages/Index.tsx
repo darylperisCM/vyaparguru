@@ -23,6 +23,9 @@ export default function Index() {
         <meta property="og:description" content="Learn professional English communication for your business. AI-powered training for Hindi speakers." />
         <meta property="og:type" content="website" />
         <link rel="canonical" href="https://vyaparguru.com/" />
+<link rel="preconnect" href="https://www.youtube.com" />
+  <link rel="preconnect" href="https://i.ytimg.com" />
+  <link rel="preconnect" href="https://img.youtube.com" />
       </Helmet>
       <div className="min-h-screen bg-gradient-subtle">
 
