@@ -2,8 +2,9 @@ import { useState } from "react";
 
 export default function HeroVideo() {
   const [play, setPlay] = useState(false);
-  const videoId = "y818qiCzKCk"; // Your demo video ID
-  const poster = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  const videoId = "y818qiCzKCk";
+  const posterHQ = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+  const posterFallback = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 
   return (
     <div className="mx-auto" style={{ maxWidth: 1200 }}>
@@ -11,7 +12,7 @@ export default function HeroVideo() {
         style={{
           position: "relative",
           width: "100%",
-          paddingBottom: "56.25%", // 16:9 ratio
+          paddingBottom: "56.25%", // 16:9
           borderRadius: 16,
           overflow: "hidden",
           background: "#000",
@@ -19,6 +20,7 @@ export default function HeroVideo() {
       >
         {!play && (
           <button
+            type="button"
             aria-label="Play demo video"
             onClick={() => setPlay(true)}
             style={{
@@ -29,11 +31,16 @@ export default function HeroVideo() {
               cursor: "pointer",
               border: 0,
               background: "transparent",
+              zIndex: 10,
             }}
           >
+            {/* Try maxres; if it 404s, browser falls back to hqdefault via onError */}
             <img
-              src={poster}
+              src={posterHQ}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = posterFallback; }}
               alt="VyaparGuru demo poster"
+              fetchpriority="high"
+              decoding="async"
               style={{
                 position: "absolute",
                 inset: 0,
@@ -42,7 +49,6 @@ export default function HeroVideo() {
                 objectFit: "cover",
                 filter: "brightness(0.85)",
               }}
-              loading="lazy"
             />
             <span
               style={{
@@ -70,6 +76,7 @@ export default function HeroVideo() {
         {play && (
           <iframe
             title="VyaparGuru Demo"
+            // remove loading="lazy" for above-the-fold
             src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&modestbranding=1&rel=0&playsinline=1&controls=1`}
             style={{
               position: "absolute",
@@ -77,8 +84,8 @@ export default function HeroVideo() {
               width: "100%",
               height: "100%",
               border: 0,
+              zIndex: 5,
             }}
-            loading="lazy"
             allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
           />
