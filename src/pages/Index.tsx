@@ -194,39 +194,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Trust Section */}
-      <section className="py-16 px-4 bg-background">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold mb-8 text-primary">Trusted by Businesses Across India</h2>
-            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <Card className="p-6">
-                <CardContent className="pt-6 text-center">
-                  <div className="text-4xl mb-4">📞</div>
-                  <h3 className="font-semibold mb-2">Customer Support</h3>
-                  <p className="text-sm text-muted-foreground">24/7 Hindi & English support available</p>
-                </CardContent>
-              </Card>
-
-              <Card className="p-6">
-                <CardContent className="pt-6 text-center">
-                  <div className="text-4xl mb-4">🏢</div>
-                  <h3 className="font-semibold mb-2">Registered Company</h3>
-                  <p className="text-sm text-muted-foreground">Legal business entity in India</p>
-                </CardContent>
-              </Card>
-
-              <Card className="p-6">
-                <CardContent className="pt-6 text-center">
-                  <div className="text-4xl mb-4">⭐</div>
-                  <h3 className="font-semibold mb-2">10,000+ Happy Users</h3>
-                  <p className="text-sm text-muted-foreground">Growing community of business owners</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
       </div>
     </>
   );

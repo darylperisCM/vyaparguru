@@ -39,7 +39,7 @@ export default function HeroVideo() {
               src={posterHQ}
               onError={(e) => { (e.currentTarget as HTMLImageElement).src = posterFallback; }}
               alt="VyaparGuru demo poster"
-              fetchpriority="high"
+              fetchPriority="high"
               decoding="async"
               style={{
                 position: "absolute",
