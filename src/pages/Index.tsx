@@ -16,17 +16,31 @@ export default function Index() {
   return (
     <>
       <Helmet>
-        <title>VyaparGuru - Business English for Hindi Speakers | ₹99/month</title>
-        <meta name="description" content="Learn professional English communication for your business. AI-powered training for Hindi speakers. Start your free trial today - just ₹99/month." />
-        <meta name="keywords" content="business english, hindi speakers, व्यापारी अंग्रेजी, professional communication, AI training, english learning, व्यापार अंग्रेजी" />
-        <meta property="og:title" content="VyaparGuru - Business English for Hindi Speakers" />
-        <meta property="og:description" content="Learn professional English communication for your business. AI-powered training for Hindi speakers." />
-        <meta property="og:type" content="website" />
-        <link rel="canonical" href="https://vyaparguru.com/" />
-<link rel="preconnect" href="https://www.youtube.com" />
-  <link rel="preconnect" href="https://i.ytimg.com" />
-  <link rel="preconnect" href="https://img.youtube.com" />
-      </Helmet>
+  <title>व्यापार गुरु (Vyapar Guru)</title>
+  <meta 
+    name="description" 
+    content="व्यापार गुरु • Vyapar Guru — Learn Business English for Hindi speakers. Just ₹99/month." 
+  />
+  <meta 
+    name="keywords" 
+    content="Vyapar Guru, व्यापार गुरु, business english, hindi speakers, AI learning, communication" 
+  />
+
+  {/* Open Graph for WhatsApp/LinkedIn */}
+  <meta property="og:title" content="व्यापार गुरु (Vyapar Guru)" />
+  <meta property="og:description" content="AI-powered Business English for Hindi speakers. Start your free trial today at just ₹99/month." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://vyaparguru.info/" />
+  <meta property="og:image" content="https://vyaparguru.info/og-image.jpg" />
+  <meta property="og:site_name" content="व्यापार गुरु / Vyapar Guru" />
+
+  {/* Twitter/X Card */}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="व्यापार गुरु (Vyapar Guru)" />
+  <meta name="twitter:description" content="AI-powered Business English for Hindi speakers. ₹99/month only." />
+  <meta name="twitter:image" content="https://vyaparguru.info/og-image.jpg" />
+</Helmet>
+
       <div className="min-h-screen bg-gradient-subtle">
 
      {/* Hero Section */}
