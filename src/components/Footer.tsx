@@ -13,7 +13,13 @@ export default function Footer() {
     <footer className="bg-muted border-t">
       <div className="container py-8 px-4 sm:px-6">
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-primary mb-4">VyaparGuru</h3>
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/assets/fulllogo_transparent.png" 
+              alt="VyaparGuru - व्यापार गुरु" 
+              className="h-12 w-auto object-contain"
+            />
+          </div>
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4">
             {legalLinks.map((link) => (
               <Link

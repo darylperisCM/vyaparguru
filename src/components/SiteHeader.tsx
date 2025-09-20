@@ -85,10 +85,11 @@ export function SiteHeader() {
         {/* Logo */}
         <div className="mr-6 flex items-center space-x-2">
           <NavLink to="/" className="flex items-center space-x-2">
-            <div className="flex flex-col">
-              <span className="text-xl font-bold text-primary">VyaparGuru</span>
-              <span className="text-sm text-muted-foreground hindi-text">व्यापार गुरु</span>
-            </div>
+            <img 
+              src="/assets/fulllogo_transparent_nobuffer.png" 
+              alt="VyaparGuru - व्यापार गुरु" 
+              className="h-8 w-auto md:h-10 object-contain"
+            />
           </NavLink>
         </div>
 
