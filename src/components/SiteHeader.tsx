@@ -82,16 +82,21 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        {/* Logo */}
-        <div className="mr-6 flex items-center space-x-2">
-          <NavLink to="/" className="flex items-center space-x-2">
-            <img 
-              src="/assets/fulllogo_transparent_nobuffer.png" 
-              alt="VyaparGuru - व्यापार गुरु" 
-              className="h-8 w-auto md:h-10 object-contain"
-            />
-          </NavLink>
-        </div>
+       {/* Logo + Brand */}
+<div className="mr-6 flex items-center">
+  <NavLink to="/" aria-label="Vyapar Guru Home" className="flex items-center gap-3">
+    {/* Use the high-res icon you saved; or keep your existing path if you prefer */}
+    <img
+      src="/footer-logo.png"                  // or "/assets/fulllogo_transparent_nobuffer.png"
+      alt="व्यापार गुरु / Vyapar Guru"
+      className="h-12 w-12 md:h-12 md:w-12 object-contain"
+    />
+    <span className="font-bold leading-tight text-xl md:text-2xl">
+      <span className="text-primary">व्यापार गुरु</span>
+      <span className="ml-2 hidden sm:inline text-muted-foreground">/ Vyapar Guru</span>
+    </span>
+  </NavLink>
+</div>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium flex-1">
