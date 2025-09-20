@@ -15,7 +15,7 @@ export default function Footer() {
         <div className="text-center">
           <div className="flex justify-center mb-4">
             <img 
-              src="/assets/fulllogo_transparent.png" 
+              src="/assets/footer-logo.png" 
               alt="VyaparGuru - व्यापार गुरु" 
               className="h-16 md:h-20 w-auto object-contain"
             />
