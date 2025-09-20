@@ -17,7 +17,7 @@ export default function Footer() {
             <img 
               src="/assets/fulllogo_transparent.png" 
               alt="VyaparGuru - व्यापार गुरु" 
-              className="h-12 w-auto object-contain"
+              className="h-16 md:h-20 w-auto object-contain"
             />
           </div>
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4">
