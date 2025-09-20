@@ -1,14 +1,7 @@
-User-agent: Googlebot
-Allow: /
 
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
 
 User-agent: *
 Allow: /
+
+# Point search engines to your sitemap
+Sitemap: https://vyaparguru.info/sitemap.xml
