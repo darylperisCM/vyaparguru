@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { HomeButton } from '@/components/ui/home-button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Building2, 
   ShoppingCart, 
@@ -14,7 +16,9 @@ import {
   Star,
   BookOpen,
   PlayCircle,
-  CheckCircle
+  CheckCircle,
+  Search,
+  Filter
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,10 +34,12 @@ interface Industry {
 }
 
 interface VocabularyItem {
+  id: string;
   hindi: string;
   english: string;
   pronunciation?: string;
-  example?: string;
+  example: string;
+  category: 'Basic' | 'Intermediate' | 'Advanced';
 }
 
 interface Scenario {
@@ -49,6 +55,8 @@ export default function IndustryModules() {
   const { toast } = useToast();
   const [selectedIndustry, setSelectedIndustry] = useState<string>('');
   const [currentTab, setCurrentTab] = useState<'vocabulary' | 'scenarios'>('vocabulary');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const industries: Industry[] = [
     {
@@ -115,61 +123,175 @@ export default function IndustryModules() {
 
   const vocabularyData: Record<string, VocabularyItem[]> = {
     retail: [
-      { 
-        hindi: 'ग्राहक', 
-        english: 'Customer', 
-        pronunciation: '/ˈkʌstəmər/',
-        example: 'The customer is always right.'
-      },
-      { 
-        hindi: 'बिक्री', 
-        english: 'Sales', 
-        pronunciation: '/seɪlz/',
-        example: 'Our sales increased this month.'
-      },
-      { 
-        hindi: 'छूट', 
-        english: 'Discount', 
-        pronunciation: '/ˈdɪskaʊnt/',
-        example: 'We offer a 20% discount.'
-      },
-      { 
-        hindi: 'इन्वेंट्री', 
-        english: 'Inventory', 
-        pronunciation: '/ˈɪnvəntri/',
-        example: 'Check our inventory levels.'
-      },
-      { 
-        hindi: 'रसीद', 
-        english: 'Receipt', 
-        pronunciation: '/rɪˈsiːt/',
-        example: 'Keep your receipt for returns.'
-      }
+      { id: '1', hindi: 'ग्राहक', english: 'Customer', example: 'The customer is always right.', category: 'Basic' },
+      { id: '2', hindi: 'खरीदार', english: 'Buyer', example: 'The buyer wants to see more options.', category: 'Basic' },
+      { id: '3', hindi: 'विक्रेता', english: 'Seller', example: 'The seller explained the product features.', category: 'Basic' },
+      { id: '4', hindi: 'दुकानदार', english: 'Shopkeeper', example: 'The shopkeeper opened the store early.', category: 'Basic' },
+      { id: '5', hindi: 'सेवा', english: 'Service', example: 'We provide excellent customer service.', category: 'Basic' },
+      { id: '6', hindi: 'सहायता', english: 'Assistance', example: 'Can I get some assistance please?', category: 'Basic' },
+      { id: '7', hindi: 'स्वागत', english: 'Welcome', example: 'Welcome to our store!', category: 'Basic' },
+      { id: '8', hindi: 'धन्यवाद', english: 'Thank you', example: 'Thank you for shopping with us.', category: 'Basic' },
+      { id: '9', hindi: 'कृपया', english: 'Please', example: 'Please wait for a moment.', category: 'Basic' },
+      { id: '10', hindi: 'माफ़ करें', english: 'Excuse me', example: 'Excuse me, where is the billing counter?', category: 'Basic' },
+      { id: '11', hindi: 'जानकारी', english: 'Information', example: 'I need more information about this product.', category: 'Basic' },
+      { id: '12', hindi: 'सलाह', english: 'Advice', example: 'My advice is to buy the premium quality.', category: 'Basic' },
+      { id: '13', hindi: 'सुझाव', english: 'Suggestion', example: 'Do you have any suggestion for me?', category: 'Basic' },
+      { id: '14', hindi: 'शिकायत', english: 'Complaint', example: 'I want to file a complaint.', category: 'Basic' },
+      { id: '15', hindi: 'समस्या', english: 'Problem', example: 'What is the problem with this item?', category: 'Basic' },
+      { id: '16', hindi: 'समाधान', english: 'Solution', example: 'We found a solution to your issue.', category: 'Basic' },
+      { id: '17', hindi: 'संतुष्टि', english: 'Satisfaction', example: 'Customer satisfaction is our priority.', category: 'Basic' },
+      { id: '18', hindi: 'गुणवत्ता', english: 'Quality', example: 'This product has excellent quality.', category: 'Basic' },
+      { id: '19', hindi: 'मानक', english: 'Standard', example: 'We maintain high standards.', category: 'Basic' },
+      { id: '20', hindi: 'अनुभव', english: 'Experience', example: 'Your shopping experience matters to us.', category: 'Basic' },
+      { id: '21', hindi: 'उत्पाद', english: 'Product', example: 'This product is very popular.', category: 'Basic' },
+      { id: '22', hindi: 'वस्तु', english: 'Item', example: 'Each item has a unique code.', category: 'Basic' },
+      { id: '23', hindi: 'सामान', english: 'Goods', example: 'We sell quality goods.', category: 'Basic' },
+      { id: '24', hindi: 'माल', english: 'Merchandise', example: 'Our merchandise is imported.', category: 'Basic' },
+      { id: '25', hindi: 'स्टॉक', english: 'Stock', example: 'The stock is running low.', category: 'Basic' },
+      { id: '26', hindi: 'इन्वेंट्री', english: 'Inventory', example: 'Check the inventory levels.', category: 'Basic' },
+      { id: '27', hindi: 'भंडार', english: 'Storage', example: 'We need more storage space.', category: 'Basic' },
+      { id: '28', hindi: 'गोदाम', english: 'Warehouse', example: 'The warehouse is fully stocked.', category: 'Basic' },
+      { id: '29', hindi: 'आपूर्ति', english: 'Supply', example: 'Supply will arrive tomorrow.', category: 'Basic' },
+      { id: '30', hindi: 'मांग', english: 'Demand', example: 'There is high demand for this.', category: 'Basic' },
+      { id: '31', hindi: 'उपलब्धता', english: 'Availability', example: 'Check the availability first.', category: 'Basic' },
+      { id: '32', hindi: 'कमी', english: 'Shortage', example: 'There is a shortage of this item.', category: 'Basic' },
+      { id: '33', hindi: 'अधिकता', english: 'Surplus', example: 'We have surplus stock.', category: 'Basic' },
+      { id: '34', hindi: 'नया', english: 'New', example: 'This is a new arrival.', category: 'Basic' },
+      { id: '35', hindi: 'पुराना', english: 'Old', example: 'The old stock is on clearance.', category: 'Basic' },
+      { id: '36', hindi: 'ताज़ा', english: 'Fresh', example: 'We have fresh vegetables.', category: 'Basic' },
+      { id: '37', hindi: 'बासी', english: 'Stale', example: 'This bread is stale.', category: 'Basic' },
+      { id: '38', hindi: 'दोषपूर्ण', english: 'Defective', example: 'The product is defective.', category: 'Basic' },
+      { id: '39', hindi: 'क्षतिग्रस्त', english: 'Damaged', example: 'The box is damaged.', category: 'Basic' },
+      { id: '40', hindi: 'वारंटी', english: 'Warranty', example: 'This comes with warranty.', category: 'Basic' },
+      { id: '41', hindi: 'गारंटी', english: 'Guarantee', example: 'We guarantee the quality.', category: 'Basic' },
+      { id: '42', hindi: 'ब्रांड', english: 'Brand', example: 'This is a popular brand.', category: 'Basic' },
+      { id: '43', hindi: 'मॉडल', english: 'Model', example: 'Which model do you prefer?', category: 'Basic' },
+      { id: '44', hindi: 'आकार', english: 'Size', example: 'What size do you need?', category: 'Basic' },
+      { id: '45', hindi: 'रंग', english: 'Color', example: 'Choose your favorite color.', category: 'Basic' },
+      { id: '46', hindi: 'बिक्री', english: 'Sales', example: 'Our sales increased this month.', category: 'Intermediate' },
+      { id: '47', hindi: 'खरीदारी', english: 'Purchase', example: 'Complete your purchase today.', category: 'Intermediate' },
+      { id: '48', hindi: 'लेन-देन', english: 'Transaction', example: 'The transaction is successful.', category: 'Intermediate' },
+      { id: '49', hindi: 'बेचना', english: 'To sell', example: 'We sell at wholesale prices.', category: 'Intermediate' },
+      { id: '50', hindi: 'खरीदना', english: 'To buy', example: 'I want to buy this item.', category: 'Intermediate' },
+      { id: '51', hindi: 'ऑर्डर', english: 'Order', example: 'Place your order now.', category: 'Intermediate' },
+      { id: '52', hindi: 'आदेश', english: 'Command', example: 'Follow the command carefully.', category: 'Intermediate' },
+      { id: '53', hindi: 'बुकिंग', english: 'Booking', example: 'Your booking is confirmed.', category: 'Intermediate' },
+      { id: '54', hindi: 'आरक्षण', english: 'Reservation', example: 'Make a reservation for tomorrow.', category: 'Intermediate' },
+      { id: '55', hindi: 'डिलीवरी', english: 'Delivery', example: 'Free delivery within the city.', category: 'Intermediate' },
+      { id: '56', hindi: 'शिपमेंट', english: 'Shipment', example: 'The shipment will arrive soon.', category: 'Intermediate' },
+      { id: '57', hindi: 'पैकेजिंग', english: 'Packaging', example: 'Check the packaging quality.', category: 'Intermediate' },
+      { id: '58', hindi: 'रैपिंग', english: 'Wrapping', example: 'Gift wrapping is available.', category: 'Intermediate' },
+      { id: '59', hindi: 'बिल', english: 'Bill', example: 'Here is your bill.', category: 'Intermediate' },
+      { id: '60', hindi: 'चालान', english: 'Invoice', example: 'Send the invoice by email.', category: 'Intermediate' },
+      { id: '61', hindi: 'रसीद', english: 'Receipt', example: 'Keep your receipt safe.', category: 'Intermediate' },
+      { id: '62', hindi: 'पर्ची', english: 'Slip', example: 'Fill this payment slip.', category: 'Intermediate' },
+      { id: '63', hindi: 'वाउचर', english: 'Voucher', example: 'Use this discount voucher.', category: 'Intermediate' },
+      { id: '64', hindi: 'कूपन', english: 'Coupon', example: 'Apply the coupon code.', category: 'Intermediate' },
+      { id: '65', hindi: 'रिफंड', english: 'Refund', example: 'Processing your refund request.', category: 'Intermediate' },
+      { id: '66', hindi: 'वापसी', english: 'Return', example: 'You can return within 30 days.', category: 'Intermediate' },
+      { id: '67', hindi: 'एक्सचेंज', english: 'Exchange', example: 'Exchange is possible with receipt.', category: 'Intermediate' },
+      { id: '68', hindi: 'बदलना', english: 'Replace', example: 'We can replace the defective item.', category: 'Intermediate' },
+      { id: '69', hindi: 'रद्द', english: 'Cancel', example: 'Cancel the order if needed.', category: 'Intermediate' },
+      { id: '70', hindi: 'पुष्टि', english: 'Confirm', example: 'Please confirm your address.', category: 'Intermediate' },
+      { id: '71', hindi: 'कमीशन', english: 'Commission', example: 'The sales commission is 5%.', category: 'Intermediate' },
+      { id: '72', hindi: 'कर', english: 'Tax', example: 'Include all taxes.', category: 'Intermediate' },
+      { id: '73', hindi: 'जीएसटी', english: 'GST', example: 'GST is applicable.', category: 'Intermediate' },
+      { id: '74', hindi: 'लाभ', english: 'Profit', example: 'Our profit margin is good.', category: 'Intermediate' },
+      { id: '75', hindi: 'हानि', english: 'Loss', example: 'Avoid any loss in business.', category: 'Intermediate' },
+      { id: '76', hindi: 'मार्जिन', english: 'Margin', example: 'Check the profit margin.', category: 'Intermediate' },
+      { id: '77', hindi: 'ऑफर', english: 'Offer', example: 'This is a special offer.', category: 'Intermediate' },
+      { id: '78', hindi: 'सौदा', english: 'Deal', example: 'Let\'s make a deal.', category: 'Intermediate' },
+      { id: '79', hindi: 'बार्गेन', english: 'Bargain', example: 'This is a good bargain.', category: 'Intermediate' },
+      { id: '80', hindi: 'मोल-भाव', english: 'Negotiation', example: 'Negotiation is possible.', category: 'Intermediate' },
+      { id: '81', hindi: 'अग्रिम', english: 'Advance', example: 'Pay 50% advance.', category: 'Intermediate' },
+      { id: '82', hindi: 'बकाया', english: 'Outstanding', example: 'Clear all outstanding dues.', category: 'Intermediate' },
+      { id: '83', hindi: 'भुगतान', english: 'Payment', example: 'Payment is due tomorrow.', category: 'Intermediate' },
+      { id: '84', hindi: 'जमा', english: 'Deposit', example: 'Make a deposit first.', category: 'Intermediate' },
+      { id: '85', hindi: 'शेष', english: 'Balance', example: 'Check your account balance.', category: 'Intermediate' },
+      { id: '86', hindi: 'दुकान', english: 'Shop', example: 'Our shop is open daily.', category: 'Intermediate' },
+      { id: '87', hindi: 'स्टोर', english: 'Store', example: 'The store has three floors.', category: 'Intermediate' },
+      { id: '88', hindi: 'शोरूम', english: 'Showroom', example: 'Visit our new showroom.', category: 'Intermediate' },
+      { id: '89', hindi: 'काउंटर', english: 'Counter', example: 'Go to the billing counter.', category: 'Intermediate' },
+      { id: '90', hindi: 'कैशियर', english: 'Cashier', example: 'The cashier will help you.', category: 'Intermediate' },
+      { id: '91', hindi: 'रजिस्टर', english: 'Register', example: 'Use the cash register.', category: 'Intermediate' },
+      { id: '92', hindi: 'पीओएस', english: 'POS', example: 'Our POS system is updated.', category: 'Advanced' },
+      { id: '93', hindi: 'बारकोड', english: 'Barcode', example: 'Scan the barcode.', category: 'Advanced' },
+      { id: '94', hindi: 'स्कैनर', english: 'Scanner', example: 'Use the barcode scanner.', category: 'Advanced' },
+      { id: '95', hindi: 'शेल्फ', english: 'Shelf', example: 'Keep items on the shelf.', category: 'Intermediate' },
+      { id: '96', hindi: 'डिस्प्ले', english: 'Display', example: 'Check the window display.', category: 'Intermediate' },
+      { id: '97', hindi: 'विंडो', english: 'Window', example: 'New window design looks good.', category: 'Intermediate' },
+      { id: '98', hindi: 'साइनबोर्ड', english: 'Signboard', example: 'Read the signboard carefully.', category: 'Intermediate' },
+      { id: '99', hindi: 'बैनर', english: 'Banner', example: 'Put up the promotional banner.', category: 'Intermediate' },
+      { id: '100', hindi: 'पोस्टर', english: 'Poster', example: 'This poster attracts customers.', category: 'Intermediate' },
+      { id: '101', hindi: 'विज्ञापन', english: 'Advertisement', example: 'Our advertisement is effective.', category: 'Advanced' },
+      { id: '102', hindi: 'प्रचार', english: 'Promotion', example: 'Promotion starts tomorrow.', category: 'Advanced' },
+      { id: '103', hindi: 'मार्केटिंग', english: 'Marketing', example: 'Marketing strategy is working.', category: 'Advanced' },
+      { id: '104', hindi: 'बिक्री', english: 'Sale', example: 'Sale ends this weekend.', category: 'Intermediate' },
+      { id: '105', hindi: 'खुला', english: 'Open', example: 'The store is open now.', category: 'Basic' },
+      { id: '106', hindi: 'नियमित', english: 'Regular', example: 'You are a regular customer.', category: 'Advanced' },
+      { id: '107', hindi: 'वफादार', english: 'Loyal', example: 'Thank you for being loyal.', category: 'Advanced' },
+      { id: '108', hindi: 'सदस्य', english: 'Member', example: 'Become a club member.', category: 'Advanced' },
+      { id: '109', hindi: 'कार्ड', english: 'Card', example: 'Use your membership card.', category: 'Advanced' },
+      { id: '110', hindi: 'पॉइंट्स', english: 'Points', example: 'Collect loyalty points.', category: 'Advanced' },
+      { id: '111', hindi: 'रिवार्ड', english: 'Reward', example: 'Claim your reward points.', category: 'Advanced' },
+      { id: '112', hindi: 'फीडबैक', english: 'Feedback', example: 'Give us your feedback.', category: 'Advanced' },
+      { id: '113', hindi: 'रेटिंग', english: 'Rating', example: 'Rate our service.', category: 'Advanced' },
+      { id: '114', hindi: 'रिव्यू', english: 'Review', example: 'Write a review online.', category: 'Advanced' },
+      { id: '115', hindi: 'सिफारिश', english: 'Recommendation', example: 'Here is my recommendation.', category: 'Advanced' },
+      { id: '116', hindi: 'संदर्भ', english: 'Reference', example: 'Use this as reference.', category: 'Advanced' },
+      { id: '117', hindi: 'रेफरल', english: 'Referral', example: 'Get referral bonus.', category: 'Advanced' },
+      { id: '118', hindi: 'वीआईपी', english: 'VIP', example: 'You are our VIP customer.', category: 'Advanced' },
+      { id: '119', hindi: 'प्रीमियम', english: 'Premium', example: 'Premium members get discounts.', category: 'Advanced' },
+      { id: '120', hindi: 'बेसिक', english: 'Basic', example: 'This is our basic plan.', category: 'Advanced' },
+      { id: '121', hindi: 'लक्ष्य', english: 'Target', example: 'Set a monthly sales target.', category: 'Advanced' },
+      { id: '122', hindi: 'उद्देश्य', english: 'Objective', example: 'Our main objective is growth.', category: 'Advanced' },
+      { id: '123', hindi: 'रणनीति', english: 'Strategy', example: 'Plan your marketing strategy.', category: 'Advanced' },
+      { id: '124', hindi: 'योजना', english: 'Plan', example: 'Make a business plan.', category: 'Advanced' },
+      { id: '125', hindi: 'बजट', english: 'Budget', example: 'Prepare the monthly budget.', category: 'Advanced' },
+      { id: '126', hindi: 'खर्च', english: 'Expense', example: 'Control your daily expenses.', category: 'Advanced' },
+      { id: '127', hindi: 'आमदनी', english: 'Income', example: 'Track your monthly income.', category: 'Advanced' },
+      { id: '128', hindi: 'नुकसान', english: 'Damage', example: 'Avoid any property damage.', category: 'Advanced' },
+      { id: '129', hindi: 'बीमा', english: 'Insurance', example: 'Get business insurance.', category: 'Advanced' },
+      { id: '130', hindi: 'लाइसेंस', english: 'License', example: 'Renew your trade license.', category: 'Advanced' },
+      { id: '131', hindi: 'ऑनलाइन', english: 'Online', example: 'Shop online from home.', category: 'Advanced' },
+      { id: '132', hindi: 'वेबसाइट', english: 'Website', example: 'Visit our website.', category: 'Advanced' },
+      { id: '133', hindi: 'ऐप', english: 'App', example: 'Download our mobile app.', category: 'Advanced' },
+      { id: '134', hindi: 'डिजिटल', english: 'Digital', example: 'Use digital payment methods.', category: 'Advanced' },
+      { id: '135', hindi: 'ई-कॉमर्स', english: 'E-commerce', example: 'We sell on e-commerce platforms.', category: 'Advanced' },
+      { id: '136', hindi: 'सोशल मीडिया', english: 'Social Media', example: 'Follow us on social media.', category: 'Advanced' },
+      { id: '137', hindi: 'ऑटोमेशन', english: 'Automation', example: 'Automation saves time.', category: 'Advanced' },
+      { id: '138', hindi: 'डेटा', english: 'Data', example: 'Analyze customer data.', category: 'Advanced' },
+      { id: '139', hindi: 'एनालिटिक्स', english: 'Analytics', example: 'Check the sales analytics.', category: 'Advanced' },
+      { id: '140', hindi: 'रिपोर्ट', english: 'Report', example: 'Generate monthly reports.', category: 'Advanced' }
     ],
     manufacturing: [
       { 
+        id: 'm1',
         hindi: 'उत्पादन', 
         english: 'Production', 
-        pronunciation: '/prəˈdʌkʃən/',
-        example: 'Production will start next week.'
+        example: 'Production will start next week.',
+        category: 'Basic'
       },
       { 
+        id: 'm2',
         hindi: 'गुणवत्ता', 
         english: 'Quality', 
-        pronunciation: '/ˈkwɒləti/',
-        example: 'We maintain high quality standards.'
+        example: 'We maintain high quality standards.',
+        category: 'Basic'
       },
       { 
+        id: 'm3',
         hindi: 'मशीन', 
         english: 'Machine', 
-        pronunciation: '/məˈʃiːn/',
-        example: 'The machine needs maintenance.'
+        example: 'The machine needs maintenance.',
+        category: 'Intermediate'
       },
       { 
+        id: 'm4',
         hindi: 'कच्चा माल', 
         english: 'Raw Materials', 
-        pronunciation: '/rɔː məˈtɪəriəlz/',
-        example: 'We need more raw materials.'
+        example: 'We need more raw materials.',
+        category: 'Intermediate'
       }
     ]
   };
@@ -258,8 +380,25 @@ export default function IndustryModules() {
   };
 
   const selectedIndustryData = industries.find(ind => ind.id === selectedIndustry);
-  const currentVocabulary = vocabularyData[selectedIndustry] || [];
+  const allVocabulary = vocabularyData[selectedIndustry] || [];
   const currentScenarios = scenarioData[selectedIndustry] || [];
+
+  // Filter and search vocabulary
+  const filteredVocabulary = allVocabulary.filter(item => {
+    const matchesSearch = searchTerm === '' || 
+      item.hindi.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.english.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.example.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  const categoryCounts = allVocabulary.reduce((acc, item) => {
+    acc[item.category] = (acc[item.category] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/5 p-6">
@@ -357,44 +496,82 @@ export default function IndustryModules() {
 
             {currentTab === 'vocabulary' ? (
               /* Vocabulary Section */
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentVocabulary.map((item, index) => (
-                  <Card key={index} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg">{item.hindi}</h3>
-                          <p className="text-primary font-medium">{item.english}</p>
-                          {item.pronunciation && (
-                            <p className="text-xs text-muted-foreground italic">{item.pronunciation}</p>
-                          )}
+              <div>
+                {/* Search and Filter Controls */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search vocabulary..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-full md:w-48">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Filter by category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories ({allVocabulary.length})</SelectItem>
+                      <SelectItem value="Basic">Basic ({categoryCounts.Basic || 0})</SelectItem>
+                      <SelectItem value="Intermediate">Intermediate ({categoryCounts.Intermediate || 0})</SelectItem>
+                      <SelectItem value="Advanced">Advanced ({categoryCounts.Advanced || 0})</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Vocabulary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredVocabulary.map((item) => (
+                    <Card key={item.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-lg">{item.hindi}</h3>
+                              <Badge 
+                                variant={item.category === 'Basic' ? 'secondary' : 
+                                       item.category === 'Intermediate' ? 'default' : 'destructive'}
+                                className="text-xs"
+                              >
+                                {item.category}
+                              </Badge>
+                            </div>
+                            <p className="text-primary font-medium">{item.english}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCopyVocabulary(item)}
+                          >
+                            <Star className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopyVocabulary(item)}
-                        >
-                          <Star className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      {item.example && (
+                        
                         <div className="mt-3 p-2 bg-accent/20 rounded text-sm">
                           <strong>Example:</strong> {item.example}
                         </div>
-                      )}
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-3"
-                        onClick={() => handleMarkProgress('vocabulary')}
-                      >
-                        Mark as Learned
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full mt-3"
+                          onClick={() => handleMarkProgress('vocabulary')}
+                        >
+                          Mark as Learned
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                {filteredVocabulary.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No vocabulary items found for your search criteria.
+                  </div>
+                )}
               </div>
             ) : (
               /* Scenarios Section */
