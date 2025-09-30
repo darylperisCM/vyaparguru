@@ -75,7 +75,7 @@ export default function IndustryModules() {
       nameHindi: 'विनिर्माण',
       icon: Building2,
       description: 'Production, quality, supply chain',
-      vocabularyCount: 200,
+      vocabularyCount: 80,
       scenarioCount: 30,
       progress: 20
     },
@@ -85,7 +85,7 @@ export default function IndustryModules() {
       nameHindi: 'सेवाएं',
       icon: Wrench,
       description: 'Consulting, maintenance, support',
-      vocabularyCount: 120,
+      vocabularyCount: 100,
       scenarioCount: 20,
       progress: 50
     },
@@ -95,7 +95,7 @@ export default function IndustryModules() {
       nameHindi: 'आतिथ्य',
       icon: Utensils,
       description: 'Hotels, restaurants, events',
-      vocabularyCount: 180,
+      vocabularyCount: 100,
       scenarioCount: 35,
       progress: 10
     },
@@ -105,7 +105,7 @@ export default function IndustryModules() {
       nameHindi: 'स्वास्थ्य सेवा',
       icon: Stethoscope,
       description: 'Medical, pharmacy, wellness',
-      vocabularyCount: 250,
+      vocabularyCount: 100,
       scenarioCount: 40,
       progress: 5
     },
@@ -115,7 +115,7 @@ export default function IndustryModules() {
       nameHindi: 'रसद',
       icon: Truck,
       description: 'Shipping, delivery, warehouse',
-      vocabularyCount: 140,
+      vocabularyCount: 100,
       scenarioCount: 22,
       progress: 65
     }
