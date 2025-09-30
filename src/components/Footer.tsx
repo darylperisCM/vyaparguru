@@ -32,7 +32,7 @@ export default function Footer() {
             ))}
           </nav>
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} VyaparGuru. All rights reserved.
+            © {new Date().getFullYear()} VyaparGuru. All rights reserved. Created and Managed by Daryl Warren Peris
           </p>
         </div>
       </div>
