@@ -174,6 +174,7 @@ const AuthSignUp = () => {
           });
         } else {
           // Create Razorpay subscription with 3-day trial
+          // Note: Database trigger already created subscription record
           try {
             const { error: subError } = await supabase.functions.invoke('razorpay-subscription', {
               body: { 
@@ -184,6 +185,11 @@ const AuthSignUp = () => {
 
             if (subError) {
               console.error('Subscription creation error:', subError);
+              toast({
+                title: "Account Created",
+                description: "Your account is ready! Your 3-day free trial has started.",
+                variant: "default",
+              });
             } else {
               toast({
                 title: "Success",
@@ -193,8 +199,8 @@ const AuthSignUp = () => {
           } catch (subError) {
             console.error('Failed to create subscription:', subError);
             toast({
-              title: "Success",
-              description: "Account created successfully!",
+              title: "Account Created",
+              description: "Your account is ready! Your 3-day free trial has started.",
             });
           }
         }

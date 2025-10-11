@@ -117,10 +117,10 @@ export default function Dashboard() {
 
       script.onload = () => {
         const options = {
-          key: 'rzp_live_RRXRskxzxb3oMh',
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           subscription_id: subscription.rzp_subscription_id,
           name: 'VyaparGuru',
-          description: 'Business English Pro - Monthly Subscription',
+          description: 'VyaparGuru - व्यापार गुरु',
           image: '/assets/fulllogo.png',
           handler: async function (response: any) {
             console.log('Payment successful:', response);
@@ -224,7 +224,7 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Plan</p>
-                      <p className="font-semibold">{subscription.plan_name || 'Business English Pro'}</p>
+                      <p className="font-semibold">{subscription.plan_name || 'VyaparGuru - व्यापार गुरु'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Monthly Cost</p>

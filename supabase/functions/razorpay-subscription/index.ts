@@ -61,7 +61,7 @@ serve(async (req) => {
           period: 'monthly',
           interval: 1,
           item: {
-            name: 'VyaparGuru Pro Monthly',
+            name: 'VyaparGuru - व्यापार गुरु',
             amount: PLAN_AMOUNT,
             currency: 'INR',
             description: 'Business English learning subscription'
@@ -120,7 +120,7 @@ serve(async (req) => {
               period: 'monthly',
               interval: 1,
               item: {
-                name: 'VyaparGuru Pro Monthly',
+                name: 'VyaparGuru - व्यापार गुरु',
                 amount: PLAN_AMOUNT,
                 currency: 'INR',
               }

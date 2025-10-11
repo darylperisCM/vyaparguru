@@ -47,10 +47,10 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
 
       script.onload = () => {
         const options = {
-          key: 'rzp_live_RRXRskxzxb3oMh', // This should come from env
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           subscription_id: subscription.rzp_subscription_id,
           name: 'VyaparGuru',
-          description: 'Business English Pro - Monthly Subscription',
+          description: 'VyaparGuru - व्यापार गुरु',
           image: '/assets/fulllogo.png',
           handler: async function (response: any) {
             console.log('Payment successful:', response);
@@ -128,7 +128,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
             <div className="bg-muted p-4 rounded-lg">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-muted-foreground">Plan</span>
-                <span className="font-semibold">Business English Pro</span>
+                <span className="font-semibold">VyaparGuru - व्यापार गुरु</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Price</span>
