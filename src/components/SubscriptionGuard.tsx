@@ -47,7 +47,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
 
       script.onload = () => {
         const options = {
-          key: 'YOUR_RAZORPAY_KEY_ID', // This should come from env
+          key: 'rzp_live_RRXRskxzxb3oMh', // This should come from env
           subscription_id: subscription.rzp_subscription_id,
           name: 'VyaparGuru',
           description: 'Business English Pro - Monthly Subscription',
