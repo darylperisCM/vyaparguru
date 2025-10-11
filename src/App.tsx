@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SubscriptionGuard } from "@/components/SubscriptionGuard";
 import { SiteHeader } from "@/components/SiteHeader";
 import Footer from "@/components/Footer";
 
@@ -49,7 +50,9 @@ export default function App() {
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <SubscriptionGuard>
+                        <Dashboard />
+                      </SubscriptionGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -57,7 +60,9 @@ export default function App() {
                   path="/translation"
                   element={
                     <ProtectedRoute>
-                      <Translation />
+                      <SubscriptionGuard>
+                        <Translation />
+                      </SubscriptionGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -65,7 +70,9 @@ export default function App() {
                   path="/email"
                   element={
                     <ProtectedRoute>
-                      <EmailAssistant />
+                      <SubscriptionGuard>
+                        <EmailAssistant />
+                      </SubscriptionGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -73,7 +80,9 @@ export default function App() {
                   path="/industry"
                   element={
                     <ProtectedRoute>
-                      <IndustryModules />
+                      <SubscriptionGuard>
+                        <IndustryModules />
+                      </SubscriptionGuard>
                     </ProtectedRoute>
                   }
                 />

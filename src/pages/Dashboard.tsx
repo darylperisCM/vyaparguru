@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useCountUp } from '@/hooks/useCountUp';
 import { useToast } from '@/hooks/use-toast';
+import { useSubscription } from '@/hooks/useSubscription';
+import { Badge } from '@/components/ui/badge';
 import { 
   Languages, 
   Mail, 
@@ -18,13 +20,23 @@ import {
   Award,
   Activity,
   Zap,
-  UserX
+  UserX,
+  CreditCard,
+  Calendar
 } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { 
+    subscription, 
+    isInTrial, 
+    isActive, 
+    daysUntilTrialEnd, 
+    trialEndsAt, 
+    nextBillingDate 
+  } = useSubscription();
 
   // Mock data - will be replaced with real data from Supabase
   const stats = {
@@ -101,6 +113,79 @@ export default function Dashboard() {
               Continue your English business journey today
             </p>
           </div>
+
+          {/* Subscription Status Card */}
+          {subscription && (
+            <section className="mb-6 sm:mb-8">
+              <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-xl hover:shadow-primary/20 transition-all duration-300">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                      <CreditCard className="h-5 w-5 text-primary" />
+                      Subscription Status
+                    </CardTitle>
+                    {isInTrial && (
+                      <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
+                        Free Trial Active
+                      </Badge>
+                    )}
+                    {isActive && (
+                      <Badge variant="default" className="bg-success/20 text-success border-success/30">
+                        Active
+                      </Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Plan</p>
+                      <p className="font-semibold">{subscription.plan_name || 'Business English Pro'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Monthly Cost</p>
+                      <p className="font-semibold text-primary text-xl">₹99</p>
+                    </div>
+                  </div>
+
+                  {isInTrial && trialEndsAt && (
+                    <div className="bg-background/50 rounded-lg p-4 border border-primary/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-medium">Trial Period</p>
+                      </div>
+                      <p className="text-2xl font-bold text-primary mb-1">
+                        {daysUntilTrialEnd} {daysUntilTrialEnd === 1 ? 'day' : 'days'} remaining
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Trial ends on {trialEndsAt.toLocaleDateString('en-IN', { 
+                          day: 'numeric', 
+                          month: 'long', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  {isActive && nextBillingDate && (
+                    <div className="bg-background/50 rounded-lg p-4 border border-success/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calendar className="h-4 w-4 text-success" />
+                        <p className="text-sm font-medium">Next Billing Date</p>
+                      </div>
+                      <p className="text-lg font-semibold">
+                        {nextBillingDate.toLocaleDateString('en-IN', { 
+                          day: 'numeric', 
+                          month: 'long', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+          )}
 
             {/* Quick Actions Section */}
           <section className="mb-8 sm:mb-10 lg:mb-12">

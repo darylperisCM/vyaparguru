@@ -173,10 +173,30 @@ const AuthSignUp = () => {
             variant: "destructive",
           });
         } else {
-          toast({
-            title: "Success",
-            description: "Account created successfully!",
-          });
+          // Create Razorpay subscription with 3-day trial
+          try {
+            const { error: subError } = await supabase.functions.invoke('razorpay-subscription', {
+              body: { 
+                action: 'create-subscription',
+                userId: user.id 
+              }
+            });
+
+            if (subError) {
+              console.error('Subscription creation error:', subError);
+            } else {
+              toast({
+                title: "Success",
+                description: "Account created! Your 3-day free trial has started.",
+              });
+            }
+          } catch (subError) {
+            console.error('Failed to create subscription:', subError);
+            toast({
+              title: "Success",
+              description: "Account created successfully!",
+            });
+          }
         }
       }
       

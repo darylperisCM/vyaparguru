@@ -49,7 +49,7 @@ export default function Pricing() {
     <>
       <Helmet>
         <title>Pricing - Just ₹99/month | VyaparGuru</title>
-        <meta name="description" content="Affordable English training for Hindi businesses. Complete access to all features for ₹99/month. Start your 7-day free trial today." />
+        <meta name="description" content="Affordable English training for Hindi businesses. Complete access to all features for ₹99/month. Start your 3-day free trial today." />
         <meta name="keywords" content="english training pricing, ₹99 monthly, business english cost, hindi speakers training, व्यापार अंग्रेजी मूल्य, affordable english" />
         <meta property="og:title" content="Pricing - Just ₹99/month | VyaparGuru" />
         <meta property="og:description" content="Affordable English training for Hindi businesses at just ₹99/month." />
@@ -132,10 +132,10 @@ export default function Pricing() {
                 </Button>
                 
                 <p className="text-center text-sm text-muted-foreground">
-                  No credit card required • 7-day free trial
+                  No credit card required • 3-day free trial
                 </p>
                 <p className="text-center text-xs hindi-text text-muted-foreground">
-                  कोई क्रेडिट कार्ड आवश्यक नहीं • 7-दिन का मुफ्त परीक्षण
+                  कोई क्रेडिट कार्ड आवश्यक नहीं • 3-दिन का मुफ्त परीक्षण
                 </p>
               </div>
             </CardContent>
@@ -161,10 +161,10 @@ export default function Pricing() {
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  You get full access to all features for 7 days, completely free. No credit card required to start.
+                  You get full access to all features for 3 days, completely free. No credit card required to start.
                 </CardDescription>
                 <CardDescription className="hindi-text text-sm mt-2 opacity-80">
-                  आपको 7 दिनों के लिए सभी सुविधाओं तक पूर्ण पहुंच मिलती है, बिल्कुल मुफ्त। शुरू करने के लिए कोई क्रेडिट कार्ड आवश्यक नहीं।
+                  आपको 3 दिनों के लिए सभी सुविधाओं तक पूर्ण पहुंच मिलती है, बिल्कुल मुफ्त। शुरू करने के लिए कोई क्रेडिट कार्ड आवश्यक नहीं।
                 </CardDescription>
               </CardContent>
             </Card>

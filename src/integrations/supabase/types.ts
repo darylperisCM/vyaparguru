@@ -254,6 +254,83 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_events: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          razorpay_event_id: string | null
+          subscription_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          razorpay_event_id?: string | null
+          subscription_id: string
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          razorpay_event_id?: string | null
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string | null
+          id: string
+          next_billing_date: string | null
+          plan_name: string | null
+          razorpay_payment_id: string | null
+          razorpay_plan_id: string | null
+          rzp_subscription_id: string | null
+          status: string | null
+          trial_ends_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string | null
+          id?: string
+          next_billing_date?: string | null
+          plan_name?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_plan_id?: string | null
+          rzp_subscription_id?: string | null
+          status?: string | null
+          trial_ends_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string | null
+          id?: string
+          next_billing_date?: string | null
+          plan_name?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_plan_id?: string | null
+          rzp_subscription_id?: string | null
+          status?: string | null
+          trial_ends_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       translation_events: {
         Row: {
           confidence: number | null
