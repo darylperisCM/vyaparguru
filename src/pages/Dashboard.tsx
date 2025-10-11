@@ -9,6 +9,7 @@ import { useCountUp } from '@/hooks/useCountUp';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
 import { 
   Languages, 
   Mail, 
@@ -22,7 +23,8 @@ import {
   Zap,
   UserX,
   CreditCard,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -37,6 +39,7 @@ export default function Dashboard() {
     trialEndsAt, 
     nextBillingDate 
   } = useSubscription();
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   // Mock data - will be replaced with real data from Supabase
   const stats = {
@@ -91,6 +94,87 @@ export default function Dashboard() {
       description: "Your subscription will end at the end of current billing cycle.",
       duration: 5000,
     });
+  };
+
+  const handleSubscribeNow = async () => {
+    if (!subscription?.rzp_subscription_id) {
+      toast({
+        title: "Error",
+        description: "Subscription not found. Please contact support.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setProcessingPayment(true);
+
+    try {
+      // Load Razorpay script
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      document.body.appendChild(script);
+
+      script.onload = () => {
+        const options = {
+          key: 'rzp_live_RRXRskxzxb3oMh',
+          subscription_id: subscription.rzp_subscription_id,
+          name: 'VyaparGuru',
+          description: 'Business English Pro - Monthly Subscription',
+          image: '/assets/fulllogo.png',
+          handler: async function (response: any) {
+            console.log('Payment successful:', response);
+            toast({
+              title: "Payment Successful!",
+              description: "Your subscription is now active.",
+            });
+            window.location.reload();
+          },
+          prefill: {
+            email: user?.email || '',
+            contact: ''
+          },
+          theme: {
+            color: '#FF6B6B'
+          },
+          modal: {
+            ondismiss: function () {
+              setProcessingPayment(false);
+            }
+          },
+          config: {
+            display: {
+              blocks: {
+                banks: {
+                  name: 'Pay via UPI',
+                  instruments: [
+                    {
+                      method: 'upi'
+                    }
+                  ]
+                }
+              },
+              sequence: ['block.banks'],
+              preferences: {
+                show_default_blocks: false
+              }
+            }
+          }
+        };
+
+        // @ts-ignore
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      };
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Error",
+        description: "Failed to open payment gateway. Please try again.",
+        variant: "destructive"
+      });
+      setProcessingPayment(false);
+    }
   };
 
   return (
@@ -181,6 +265,24 @@ export default function Dashboard() {
                         })}
                       </p>
                     </div>
+                  )}
+
+                  {isInTrial && (
+                    <Button 
+                      onClick={handleSubscribeNow}
+                      disabled={processingPayment}
+                      className="w-full"
+                      size="lg"
+                    >
+                      {processingPayment ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Subscribe Now - ₹99/month'
+                      )}
+                    </Button>
                   )}
                 </CardContent>
               </Card>

@@ -126,7 +126,7 @@ export default function Pricing() {
 
               <div className="space-y-3">
                 <Button variant="hero" size="xl" className="w-full" asChild>
-                  <NavLink to="/auth/sign-in">
+                  <NavLink to="/auth/sign-up">
                     Start Free Trial • मुफ्त परीक्षण शुरू करें
                   </NavLink>
                 </Button>
@@ -212,7 +212,7 @@ export default function Pricing() {
             व्यापारिक अंग्रेजी में महारत हासिल करने के लिए तैयार हैं?
           </p>
           <Button variant="secondary" size="xl" asChild>
-            <NavLink to="/auth/sign-in">
+            <NavLink to="/auth/sign-up">
               Start Your Free Trial Today • आज अपना मुफ्त परीक्षण शुरू करें
             </NavLink>
           </Button>
