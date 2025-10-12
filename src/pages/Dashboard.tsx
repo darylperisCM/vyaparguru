@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Languages, 
   Mail, 
@@ -37,7 +38,8 @@ export default function Dashboard() {
     isActive, 
     daysUntilTrialEnd, 
     trialEndsAt, 
-    nextBillingDate 
+    nextBillingDate,
+    refetch 
   } = useSubscription();
   const [processingPayment, setProcessingPayment] = useState(false);
 
@@ -97,18 +99,45 @@ export default function Dashboard() {
   };
 
   const handleSubscribeNow = async () => {
-    if (!subscription?.rzp_subscription_id) {
-      toast({
-        title: "Error",
-        description: "Subscription not found. Please contact support.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setProcessingPayment(true);
 
     try {
+      let subscriptionId = subscription?.rzp_subscription_id;
+
+      // If no Razorpay subscription ID, create it first
+      if (!subscriptionId) {
+        console.log('No Razorpay subscription ID found, creating one...');
+        
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) {
+          throw new Error('User not authenticated');
+        }
+
+        const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
+          body: { 
+            action: 'create-subscription',
+            userId: authUser.id 
+          }
+        });
+
+        if (subError || !subData?.subscription_id) {
+          console.error('Failed to create Razorpay subscription:', subError);
+          toast({
+            title: "Error",
+            description: "Failed to initialize subscription. Please ensure Razorpay secrets are configured.",
+            variant: "destructive",
+          });
+          setProcessingPayment(false);
+          return;
+        }
+
+        subscriptionId = subData.subscription_id;
+        console.log('Created Razorpay subscription:', subscriptionId);
+        
+        // Refetch subscription to get updated data
+        await refetch();
+      }
+
       // Load Razorpay script
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -118,7 +147,7 @@ export default function Dashboard() {
       script.onload = () => {
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-          subscription_id: subscription.rzp_subscription_id,
+          subscription_id: subscriptionId,
           name: 'VyaparGuru',
           description: 'VyaparGuru - व्यापार गुरु',
           image: '/assets/fulllogo.png',
@@ -170,7 +199,7 @@ export default function Dashboard() {
       console.error('Payment error:', error);
       toast({
         title: "Payment Error",
-        description: "Failed to open payment gateway. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to open payment gateway. Please try again.",
         variant: "destructive"
       });
       setProcessingPayment(false);

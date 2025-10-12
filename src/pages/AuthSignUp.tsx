@@ -175,32 +175,32 @@ const AuthSignUp = () => {
         } else {
           // Create Razorpay subscription with 3-day trial
           // Note: Database trigger already created subscription record
-          try {
-            const { error: subError } = await supabase.functions.invoke('razorpay-subscription', {
-              body: { 
-                action: 'create-subscription',
-                userId: user.id 
-              }
-            });
-
-            if (subError) {
-              console.error('Subscription creation error:', subError);
-              toast({
-                title: "Account Created",
-                description: "Your account is ready! Your 3-day free trial has started.",
-                variant: "default",
-              });
-            } else {
-              toast({
-                title: "Success",
-                description: "Account created! Your 3-day free trial has started.",
-              });
+          const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
+            body: { 
+              action: 'create-subscription',
+              userId: user.id 
             }
-          } catch (subError) {
-            console.error('Failed to create subscription:', subError);
+          });
+
+          if (subError) {
+            console.error('Razorpay subscription creation failed:', subError);
             toast({
               title: "Account Created",
-              description: "Your account is ready! Your 3-day free trial has started.",
+              description: "Your account is ready! You can set up payment from your dashboard.",
+              variant: "default",
+            });
+          } else if (subData?.subscription_id) {
+            console.log('Razorpay subscription created:', subData.subscription_id);
+            toast({
+              title: "Success",
+              description: "Account created! Your 3-day free trial has started.",
+            });
+          } else {
+            console.warn('Subscription created but no ID returned');
+            toast({
+              title: "Account Created",
+              description: "Your account is ready! You can set up payment from your dashboard.",
+              variant: "default",
             });
           }
         }

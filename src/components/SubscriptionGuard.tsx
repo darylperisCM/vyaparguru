@@ -31,14 +31,40 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
   }, [hasAccess, loading, isPendingPayment, isExpired]);
 
   const handlePayment = async () => {
-    if (!subscription?.rzp_subscription_id) {
-      console.error('No Razorpay subscription ID found');
-      return;
-    }
-
     setProcessingPayment(true);
 
     try {
+      let subscriptionId = subscription?.rzp_subscription_id;
+
+      // If no Razorpay subscription ID, create it first
+      if (!subscriptionId) {
+        console.log('No Razorpay subscription ID found, creating one...');
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.error('User not authenticated');
+          setProcessingPayment(false);
+          return;
+        }
+
+        const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
+          body: { 
+            action: 'create-subscription',
+            userId: user.id 
+          }
+        });
+
+        if (subError || !subData?.subscription_id) {
+          console.error('Failed to create Razorpay subscription:', subError);
+          setProcessingPayment(false);
+          setShowPaymentModal(false);
+          return;
+        }
+
+        subscriptionId = subData.subscription_id;
+        console.log('Created Razorpay subscription:', subscriptionId);
+      }
+
       // Load Razorpay script
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -48,15 +74,12 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
       script.onload = () => {
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-          subscription_id: subscription.rzp_subscription_id,
+          subscription_id: subscriptionId,
           name: 'VyaparGuru',
           description: 'VyaparGuru - व्यापार गुरु',
           image: '/assets/fulllogo.png',
           handler: async function (response: any) {
             console.log('Payment successful:', response);
-            
-            // Payment will be verified via webhook
-            // Just close modal and refresh subscription
             setShowPaymentModal(false);
             window.location.reload();
           },
