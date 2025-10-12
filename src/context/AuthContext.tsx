@@ -75,24 +75,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const requestOtp = async (phone: string) => {
-    // Mock implementation - no actual OTP sent
-    return { error: null };
+    try {
+      const { error } = await supabase.functions.invoke('msg91-otp', {
+        body: { 
+          action: 'send-otp',
+          phone 
+        }
+      });
+      
+      if (error) {
+        console.error('Error sending OTP:', error);
+        return { error };
+      }
+      
+      return { error: null };
+    } catch (error: any) {
+      console.error('Error in requestOtp:', error);
+      return { error };
+    }
   };
 
   const verifyOtp = async (phone: string, otp: string) => {
-    if (otp === "123456") {
-      const { error } = await supabase.auth.signInAnonymously();
+    try {
+      const { data, error } = await supabase.functions.invoke('msg91-otp', {
+        body: { 
+          action: 'verify-otp',
+          phone,
+          otp
+        }
+      });
+
       if (error) {
-        // Return the exact Supabase error message for better debugging
-        return { 
-          error: error.message.includes('Anonymous') ? 
-            new Error('Please enable Anonymous sign-ins in Supabase Authentication settings') : 
-            error 
-        };
+        console.error('Error verifying OTP:', error);
+        return { error };
       }
+
+      if (!data?.access_token || !data?.refresh_token) {
+        return { error: new Error('Invalid response from server') };
+      }
+
+      // Set session with the tokens from edge function
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token
+      });
+
+      if (sessionError) {
+        console.error('Error setting session:', sessionError);
+        return { error: sessionError };
+      }
+
       return { error: null };
+    } catch (error: any) {
+      console.error('Error in verifyOtp:', error);
+      return { error };
     }
-    return { error: new Error('Invalid OTP. Use 123456 in preview mode.') };
   };
 
   const value = {

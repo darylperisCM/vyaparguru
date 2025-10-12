@@ -176,6 +176,33 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_auth: {
+        Row: {
+          created_at: string | null
+          otp_expires_at: string | null
+          otp_hash: string | null
+          phone_number: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          otp_expires_at?: string | null
+          otp_hash?: string | null
+          phone_number: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          otp_expires_at?: string | null
+          otp_hash?: string | null
+          phone_number?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number

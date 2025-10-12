@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const AuthSignUp = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, verifyOtp, loading: authLoading } = useAuth();
+  const { isAuthenticated, verifyOtp, requestOtp, loading: authLoading } = useAuth();
   const { toast } = useToast();
   
   const [step, setStep] = useState<'form' | 'otp'>('form');
@@ -107,10 +107,20 @@ const AuthSignUp = () => {
     setLoading(true);
     
     try {
-      // In preview mode, we'll just proceed to OTP step
+      const { error } = await requestOtp(`+91${formData.mobileNumber}`);
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to send OTP. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       toast({
         title: "OTP Sent",
-        description: "Please enter the OTP to complete registration",
+        description: "Please enter the OTP received on your mobile",
       });
       setStep('otp');
     } catch (error) {
@@ -150,14 +160,31 @@ const AuthSignUp = () => {
         return;
       }
 
-      // Create user profile after successful authentication
+      // Get authenticated user
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         throw new Error('Failed to get user information');
       }
 
-      // CRITICAL: Create profile first - subscription depends on this
+      // Check if profile already exists (existing user signing in)
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        // Existing user - just navigate to dashboard
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully signed in.",
+        });
+        navigate('/dashboard');
+        return;
+      }
+
+      // New user - create profile
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -177,9 +204,7 @@ const AuthSignUp = () => {
         
         toast({
           title: "Setup Failed",
-          description: profileError.message.includes('duplicate')
-            ? "This account already exists. Please sign in instead."
-            : "Failed to complete account setup. Please try again.",
+          description: "Failed to complete account setup. Please try again.",
           variant: "destructive",
         });
         
