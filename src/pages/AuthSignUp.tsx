@@ -153,59 +153,83 @@ const AuthSignUp = () => {
       // Create user profile after successful authentication
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: user.id,
-            name: formData.name,
-            age: parseInt(formData.age),
-            location: formData.location || null,
-            email: formData.email || null,
-            mobile_number: `+91${formData.mobileNumber}`
-          });
+      if (!user) {
+        throw new Error('Failed to get user information');
+      }
 
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          toast({
-            title: "Warning",
-            description: "Account created but profile setup incomplete. Please update your profile in settings.",
-            variant: "destructive",
-          });
-        } else {
-          // Create Razorpay subscription with 3-day trial
-          // Note: Database trigger already created subscription record
-          const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
-            body: { 
-              action: 'create-subscription',
-              userId: user.id 
-            }
-          });
+      // CRITICAL: Create profile first - subscription depends on this
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: user.id,
+          name: formData.name,
+          age: parseInt(formData.age),
+          location: formData.location || null,
+          email: formData.email || null,
+          mobile_number: `+91${formData.mobileNumber}`
+        });
 
-          if (subError) {
-            console.error('Razorpay subscription creation failed:', subError);
-            toast({
-              title: "Account Created",
-              description: "Your account is ready! You can set up payment from your dashboard.",
-              variant: "default",
-            });
-          } else if (subData?.subscription_id) {
-            console.log('Razorpay subscription created:', subData.subscription_id);
-            toast({
-              title: "Success",
-              description: "Account created! Your 3-day free trial has started.",
-            });
-          } else {
-            console.warn('Subscription created but no ID returned');
-            toast({
-              title: "Account Created",
-              description: "Your account is ready! You can set up payment from your dashboard.",
-              variant: "default",
-            });
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        
+        // Sign out the user since we couldn't complete setup
+        await supabase.auth.signOut();
+        
+        toast({
+          title: "Setup Failed",
+          description: profileError.message.includes('duplicate')
+            ? "This account already exists. Please sign in instead."
+            : "Failed to complete account setup. Please try again.",
+          variant: "destructive",
+        });
+        
+        // Reset to form step so user can retry
+        setStep('form');
+        setOtp('');
+        return;
+      }
+
+      // Wait a moment for the database trigger to create the subscription
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Verify subscription was created
+      const { data: subscription, error: subCheckError } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (subCheckError || !subscription) {
+        console.error('Subscription check failed:', subCheckError);
+        toast({
+          title: "Warning",
+          description: "Account created but subscription setup incomplete. Please contact support if you can't access features.",
+          variant: "destructive",
+        });
+      }
+
+      // Try to create Razorpay subscription
+      try {
+        const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
+          body: { 
+            action: 'create-subscription',
+            userId: user.id 
           }
+        });
+
+        if (!subError && subData?.subscription_id) {
+          console.log('Razorpay subscription created:', subData.subscription_id);
+          toast({
+            title: "Success!",
+            description: "Account created! Your 3-day free trial has started.",
+          });
         }
+      } catch (razorpayError) {
+        // Non-blocking: Razorpay subscription can be created later
+        console.error('Razorpay subscription error:', razorpayError);
       }
       
+      // Only navigate after successful profile creation
       navigate('/dashboard');
     } catch (error) {
       toast({
