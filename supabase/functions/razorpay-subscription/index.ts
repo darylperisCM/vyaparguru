@@ -135,9 +135,7 @@ serve(async (req) => {
         throw new Error('Failed to fetch plans from Razorpay');
       }
 
-      // Create subscription
-      const trialEndTimestamp = Math.floor(Date.now() / 1000) + (TRIAL_PERIOD_DAYS * 24 * 60 * 60);
-      
+      // Create subscription (trial is managed by our app, not Razorpay)
       const subscriptionResponse = await fetch(`${RAZORPAY_API_URL}/subscriptions`, {
         method: 'POST',
         headers: {
@@ -148,7 +146,6 @@ serve(async (req) => {
           plan_id: planId,
           customer_notify: 1,
           total_count: 120, // 10 years of monthly charges
-          trial_end: trialEndTimestamp,
           notes: {
             user_id: userId
           }
@@ -164,14 +161,21 @@ serve(async (req) => {
       const subscription: CreateSubscriptionResponse = await subscriptionResponse.json();
       console.log('Subscription created:', subscription);
 
-      // Update Supabase subscription record
+      // Get existing trial_ends_at from database (set by database trigger)
+      const { data: existingSub } = await supabase
+        .from('subscriptions')
+        .select('trial_ends_at')
+        .eq('user_id', userId)
+        .single();
+
+      // Update Supabase subscription record with Razorpay subscription ID
+      // Keep the trial_ends_at that was set by the database trigger
       const { error: updateError } = await supabase
         .from('subscriptions')
         .update({
           rzp_subscription_id: subscription.id,
           razorpay_plan_id: planId,
           status: 'trial',
-          trial_ends_at: new Date(trialEndTimestamp * 1000).toISOString(),
           next_billing_date: subscription.next_billing_at ? 
             new Date(subscription.next_billing_at * 1000).toISOString() : null
         })
