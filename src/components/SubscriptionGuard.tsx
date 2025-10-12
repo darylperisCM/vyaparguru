@@ -12,11 +12,23 @@ interface SubscriptionGuardProps {
 }
 
 export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
-  const { isAuthenticated, loading: authLoading } = useAuth();
-  const { hasAccess, loading, subscription, isPendingPayment, isExpired } = useSubscription();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const { hasAccess, loading, subscription, isPendingPayment, isExpired, isInTrial, isActive, refetch } = useSubscription();
   const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
+
+  // Log subscription state for debugging
+  console.log('[SubscriptionGuard] State:', {
+    user: user?.id,
+    hasAccess,
+    subscription: subscription?.id,
+    status: subscription?.status,
+    isInTrial,
+    isActive,
+    isPendingPayment,
+    isExpired
+  });
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -130,6 +142,65 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Debug card when subscription exists but hasAccess is false
+  if (!hasAccess && subscription && !showPaymentModal) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-2xl w-full">
+          <CardHeader>
+            <CardTitle className="text-center">🔍 Debug Information</CardTitle>
+            <CardDescription className="text-center">
+              Subscription found but access denied - investigating...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2 text-sm bg-muted p-4 rounded-lg font-mono">
+              <div><strong>Auth Status:</strong> {isAuthenticated ? 'Authenticated ✓' : 'Not Authenticated ✗'}</div>
+              <div><strong>User ID:</strong> {user?.id || 'N/A'}</div>
+              <div className="border-t pt-2 mt-2">
+                <div><strong>Subscription Found:</strong> Yes ✓</div>
+                <div><strong>Subscription ID:</strong> {subscription.id}</div>
+                <div><strong>Subscription Status:</strong> {subscription.status}</div>
+                <div><strong>Trial Ends At:</strong> {subscription.trial_ends_at || 'N/A'}</div>
+                <div><strong>Razorpay Sub ID:</strong> {subscription.rzp_subscription_id || 'NULL'}</div>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <div><strong>Is In Trial:</strong> {isInTrial ? 'Yes ✓' : 'No ✗'}</div>
+                <div><strong>Is Active:</strong> {isActive ? 'Yes ✓' : 'No ✗'}</div>
+                <div><strong>Is Expired:</strong> {isExpired ? 'Yes' : 'No'}</div>
+                <div><strong>Is Pending Payment:</strong> {isPendingPayment ? 'Yes' : 'No'}</div>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <div className="text-red-500"><strong>Has Access:</strong> {hasAccess ? 'Yes ✓' : 'No ✗'}</div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  console.log('[SubscriptionGuard] Manually refreshing subscription...');
+                  refetch();
+                }}
+                className="flex-1"
+              >
+                🔄 Retry Subscription Fetch
+              </Button>
+              <Button
+                onClick={() => navigate('/pricing')}
+                variant="outline"
+                className="flex-1"
+              >
+                View Plans
+              </Button>
+            </div>
+            <p className="text-xs text-center text-muted-foreground">
+              Please check browser console for detailed logs
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -51,7 +51,12 @@ export const useSubscription = () => {
   }, [user]);
 
   const fetchSubscription = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('[useSubscription] No user, skipping fetch');
+      return;
+    }
+
+    console.log('[useSubscription] Fetching subscription for user:', user.id);
 
     try {
       const { data, error } = await supabase
@@ -60,10 +65,14 @@ export const useSubscription = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
+      console.log('[useSubscription] Query result:', { data, error });
+
       if (error) throw error;
       setSubscription(data);
+      
+      console.log('[useSubscription] Subscription set:', data);
     } catch (error) {
-      console.error('Error fetching subscription:', error);
+      console.error('[useSubscription] Error fetching subscription:', error);
     } finally {
       setLoading(false);
     }
@@ -83,6 +92,16 @@ export const useSubscription = () => {
     : 0;
 
   const hasAccess = isInTrial || isActive;
+
+  console.log('[useSubscription] Current state:', {
+    subscriptionExists: !!subscription,
+    status: subscription?.status,
+    isInTrial,
+    isActive,
+    hasAccess,
+    trialEndsAt: subscription?.trial_ends_at,
+    daysUntilTrialEnd
+  });
 
   return {
     subscription,
