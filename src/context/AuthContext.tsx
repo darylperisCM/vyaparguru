@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   try {
     console.log('🔍 VyaparGuru - Requesting OTP for:', phone);
     
-    const { data, error } = await supabase.functions.invoke('msg91-otp', {
+    const { data, error } = await supabase.functions.invoke('msg91-otp-v2', {
       body: { 
         action: 'send-otp',
         phone 
