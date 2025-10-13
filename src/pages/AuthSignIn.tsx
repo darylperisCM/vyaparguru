@@ -216,6 +216,17 @@ export default function AuthSignIn() {
     setSignUpLoading(true);
     
     try {
+      const { error } = await requestOtp(`+91${signUpFormData.mobileNumber}`);
+      
+      if (error) {
+        toast({
+          title: "Failed to Send OTP",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
       toast({
         title: "OTP Sent",
         description: "Please enter the OTP to complete registration",
@@ -433,9 +444,6 @@ export default function AuthSignIn() {
                     <p className="text-sm text-muted-foreground text-center">
                       OTP sent to +91{signUpFormData.mobileNumber}
                     </p>
-                    <p className="text-xs text-muted-foreground text-center">
-                      Use 123456 for testing in preview mode
-                    </p>
                   </div>
                   
                   <div className="space-y-3">
@@ -545,9 +553,6 @@ export default function AuthSignIn() {
                       </InputOTP>
                     </div>
                     <div className="text-center space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        Preview mode: Use <span className="font-mono bg-muted px-1 rounded">123456</span>
-                      </p>
                       <Button 
                         type="button" 
                         variant="ghost" 
