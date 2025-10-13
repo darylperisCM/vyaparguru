@@ -131,7 +131,7 @@ const verifyOtp = async (phone: string, otp: string) => {
   try {
     console.log('🔍 VyaparGuru - Verifying OTP for:', { phone, otp });
     
-    const { data, error } = await supabase.functions.invoke('msg91-otp', {
+    const { data, error } = await supabase.functions.invoke('msg91-otp-v2', {
       body: { 
         action: 'verify-otp',
         phone,
