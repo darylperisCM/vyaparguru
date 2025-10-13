@@ -34,22 +34,12 @@ Deno.serve(async (req) => {
 
     if (action === 'send-otp') {
       const templateId = Deno.env.get('MSG91_TEMPLATE_ID');
-      const devMode = Deno.env.get('MSG91_DEV_MODE') === 'true';
-
-      // Development mode - skip actual MSG91 API call
-      if (devMode || !templateId) {
-        console.log('DEV MODE: Skipping MSG91 OTP send, using test mode');
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            message: 'OTP sent successfully (dev mode)',
-            dev_mode: true 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      
+      if (!templateId) {
+        throw new Error('MSG91_TEMPLATE_ID is not configured');
       }
 
-      // Production mode - Send OTP via MSG91
+      // Send OTP via MSG91
       console.log('Sending OTP via MSG91...');
       const response = await fetch('https://control.msg91.com/api/v5/otp', {
         method: 'POST',
@@ -81,37 +71,25 @@ Deno.serve(async (req) => {
         throw new Error('OTP is required for verification');
       }
 
-      const templateId = Deno.env.get('MSG91_TEMPLATE_ID');
-      const devMode = Deno.env.get('MSG91_DEV_MODE') === 'true';
+      // Verify OTP with MSG91
+      console.log('Verifying OTP with MSG91...');
+      const verifyResponse = await fetch('https://control.msg91.com/api/v5/otp/verify', {
+        method: 'POST',
+        headers: {
+          'authkey': msg91AuthKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          otp: otp,
+          mobile: phone.startsWith('+91') ? phone.substring(3) : phone,
+        }),
+      });
 
-      // Development mode - accept test OTP
-      if (devMode || !templateId) {
-        console.log('DEV MODE: Using test OTP verification');
-        if (otp !== '123456') {
-          throw new Error('Invalid OTP. Use 123456 in development mode.');
-        }
-        console.log('DEV MODE: OTP verified successfully');
-      } else {
-        // Production mode - Verify OTP with MSG91
-        console.log('Verifying OTP with MSG91...');
-        const verifyResponse = await fetch('https://control.msg91.com/api/v5/otp/verify', {
-          method: 'POST',
-          headers: {
-            'authkey': msg91AuthKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            otp: otp,
-            mobile: phone.startsWith('+91') ? phone.substring(3) : phone,
-          }),
-        });
+      const verifyResult = await verifyResponse.json();
+      console.log('MSG91 Verify OTP Response:', verifyResult);
 
-        const verifyResult = await verifyResponse.json();
-        console.log('MSG91 Verify OTP Response:', verifyResult);
-
-        if (!verifyResponse.ok || verifyResult.type !== 'success') {
-          throw new Error(`Invalid OTP: ${verifyResult.message || 'Verification failed'}`);
-        }
+      if (!verifyResponse.ok || verifyResult.type !== 'success') {
+        throw new Error(`Invalid OTP: ${verifyResult.message || 'Verification failed'}`);
       }
 
       // Check if user exists (by checking if phone exists in profiles table)
