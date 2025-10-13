@@ -74,63 +74,139 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
-  const requestOtp = async (phone: string) => {
-    try {
-      const { error } = await supabase.functions.invoke('msg91-otp', {
-        body: { 
-          action: 'send-otp',
-          phone 
-        }
-      });
+ const requestOtp = async (phone: string) => {
+  try {
+    console.log('🔍 VyaparGuru - Requesting OTP for:', phone);
+    
+    const { data, error } = await supabase.functions.invoke('msg91-otp', {
+      body: { 
+        action: 'send-otp',
+        phone 
+      }
+    });
+    
+    console.log('🔍 VyaparGuru - Raw response:', { data, error });
+    
+    // Handle Supabase function errors (non-2xx responses)
+    if (error) {
+      console.error('🔍 VyaparGuru - Function error:', error);
       
-      if (error) {
-        console.error('Error sending OTP:', error);
-        return { error };
+      // Try to get the actual error message from the Edge Function
+      let errorMessage = 'Failed to send OTP';
+      
+      if (error.context && error.context.body) {
+        try {
+          const errorResponse = await new Response(error.context.body).json();
+          console.log('🔍 VyaparGuru - Error response body:', errorResponse);
+          errorMessage = errorResponse.error || errorResponse.message || errorMessage;
+        } catch (parseError) {
+          console.log('🔍 VyaparGuru - Could not parse error body');
+        }
       }
       
-      return { error: null };
-    } catch (error: any) {
-      console.error('Error in requestOtp:', error);
-      return { error };
+      return { 
+        error: { 
+          message: errorMessage,
+          originalError: error 
+        } 
+      };
     }
-  };
+    
+    // Success case
+    console.log('✅ VyaparGuru - OTP request successful:', data);
+    return { error: null };
+    
+  } catch (error: any) {
+    console.error('💥 VyaparGuru - Exception in requestOtp:', error);
+    return { 
+      error: { 
+        message: 'Network error - please check your connection',
+        originalError: error 
+      } 
+    };
+  }
+};
 
-  const verifyOtp = async (phone: string, otp: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('msg91-otp', {
-        body: { 
-          action: 'verify-otp',
-          phone,
-          otp
+const verifyOtp = async (phone: string, otp: string) => {
+  try {
+    console.log('🔍 VyaparGuru - Verifying OTP for:', { phone, otp });
+    
+    const { data, error } = await supabase.functions.invoke('msg91-otp', {
+      body: { 
+        action: 'verify-otp',
+        phone,
+        otp
+      }
+    });
+
+    console.log('🔍 VyaparGuru - Verify raw response:', { data, error });
+
+    // Handle Supabase function errors (non-2xx responses)
+    if (error) {
+      console.error('🔍 VyaparGuru - Verify error:', error);
+      
+      // Try to get the actual error message from the Edge Function
+      let errorMessage = 'OTP verification failed';
+      
+      if (error.context && error.context.body) {
+        try {
+          const errorResponse = await new Response(error.context.body).json();
+          console.log('🔍 VyaparGuru - Verify error response body:', errorResponse);
+          errorMessage = errorResponse.error || errorResponse.message || errorMessage;
+        } catch (parseError) {
+          console.log('🔍 VyaparGuru - Could not parse verify error body');
         }
-      });
-
-      if (error) {
-        console.error('Error verifying OTP:', error);
-        return { error };
       }
-
-      if (!data?.access_token || !data?.refresh_token) {
-        return { error: new Error('Invalid response from server') };
-      }
-
-      // Set session with the tokens from edge function
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token
-      });
-
-      if (sessionError) {
-        console.error('Error setting session:', sessionError);
-        return { error: sessionError };
-      }
-
-      return { error: null };
-    } catch (error: any) {
-      console.error('Error in verifyOtp:', error);
-      return { error };
+      
+      return { 
+        error: { 
+          message: errorMessage,
+          originalError: error 
+        } 
+      };
     }
-  };
+
+    // Success case - validate response
+    if (!data?.access_token || !data?.refresh_token) {
+      console.error('🔍 VyaparGuru - Invalid response format:', data);
+      return { 
+        error: { 
+          message: 'Invalid server response - missing tokens' 
+        } 
+      };
+    }
+
+    // Set session with the tokens from edge function
+    console.log('🔍 VyaparGuru - Setting session with tokens...');
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token
+    });
+
+    if (sessionError) {
+      console.error('🔍 VyaparGuru - Session error:', sessionError);
+      return { 
+        error: { 
+          message: 'Failed to create session',
+          originalError: sessionError 
+        } 
+      };
+    }
+
+    console.log('✅ VyaparGuru - OTP verification and session creation successful');
+    return { error: null };
+
+  } catch (error: any) {
+    console.error('💥 VyaparGuru - Exception in verifyOtp:', error);
+    return { 
+      error: { 
+        message: 'Network error during verification',
+        originalError: error 
+      } 
+    };
+  }
+};
+
 
   const value = {
     isAuthenticated: !!session,
