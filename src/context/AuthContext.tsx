@@ -246,17 +246,6 @@ const verifyOtp = async (phone: string, otp: string) => {
   }
 };
 
-    
-  } catch (error: any) {
-    console.error('❌ Verify OTP Error:', error);
-    return { 
-      error: { 
-        message: error.message || 'Verification failed'
-      } 
-    };
-  }
-};
-
 
 
   const value = {
