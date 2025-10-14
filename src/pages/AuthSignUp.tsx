@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const AuthSignUp = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, verifyOtp, requestOtp, registerUser, loading: authLoading } = useAuth(); // ← Add registerUser
+  const { isAuthenticated, verifyOtp, requestOtp, registerUser, loading: authLoading } = useAuth();
   const { toast } = useToast();
   
   const [step, setStep] = useState<'form' | 'otp'>('form');
@@ -98,7 +98,7 @@ const AuthSignUp = () => {
     }
   };
 
-  // ✅ FIXED: Use registerUser first, then requestOtp
+  // ✅ FIXED: Pass all form data to registerUser
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -108,13 +108,15 @@ const AuthSignUp = () => {
     const fullPhone = `+91${formData.mobileNumber}`;
     
     try {
-      console.log('📝 Sign-Up: Step 1 - Registering user:', fullPhone);
+      console.log('📝 Sign-Up: Step 1 - Registering user:', fullPhone, formData);
       
-      // ✅ Step 1: Register user first
+      // ✅ Step 1: Register user with ALL form data
       const { error: registerError } = await registerUser(
         fullPhone, 
         formData.name,
-        formData.email || undefined
+        formData.email || undefined,
+        formData.age,        // ✅ FIXED: Pass age
+        formData.location    // ✅ FIXED: Pass location
       );
       
       if (registerError) {
@@ -162,7 +164,6 @@ const AuthSignUp = () => {
     }
   };
 
-  // ✅ FIXED: Simplified - no profile creation needed (edge function handles it)
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -192,7 +193,6 @@ const AuthSignUp = () => {
         return;
       }
 
-      // ✅ Success! Profile is already created by edge function
       console.log('✅ OTP verified successfully - user profile created by backend');
       
       toast({
@@ -200,7 +200,6 @@ const AuthSignUp = () => {
         description: "Your account has been created successfully!",
       });
       
-      // Navigate to dashboard
       navigate('/dashboard');
       
     } catch (error: any) {
