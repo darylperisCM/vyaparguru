@@ -188,11 +188,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(data?.error || 'Invalid OTP');
     }
 
-    // ✅ OTP verified successfully - now sign in the user
-    console.log('✅ OTP verified, signing in user:', data.user_id);
+    // ✅ OTP verified successfully - now establish session
+    console.log('✅ OTP verified, establishing session for user:', data.user_id);
     
-    // Use Supabase's signInWithOtp or similar method to establish session
-    // Since we have a verified user, we can establish the session
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    });
+    
+    if (sessionError) {
+      console.error('❌ Session error:', sessionError);
+      throw new Error('Failed to establish session');
+    }
+    
+    console.log('✅ Session established successfully');
     return { error: null };
     
   } catch (error: any) {
