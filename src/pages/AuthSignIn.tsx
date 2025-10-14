@@ -224,6 +224,7 @@ export default function AuthSignIn() {
     }
   };
 
+  // ✅ FIXED: Pass ALL form data including age and location
   const handleSignUpRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -233,13 +234,15 @@ export default function AuthSignIn() {
     const fullPhone = `+91${signUpFormData.mobileNumber}`;
     
     try {
-      console.log('📝 Sign-Up: Step 1 - Registering user:', fullPhone);
+      console.log('📝 Sign-Up: Step 1 - Registering user:', fullPhone, signUpFormData);
       
-      // Step 1: Register user FIRST
+      // ✅ Step 1: Register user with ALL form data
       const { error: registerError } = await registerUser(
         fullPhone, 
         signUpFormData.name,
-        signUpFormData.email || undefined
+        signUpFormData.email || undefined,
+        signUpFormData.age,        // ✅ FIXED: Pass age
+        signUpFormData.location    // ✅ FIXED: Pass location
       );
       
       if (registerError) {
@@ -254,7 +257,7 @@ export default function AuthSignIn() {
 
       console.log('✅ User registered successfully');
 
-      // Step 2: THEN request OTP
+      // ✅ Step 2: THEN request OTP
       console.log('📝 Sign-Up: Step 2 - Requesting OTP for registered user');
       const { error: otpError } = await requestOtp(fullPhone);
       
