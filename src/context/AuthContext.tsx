@@ -76,10 +76,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 const requestOtp = async (phone: string) => {
   try {
-    console.log('🚀 VyaparGuru DIRECT - Requesting OTP for:', phone);
+    console.log('🚀 VyaparGuru PROXY - Requesting OTP for:', phone);
     
     const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
-    const cleanPhone = phone.startsWith('+91') ? phone.substring(3) : phone;
     
     // Store OTP locally for verification
     localStorage.setItem(`vyapar_otp_${phone}`, JSON.stringify({
@@ -88,28 +87,23 @@ const requestOtp = async (phone: string) => {
       phone: phone
     }));
     
-    // Direct MSG91 API call (bypassing broken Edge Functions)
-    const message = `Your VyaparGuru login OTP is ${generatedOTP}. Valid for 5 minutes. Do not share with anyone.`;
-    const otpUrl = `https://control.msg91.com/api/sendotp.php?` + 
-      `authkey=YOUR_MSG91_AUTH_KEY` + // Replace with your actual key
-      `&mobile=91${cleanPhone}` +
-      `&otp=${generatedOTP}` +
-      `&sender=VYGURU` +
-      `&DLT_TE_ID=1707176026967145609` +
-      `&message=${encodeURIComponent(message)}`;
-
-    console.log('📨 VyaparGuru DIRECT - Calling MSG91...');
-    
-    const response = await fetch(otpUrl, {
-      method: 'GET',
-      mode: 'no-cors' // Bypass CORS issues
+    // Call our proxy Edge Function (no CORS issues)
+    const { data, error } = await supabase.functions.invoke('msg91-proxy', {
+      body: { 
+        phone: phone,
+        otp: generatedOTP
+      }
     });
-
-    console.log('✅ VyaparGuru DIRECT - SMS sent successfully!');
+    
+    if (error || !data?.success) {
+      throw new Error('Failed to send OTP');
+    }
+    
+    console.log('✅ VyaparGuru PROXY - SMS sent successfully!');
     return { error: null };
     
   } catch (error: any) {
-    console.error('❌ VyaparGuru DIRECT Error:', error);
+    console.error('❌ VyaparGuru PROXY Error:', error);
     return { 
       error: { 
         message: 'Failed to send OTP - please try again',
@@ -121,7 +115,7 @@ const requestOtp = async (phone: string) => {
 
 const verifyOtp = async (phone: string, otp: string) => {
   try {
-    console.log('🔍 VyaparGuru DIRECT - Verifying OTP...');
+    console.log('🔍 VyaparGuru PROXY - Verifying OTP...');
     
     // Get stored OTP
     const storedData = localStorage.getItem(`vyapar_otp_${phone}`);
@@ -145,7 +139,7 @@ const verifyOtp = async (phone: string, otp: string) => {
     // Clean up
     localStorage.removeItem(`vyapar_otp_${phone}`);
     
-    // Create user session with Supabase Auth (bypassing Edge Functions)
+    // Create user session with Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email: `${phone.replace('+', '')}@vyaparguru.temp`,
       password: 'VyaparGuru2025!',
@@ -171,11 +165,11 @@ const verifyOtp = async (phone: string, otp: string) => {
       throw new Error('Authentication failed');
     }
     
-    console.log('✅ VyaparGuru DIRECT - Authentication successful!');
+    console.log('✅ VyaparGuru PROXY - Authentication successful!');
     return { error: null };
     
   } catch (error: any) {
-    console.error('❌ VyaparGuru DIRECT Verify Error:', error);
+    console.error('❌ VyaparGuru PROXY Verify Error:', error);
     return { 
       error: { 
         message: error.message || 'Verification failed',
