@@ -11,7 +11,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   requestOtp: (phone: string) => Promise<{ error: any }>;
   verifyOtp: (phone: string, otp: string) => Promise<{ error: any }>;
-  registerUser: (phone: string, name: string, email?: string) => Promise<{ error: any }>; // ← ADD THIS
+  registerUser: (phone: string, name: string, email?: string, age?: string, location?: string) => Promise<{ error: any }>; // ✅ FIXED: Added age and location parameters
   loading: boolean;
 }
 
@@ -75,8 +75,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
-  // ✅ ADD THIS FUNCTION
-  const registerUser = async (phone: string, name: string, email?: string) => {
+  // ✅ FIXED: Updated function signature and body
+  const registerUser = async (phone: string, name: string, email?: string, age?: string, location?: string) => {
     try {
       console.log('👤 Registering new user:', phone, name);
       
@@ -85,9 +85,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           action: 'register-user',
           phone: phone,
           name: name,
-          email: email
-            age: age,      // ✅ ADD: Pass age
-        location: location  // ✅ ADD: Pass location
+          email: email,
+          age: age,        // ✅ FIXED: Now properly included
+          location: location  // ✅ FIXED: Now properly included
         }
       });
       
@@ -224,7 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     requestOtp,
     verifyOtp,
-    registerUser, // ← ADD THIS TO THE VALUE
+    registerUser,
     loading,
   };
 
