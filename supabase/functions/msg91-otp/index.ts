@@ -9,6 +9,10 @@ interface OTPRequestBody {
   action: 'send-otp' | 'verify-otp';
   phone: string;
   otp?: string;
+  name?: string;
+  email?: string;
+  age?: string;
+  location?: string;
 }
 
 Deno.serve(async (req) => {
@@ -18,7 +22,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, phone, otp }: OTPRequestBody = await req.json();
+    const { action, phone, otp, name, email, age, location }: OTPRequestBody = await req.json();
     console.log(`MSG91 OTP Action: ${action} for phone: ${phone}`);
 
     const msg91AuthKey = Deno.env.get('MSG91_AUTH_KEY');
@@ -148,6 +152,26 @@ Deno.serve(async (req) => {
         userId = newUser.user.id;
         isNewUser = true;
         console.log('New user created:', userId);
+
+        // CRITICAL: Create profile for new user - this triggers the 3-day trial subscription!
+        console.log('Creating profile with data:', { name, email, age, location });
+        const { error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            user_id: userId,
+            mobile_number: phone,
+            name: name || 'User',
+            age: age ? parseInt(age) : 25,
+            email: email || null,
+            location: location || null,
+          });
+
+        if (profileError) {
+          console.error('❌ Error creating profile:', profileError);
+          throw new Error('Failed to create user profile');
+        }
+        
+        console.log('✅ Profile created - subscription trigger should fire now');
       }
 
       // Generate session token

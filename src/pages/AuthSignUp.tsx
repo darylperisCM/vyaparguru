@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const AuthSignUp = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, verifyOtp, requestOtp, registerUser, loading: authLoading } = useAuth();
+  const { isAuthenticated, verifyOtp, requestOtp, loading: authLoading } = useAuth();
   const { toast } = useToast();
   
   const [step, setStep] = useState<'form' | 'otp'>('form');
@@ -98,7 +98,6 @@ const AuthSignUp = () => {
     }
   };
 
-  // ✅ FIXED: Pass all form data to registerUser
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -108,31 +107,8 @@ const AuthSignUp = () => {
     const fullPhone = `+91${formData.mobileNumber}`;
     
     try {
-      console.log('📝 Sign-Up: Step 1 - Registering user:', fullPhone, formData);
+      console.log('📝 Sign-Up: Requesting OTP for:', fullPhone);
       
-      // ✅ Step 1: Register user with ALL form data
-      const { error: registerError } = await registerUser(
-        fullPhone, 
-        formData.name,
-        formData.email || undefined,
-        formData.age,        // ✅ FIXED: Pass age
-        formData.location    // ✅ FIXED: Pass location
-      );
-      
-      if (registerError) {
-        console.error('📝 Sign-Up: Registration failed:', registerError);
-        toast({
-          title: "Registration Failed",
-          description: registerError.message || "Please try again",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('✅ User registered successfully');
-
-      // ✅ Step 2: Now request OTP
-      console.log('📝 Sign-Up: Step 2 - Requesting OTP for registered user');
       const { error: otpError } = await requestOtp(fullPhone);
       
       if (otpError) {
@@ -147,8 +123,8 @@ const AuthSignUp = () => {
       
       console.log('✅ OTP sent successfully');
       toast({
-        title: "Registration Successful!",
-        description: "Please enter the OTP to complete setup",
+        title: "OTP Sent!",
+        description: "Please enter the OTP to complete registration",
       });
       setStep('otp');
 
@@ -156,7 +132,7 @@ const AuthSignUp = () => {
       console.error('📝 Sign-Up: Unexpected error:', error);
       toast({
         title: "Error",
-        description: "Registration failed. Please try again.",
+        description: "Failed to send OTP. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -179,9 +155,19 @@ const AuthSignUp = () => {
     setLoading(true);
     
     try {
-      console.log('📝 Sign-Up: Verifying OTP for:', `+91${formData.mobileNumber}`);
+      console.log('📝 Sign-Up: Verifying OTP with profile data');
       
-      const { error } = await verifyOtp(`+91${formData.mobileNumber}`, otp);
+      // Pass profile data with OTP verification for new user registration
+      const { error } = await verifyOtp(
+        `+91${formData.mobileNumber}`, 
+        otp,
+        {
+          name: formData.name,
+          email: formData.email || undefined,
+          age: formData.age,
+          location: formData.location || undefined
+        }
+      );
       
       if (error) {
         console.error('📝 Sign-Up: OTP verification failed:', error);
@@ -193,14 +179,14 @@ const AuthSignUp = () => {
         return;
       }
 
-      console.log('✅ OTP verified successfully - user profile created by backend');
+      console.log('✅ Registration complete - profile and subscription created!');
       
       toast({
         title: "Welcome to VyaparGuru!",
-        description: "Your account has been created successfully!",
+        description: "Your 3-day free trial has started!",
       });
       
-      navigate('/dashboard');
+      // Auth state change will auto-redirect to dashboard
       
     } catch (error: any) {
       console.error('📝 Sign-Up: Verification error:', error);

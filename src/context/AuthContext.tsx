@@ -10,8 +10,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   requestOtp: (phone: string) => Promise<{ error: any }>;
-  verifyOtp: (phone: string, otp: string) => Promise<{ error: any }>;
-  registerUser: (phone: string, name: string, email?: string, age?: string, location?: string) => Promise<{ error: any }>;
+  verifyOtp: (phone: string, otp: string, profileData?: { name: string; email?: string; age?: string; location?: string }) => Promise<{ error: any }>;
   loading: boolean;
 }
 
@@ -75,46 +74,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
-  const registerUser = async (phone: string, name: string, email?: string, age?: string, location?: string) => {
-    try {
-      console.log('👤 Registering new user:', phone, name);
-      
-      const { data, error } = await supabase.functions.invoke('msg91-otp', {
-        body: { 
-          action: 'register-user',
-          phone: phone,
-          name: name,
-          email: email,
-          age: age,
-          location: location
-        }
-      });
-      
-      console.log('📡 Registration response:', { data, error });
-      
-      if (error) {
-        console.error('❌ Edge function error:', error);
-        throw new Error(error.message || 'Registration failed');
-      }
-      
-      if (!data?.success) {
-        console.error('❌ Registration failed:', data);
-        throw new Error(data?.message || 'Registration failed');
-      }
-      
-      console.log('✅ User registered successfully');
-      return { error: null };
-      
-    } catch (error: any) {
-      console.error('❌ Registration Error:', error);
-      return { 
-        error: { 
-          message: error.message || 'Registration failed - please try again'
-        } 
-      };
-    }
-  };
-
   const requestOtp = async (phone: string) => {
     try {
       console.log('📱 Requesting OTP for phone:', phone);
@@ -162,17 +121,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // ✅ FIXED: Simplified verifyOtp with better error handling
-  const verifyOtp = async (phone: string, otp: string) => {
+  const verifyOtp = async (
+    phone: string, 
+    otp: string,
+    profileData?: { name: string; email?: string; age?: string; location?: string }
+  ) => {
   try {
     console.log('🔍 Verifying OTP for phone:', phone);
     
+    const requestBody: any = { 
+      action: 'verify-otp',
+      phone: phone,
+      otp: otp
+    };
+    
+    // Include profile data if provided (for new user sign-ups)
+    if (profileData) {
+      requestBody.name = profileData.name;
+      requestBody.email = profileData.email;
+      requestBody.age = profileData.age;
+      requestBody.location = profileData.location;
+      console.log('Including profile data for new user registration');
+    }
+    
     const { data, error } = await supabase.functions.invoke('msg91-otp', {
-      body: { 
-        action: 'verify-otp',
-        phone: phone,
-        otp: otp
-      }
+      body: requestBody
     });
     
     if (error || !data?.success) {
@@ -305,7 +278,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     requestOtp,
     verifyOtp,
-    registerUser,
     loading,
   };
 

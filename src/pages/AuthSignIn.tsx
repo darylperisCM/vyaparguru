@@ -11,7 +11,7 @@ import { HomeButton } from '@/components/ui/home-button';
 import { Loader2, Smartphone, KeyRound, ArrowLeft, UserPlus, LogIn } from 'lucide-react';
 
 export default function AuthSignIn() {
-  const { requestOtp, verifyOtp, registerUser, isAuthenticated, loading } = useAuth();
+  const { requestOtp, verifyOtp, isAuthenticated, loading } = useAuth();
   const { toast } = useToast();
   
   // Sign In States
@@ -224,7 +224,6 @@ export default function AuthSignIn() {
     }
   };
 
-  // ✅ FIXED: Pass ALL form data including age and location
   const handleSignUpRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -234,31 +233,8 @@ export default function AuthSignIn() {
     const fullPhone = `+91${signUpFormData.mobileNumber}`;
     
     try {
-      console.log('📝 Sign-Up: Step 1 - Registering user:', fullPhone, signUpFormData);
+      console.log('📝 Sign-Up: Requesting OTP for:', fullPhone);
       
-      // ✅ Step 1: Register user with ALL form data
-      const { error: registerError } = await registerUser(
-        fullPhone, 
-        signUpFormData.name,
-        signUpFormData.email || undefined,
-        signUpFormData.age,        // ✅ FIXED: Pass age
-        signUpFormData.location    // ✅ FIXED: Pass location
-      );
-      
-      if (registerError) {
-        console.error('📝 Sign-Up: Registration failed:', registerError);
-        toast({
-          title: "Registration Failed",
-          description: registerError.message || "Please try again",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('✅ User registered successfully');
-
-      // ✅ Step 2: THEN request OTP
-      console.log('📝 Sign-Up: Step 2 - Requesting OTP for registered user');
       const { error: otpError } = await requestOtp(fullPhone);
       
       if (otpError) {
@@ -273,8 +249,8 @@ export default function AuthSignIn() {
       
       console.log('✅ OTP sent successfully');
       toast({
-        title: "Registration Successful!",
-        description: "Please enter the OTP to complete setup",
+        title: "OTP Sent!",
+        description: "Please enter the OTP to complete registration",
       });
       setSignUpStep('otp');
 
@@ -282,7 +258,7 @@ export default function AuthSignIn() {
       console.error('📝 Sign-Up: Unexpected error:', error);
       toast({
         title: "Error",
-        description: "Registration failed. Please try again.",
+        description: "Failed to send OTP. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -305,7 +281,19 @@ export default function AuthSignIn() {
     setSignUpLoading(true);
     
     try {
-      const { error } = await verifyOtp(`+91${signUpFormData.mobileNumber}`, signUpOtp);
+      console.log('📝 Sign-Up: Verifying OTP with profile data');
+      
+      // Pass profile data with OTP verification for new user registration
+      const { error } = await verifyOtp(
+        `+91${signUpFormData.mobileNumber}`, 
+        signUpOtp,
+        {
+          name: signUpFormData.name,
+          email: signUpFormData.email || undefined,
+          age: signUpFormData.age,
+          location: signUpFormData.location || undefined
+        }
+      );
       
       if (error) {
         toast({
@@ -316,9 +304,11 @@ export default function AuthSignIn() {
         return;
       }
 
+      console.log('✅ Registration complete - profile and subscription created!');
+      
       toast({
         title: "Welcome to VyaparGuru!",
-        description: "Your account has been created successfully!",
+        description: "Your 3-day free trial has started!",
       });
       
     } catch (error) {
