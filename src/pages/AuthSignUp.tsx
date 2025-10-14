@@ -8,11 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 const AuthSignUp = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, verifyOtp, requestOtp, loading: authLoading } = useAuth();
+  const { isAuthenticated, verifyOtp, requestOtp, registerUser, loading: authLoading } = useAuth(); // ← Add registerUser
   const { toast } = useToast();
   
   const [step, setStep] = useState<'form' | 'otp'>('form');
@@ -99,34 +98,63 @@ const AuthSignUp = () => {
     }
   };
 
+  // ✅ FIXED: Use registerUser first, then requestOtp
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
     
     setLoading(true);
+    const fullPhone = `+91${formData.mobileNumber}`;
     
     try {
-      const { error } = await requestOtp(`+91${formData.mobileNumber}`);
+      console.log('📝 Sign-Up: Step 1 - Registering user:', fullPhone);
       
-      if (error) {
+      // ✅ Step 1: Register user first
+      const { error: registerError } = await registerUser(
+        fullPhone, 
+        formData.name,
+        formData.email || undefined
+      );
+      
+      if (registerError) {
+        console.error('📝 Sign-Up: Registration failed:', registerError);
         toast({
-          title: "Error",
-          description: error.message || "Failed to send OTP. Please try again.",
+          title: "Registration Failed",
+          description: registerError.message || "Please try again",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('✅ User registered successfully');
+
+      // ✅ Step 2: Now request OTP
+      console.log('📝 Sign-Up: Step 2 - Requesting OTP for registered user');
+      const { error: otpError } = await requestOtp(fullPhone);
+      
+      if (otpError) {
+        console.error('📝 Sign-Up: OTP request failed:', otpError);
+        toast({
+          title: "Failed to Send OTP",
+          description: otpError.message || "Please try again",
           variant: "destructive",
         });
         return;
       }
       
+      console.log('✅ OTP sent successfully');
       toast({
-        title: "OTP Sent",
-        description: "Please enter the OTP received on your mobile",
+        title: "Registration Successful!",
+        description: "Please enter the OTP to complete setup",
       });
       setStep('otp');
-    } catch (error) {
+
+    } catch (error: any) {
+      console.error('📝 Sign-Up: Unexpected error:', error);
       toast({
         title: "Error",
-        description: "Failed to send OTP. Please try again.",
+        description: "Registration failed. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -134,6 +162,7 @@ const AuthSignUp = () => {
     }
   };
 
+  // ✅ FIXED: Simplified - no profile creation needed (edge function handles it)
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -149,9 +178,12 @@ const AuthSignUp = () => {
     setLoading(true);
     
     try {
+      console.log('📝 Sign-Up: Verifying OTP for:', `+91${formData.mobileNumber}`);
+      
       const { error } = await verifyOtp(`+91${formData.mobileNumber}`, otp);
       
       if (error) {
+        console.error('📝 Sign-Up: OTP verification failed:', error);
         toast({
           title: "Error",
           description: error.message,
@@ -160,106 +192,22 @@ const AuthSignUp = () => {
         return;
       }
 
-      // Get authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
+      // ✅ Success! Profile is already created by edge function
+      console.log('✅ OTP verified successfully - user profile created by backend');
       
-      if (!user) {
-        throw new Error('Failed to get user information');
-      }
-
-      // Check if profile already exists (existing user signing in)
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (existingProfile) {
-        // Existing user - just navigate to dashboard
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
-        });
-        navigate('/dashboard');
-        return;
-      }
-
-      // New user - create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: user.id,
-          name: formData.name,
-          age: parseInt(formData.age),
-          location: formData.location || null,
-          email: formData.email || null,
-          mobile_number: `+91${formData.mobileNumber}`
-        });
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        
-        // Sign out the user since we couldn't complete setup
-        await supabase.auth.signOut();
-        
-        toast({
-          title: "Setup Failed",
-          description: "Failed to complete account setup. Please try again.",
-          variant: "destructive",
-        });
-        
-        // Reset to form step so user can retry
-        setStep('form');
-        setOtp('');
-        return;
-      }
-
-      // Wait a moment for the database trigger to create the subscription
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Verify subscription was created
-      const { data: subscription, error: subCheckError } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (subCheckError || !subscription) {
-        console.error('Subscription check failed:', subCheckError);
-        toast({
-          title: "Warning",
-          description: "Account created but subscription setup incomplete. Please contact support if you can't access features.",
-          variant: "destructive",
-        });
-      }
-
-      // Try to create Razorpay subscription
-      try {
-        const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
-          body: { 
-            action: 'create-subscription',
-            userId: user.id 
-          }
-        });
-
-        if (!subError && subData?.subscription_id) {
-          console.log('Razorpay subscription created:', subData.subscription_id);
-          toast({
-            title: "Success!",
-            description: "Account created! Your 3-day free trial has started.",
-          });
-        }
-      } catch (razorpayError) {
-        // Non-blocking: Razorpay subscription can be created later
-        console.error('Razorpay subscription error:', razorpayError);
-      }
+      toast({
+        title: "Welcome to VyaparGuru!",
+        description: "Your account has been created successfully!",
+      });
       
-      // Only navigate after successful profile creation
+      // Navigate to dashboard
       navigate('/dashboard');
-    } catch (error) {
+      
+    } catch (error: any) {
+      console.error('📝 Sign-Up: Verification error:', error);
       toast({
         title: "Error",
-        description: "Registration failed. Please try again.",
+        description: "Verification failed. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -366,10 +314,10 @@ const AuthSignUp = () => {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending OTP...
+                    Creating Account...
                   </>
                 ) : (
-                  'Receive OTP to Complete Registration'
+                  'Create Account & Send OTP'
                 )}
               </Button>
             </form>
@@ -395,9 +343,6 @@ const AuthSignUp = () => {
                 </div>
                 <p className="text-sm text-muted-foreground text-center">
                   OTP sent to +91{formData.mobileNumber}
-                </p>
-                <p className="text-xs text-muted-foreground text-center">
-                  Use 123456 for testing in preview mode
                 </p>
               </div>
               
