@@ -86,6 +86,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           phone: phone,
           name: name,
           email: email
+            age: age,      // ✅ ADD: Pass age
+        location: location  // ✅ ADD: Pass location
         }
       });
       
