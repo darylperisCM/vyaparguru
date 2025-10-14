@@ -11,7 +11,7 @@ import { HomeButton } from '@/components/ui/home-button';
 import { Loader2, Smartphone, KeyRound, ArrowLeft, UserPlus, LogIn } from 'lucide-react';
 
 export default function AuthSignIn() {
-  const { requestOtp, verifyOtp, registerUser, isAuthenticated, loading } = useAuth(); // ← Add registerUser
+  const { requestOtp, verifyOtp, registerUser, isAuthenticated, loading } = useAuth();
   const { toast } = useToast();
   
   // Sign In States
@@ -55,7 +55,7 @@ export default function AuthSignIn() {
     return digits;
   };
 
-  // ✅ FIXED: Handle requiresSignup in sign-in flow
+  // Sign In Functions
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -79,14 +79,12 @@ export default function AuthSignIn() {
       if (error) {
         console.error('🔐 Sign-In: OTP request failed:', error);
         
-        // ✅ NEW: Handle requiresSignup case
         if (error.requiresSignup) {
           toast({
             title: "Account Not Found",
             description: "This number is not registered. Please create an account first.",
             variant: "destructive"
           });
-          // Optionally scroll to sign-up section or highlight it
           return;
         }
         
@@ -226,7 +224,6 @@ export default function AuthSignIn() {
     }
   };
 
-  // ✅ FIXED: Use registerUser first, then requestOtp
   const handleSignUpRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -234,10 +231,11 @@ export default function AuthSignIn() {
     
     setSignUpLoading(true);
     const fullPhone = `+91${signUpFormData.mobileNumber}`;
-    console.log('📝 Sign-Up: Registering user:', fullPhone);
     
     try {
-      // ✅ Step 1: Register user first
+      console.log('📝 Sign-Up: Step 1 - Registering user:', fullPhone);
+      
+      // Step 1: Register user FIRST
       const { error: registerError } = await registerUser(
         fullPhone, 
         signUpFormData.name,
@@ -256,7 +254,8 @@ export default function AuthSignIn() {
 
       console.log('✅ User registered successfully');
 
-      // ✅ Step 2: Now request OTP
+      // Step 2: THEN request OTP
+      console.log('📝 Sign-Up: Step 2 - Requesting OTP for registered user');
       const { error: otpError } = await requestOtp(fullPhone);
       
       if (otpError) {
@@ -288,7 +287,6 @@ export default function AuthSignIn() {
     }
   };
 
-  // ✅ FIXED: Simplified OTP verification (no profile creation needed)
   const handleSignUpVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -315,7 +313,6 @@ export default function AuthSignIn() {
         return;
       }
 
-      // ✅ Profile is already created by edge function, just show success
       toast({
         title: "Welcome to VyaparGuru!",
         description: "Your account has been created successfully!",
@@ -337,8 +334,284 @@ export default function AuthSignIn() {
     setSignUpOtp('');
   };
 
-  // Rest of your JSX remains the same...
   return (
-    // Your existing JSX code here - no changes needed
+    <div className="min-h-screen bg-gradient-to-br from-background to-accent/5 p-6">
+      <div className="container mx-auto">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-primary mb-2">
+            व्यापार इंग्लिश गुरु
+          </h1>
+          <p className="text-muted-foreground">
+            Create an account or sign in to continue
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {/* Sign Up Section - Left */}
+          <Card className="gradient-card">
+            <CardHeader className="text-center pb-4">
+              <div className="flex justify-center mb-4">
+                <UserPlus className="h-12 w-12 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Create New Account</CardTitle>
+              <CardDescription>
+                {signUpStep === 'form' 
+                  ? 'Fill in your details to get started' 
+                  : 'Enter the OTP sent to your mobile number'
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {signUpStep === 'form' ? (
+                <form onSubmit={handleSignUpRequestOtp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Name *</Label>
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      value={signUpFormData.name}
+                      onChange={(e) => handleSignUpInputChange('name', e.target.value)}
+                      placeholder="Enter your full name"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-age">Age *</Label>
+                    <Input
+                      id="signup-age"
+                      type="text"
+                      value={signUpFormData.age}
+                      onChange={(e) => handleSignUpInputChange('age', e.target.value)}
+                      placeholder="Enter your age"
+                      maxLength={3}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-location">Location</Label>
+                    <Input
+                      id="signup-location"
+                      type="text"
+                      value={signUpFormData.location}
+                      onChange={(e) => handleSignUpInputChange('location', e.target.value)}
+                      placeholder="Enter your location"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email Address</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      value={signUpFormData.email}
+                      onChange={(e) => handleSignUpInputChange('email', e.target.value)}
+                      placeholder="Enter your email (optional)"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-mobile">Mobile Number *</Label>
+                    <div className="flex">
+                      <div className="flex items-center px-3 border border-r-0 border-input bg-muted rounded-l-md">
+                        <span className="text-sm text-muted-foreground">+91</span>
+                      </div>
+                      <Input
+                        id="signup-mobile"
+                        type="tel"
+                        value={signUpFormData.mobileNumber}
+                        onChange={(e) => handleSignUpInputChange('mobileNumber', e.target.value)}
+                        placeholder="Enter 10-digit mobile number"
+                        className="rounded-l-none"
+                        maxLength={10}
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button type="submit" className="w-full" variant="hero" disabled={signUpLoading}>
+                    {signUpLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating Account...
+                      </>
+                    ) : (
+                      'Create Account & Send OTP'
+                    )}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleSignUpVerifyOtp} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-otp">Enter OTP</Label>
+                    <div className="flex justify-center">
+                      <InputOTP
+                        value={signUpOtp}
+                        onChange={setSignUpOtp}
+                        maxLength={6}
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                    <p className="text-sm text-muted-foreground text-center">
+                      OTP sent to +91{signUpFormData.mobileNumber}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Button type="submit" className="w-full" variant="hero" disabled={signUpLoading}>
+                      {signUpLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Verifying...
+                        </>
+                      ) : (
+                        'Complete Registration'
+                      )}
+                    </Button>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleSignUpBackToForm}
+                      disabled={signUpLoading}
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Change Mobile Number
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Sign In Section - Right */}
+          <Card className="gradient-card">
+            <CardHeader className="text-center pb-4">
+              <div className="flex justify-center mb-4">
+                {step === 'phone' ? (
+                  <LogIn className="h-12 w-12 text-primary" />
+                ) : (
+                  <KeyRound className="h-12 w-12 text-primary" />
+                )}
+              </div>
+              <CardTitle className="text-2xl">Sign In</CardTitle>
+              <CardDescription>
+                {step === 'phone' ? 'Enter your registered mobile number' : 'Enter the OTP sent to your mobile'}
+              </CardDescription>
+              {step === 'otp' && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  OTP sent to +91 {phone}
+                </p>
+              )}
+            </CardHeader>
+            <CardContent>
+              {step === 'phone' ? (
+                <form onSubmit={handleRequestOtp} className="space-y-4">
+                  <div>
+                    <Label htmlFor="signin-phone">Registered Mobile Number</Label>
+                    <div className="flex">
+                      <div className="flex items-center px-3 border border-r-0 border-input rounded-l-md bg-muted text-muted-foreground">
+                        +91
+                      </div>
+                      <Input
+                        id="signin-phone"
+                        type="tel"
+                        placeholder="9876543210"
+                        value={phone}
+                        onChange={handlePhoneChange}
+                        className="rounded-l-none"
+                        maxLength={10}
+                        required
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter the mobile number you used to create your account
+                    </p>
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    variant="hero"
+                    disabled={isRequestingOtp || !validatePhone(phone)}
+                  >
+                    {isRequestingOtp ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Smartphone className="h-4 w-4 mr-2" />
+                    )}
+                    {isRequestingOtp ? 'Sending OTP...' : 'Send OTP'}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOtp} className="space-y-6">
+                  <div className="space-y-4">
+                    <Label htmlFor="signin-otp" className="text-center block">Enter 6-digit OTP</Label>
+                    <div className="flex justify-center">
+                      <InputOTP
+                        maxLength={6}
+                        value={otp}
+                        onChange={(value) => setOtp(value)}
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                    <div className="text-center space-y-2">
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={handleBackToPhone}
+                        className="text-xs"
+                      >
+                        Change number
+                      </Button>
+                    </div>
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    variant="hero"
+                    disabled={isVerifyingOtp || otp.length !== 6}
+                  >
+                    {isVerifyingOtp ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <KeyRound className="h-4 w-4 mr-2" />
+                    )}
+                    {isVerifyingOtp ? 'Verifying...' : 'Verify & Continue'}
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-8 text-center">
+          <NavLink to="/">
+            <Button variant="ghost" className="text-muted-foreground">
+              <HomeButton />
+              Back to Home
+            </Button>
+          </NavLink>
+        </div>
+      </div>
+    </div>
   );
 }
