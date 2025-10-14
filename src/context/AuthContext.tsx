@@ -176,41 +176,36 @@ const verifyOtp = async (phone: string, otp: string) => {
       }
     });
     
-    console.log('📡 Verify response:', { data, error });
-    
-    if (error) {
-      console.error('❌ Edge function error:', error);
-      throw new Error(error.message || 'Failed to verify OTP');
-    }
-    
-    if (!data?.success) {
-      console.error('❌ Verification failed:', data);
-      throw new Error(data?.error || 'Invalid OTP');
+    if (error || !data?.success) {
+      throw new Error(data?.error || error?.message || 'Invalid OTP');
     }
 
     console.log('✅ OTP verified successfully for user:', data.user_id);
     
-    // ✅ SIMPLIFIED: Get user profile and manually set auth state
+    // ✅ FIXED: Query by mobile_number instead of user_id
     try {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', data.user_id)
+        .eq('mobile_number', phone)  // ✅ Use phone instead of user_id
         .single();
       
       if (profileError || !profile) {
+        console.error('Profile query error:', profileError);
         throw new Error('User profile not found');
       }
 
-      // ✅ Manually create a session object
+      console.log('✅ Profile found:', profile);
+
+      // ✅ Create session with the correct user_id from profile
       const mockSession = {
-        access_token: `verified_${data.user_id}`,
-        refresh_token: `refresh_${data.user_id}`,
+        access_token: `verified_${profile.user_id}`,
+        refresh_token: `refresh_${profile.user_id}`,
         expires_in: 3600,
         expires_at: Math.floor(Date.now() / 1000) + 3600,
         token_type: 'bearer',
         user: {
-          id: data.user_id,
+          id: profile.user_id,  // ✅ Use user_id from profile
           phone: phone,
           email: profile.email,
           user_metadata: {
@@ -229,7 +224,7 @@ const verifyOtp = async (phone: string, otp: string) => {
       setUser(mockSession.user);
       setLoading(false);
 
-      console.log('✅ Session established manually');
+      console.log('✅ Session established successfully');
       return { error: null };
       
     } catch (sessionError: any) {
@@ -240,6 +235,17 @@ const verifyOtp = async (phone: string, otp: string) => {
         } 
       };
     }
+    
+  } catch (error: any) {
+    console.error('❌ Verify OTP Error:', error);
+    return { 
+      error: { 
+        message: error.message || 'Verification failed'
+      } 
+    };
+  }
+};
+
     
   } catch (error: any) {
     console.error('❌ Verify OTP Error:', error);
