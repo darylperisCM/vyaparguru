@@ -11,6 +11,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   requestOtp: (phone: string) => Promise<{ error: any }>;
   verifyOtp: (phone: string, otp: string) => Promise<{ error: any }>;
+  registerUser: (phone: string, name: string, email?: string) => Promise<{ error: any }>; // ← ADD THIS
   loading: boolean;
 }
 
@@ -74,11 +75,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
+  // ✅ ADD THIS FUNCTION
+  const registerUser = async (phone: string, name: string, email?: string) => {
+    try {
+      console.log('👤 Registering new user:', phone, name);
+      
+      const { data, error } = await supabase.functions.invoke('msg91-otp', {
+        body: { 
+          action: 'register-user',
+          phone: phone,
+          name: name,
+          email: email
+        }
+      });
+      
+      console.log('📡 Registration response:', { data, error });
+      
+      if (error) {
+        console.error('❌ Edge function error:', error);
+        throw new Error(error.message || 'Registration failed');
+      }
+      
+      if (!data?.success) {
+        console.error('❌ Registration failed:', data);
+        throw new Error(data?.message || 'Registration failed');
+      }
+      
+      console.log('✅ User registered successfully');
+      return { error: null };
+      
+    } catch (error: any) {
+      console.error('❌ Registration Error:', error);
+      return { 
+        error: { 
+          message: error.message || 'Registration failed - please try again'
+        } 
+      };
+    }
+  };
+
   const requestOtp = async (phone: string) => {
     try {
       console.log('📱 Requesting OTP for phone:', phone);
       
-      // Call MSG91 OTP Edge Function
       const { data, error } = await supabase.functions.invoke('msg91-otp', {
         body: { 
           action: 'send-otp',
@@ -94,6 +133,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (!data?.success) {
+        // ✅ Handle unregistered user
+        if (data?.action_required === 'signup') {
+          console.log('⚠️ User not registered, redirecting to signup');
+          return { 
+            error: { 
+              message: data.message,
+              requiresSignup: true  // Flag to redirect to signup page
+            } 
+          };
+        }
+        
         console.error('❌ MSG91 API error:', data);
         throw new Error(data?.message || 'Failed to send OTP');
       }
@@ -172,9 +222,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     requestOtp,
     verifyOtp,
+    registerUser, // ← ADD THIS TO THE VALUE
     loading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
