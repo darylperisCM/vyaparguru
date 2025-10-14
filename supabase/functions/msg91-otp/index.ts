@@ -39,27 +39,53 @@ Deno.serve(async (req) => {
         throw new Error('MSG91_TEMPLATE_ID is not configured');
       }
 
-      // Send OTP via MSG91
-      console.log('Sending OTP via MSG91...');
+      // Format phone number
+      const formattedPhone = phone.startsWith('+91') ? phone.substring(3) : phone;
+      
+      console.log('🚀 Sending OTP via MSG91:');
+      console.log('  📱 Phone (original):', phone);
+      console.log('  📱 Phone (formatted):', formattedPhone);
+      console.log('  📋 Template ID:', templateId);
+      console.log('  🔑 Auth Key exists:', !!msg91AuthKey);
+
+      const requestBody = {
+        mobile: formattedPhone,
+        template_id: templateId,
+      };
+      console.log('  📦 Request body:', JSON.stringify(requestBody));
+
       const response = await fetch('https://control.msg91.com/api/v5/otp', {
         method: 'POST',
         headers: {
           'authkey': msg91AuthKey,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          mobile: phone.startsWith('+91') ? phone.substring(3) : phone,
-          template_id: templateId,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const result = await response.json();
-      console.log('MSG91 Send OTP Response:', result);
+      console.log('📡 MSG91 API Response:');
+      console.log('  Status:', response.status);
+      console.log('  Response:', JSON.stringify(result, null, 2));
 
       if (!response.ok || result.type === 'error') {
-        throw new Error(`MSG91 API Error: ${result.message || 'Failed to send OTP'}`);
+        const errorMsg = result.message || 'Failed to send OTP';
+        console.error('❌ MSG91 Error:', errorMsg);
+        
+        // Provide helpful error messages
+        let userMessage = errorMsg;
+        if (errorMsg.toLowerCase().includes('template')) {
+          userMessage = 'SMS template not approved. Please check your MSG91 dashboard.';
+        } else if (errorMsg.toLowerCase().includes('balance')) {
+          userMessage = 'Insufficient SMS balance. Please recharge your MSG91 account.';
+        } else if (errorMsg.toLowerCase().includes('dnd')) {
+          userMessage = 'Number is on DND. Cannot send OTP to this number.';
+        }
+        
+        throw new Error(userMessage);
       }
 
+      console.log('✅ OTP sent successfully!');
       return new Response(
         JSON.stringify({ success: true, message: 'OTP sent successfully' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

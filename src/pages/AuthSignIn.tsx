@@ -71,22 +71,30 @@ export default function AuthSignIn() {
     }
 
     setIsRequestingOtp(true);
+    const fullPhone = `+91${phone}`;
+    console.log('🔐 Sign-In: Requesting OTP for:', fullPhone);
+    
     try {
-      const { error } = await requestOtp(`+91${phone}`);
+      const { error } = await requestOtp(fullPhone);
+      console.log('🔐 Sign-In: OTP request result:', { error });
+      
       if (error) {
+        console.error('🔐 Sign-In: OTP request failed:', error);
         toast({
           title: "Failed to Send OTP",
-          description: error.message,
+          description: error.message || "Please try again",
           variant: "destructive"
         });
       } else {
+        console.log('🔐 Sign-In: OTP sent successfully');
         toast({
           title: "OTP Sent!",
           description: "Please enter the OTP to continue"
         });
         setStep('otp');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('🔐 Sign-In: Unexpected error:', error);
       toast({
         title: "Failed to Send OTP",
         description: "An unexpected error occurred",
@@ -214,25 +222,36 @@ export default function AuthSignIn() {
     if (!validateSignUpForm()) return;
     
     setSignUpLoading(true);
+    const fullPhone = `+91${signUpFormData.mobileNumber}`;
+    console.log('📝 Sign-Up: Requesting OTP for:', fullPhone);
+    console.log('📝 Sign-Up: Form data:', { 
+      name: signUpFormData.name,
+      age: signUpFormData.age,
+      phone: fullPhone 
+    });
     
     try {
-      const { error } = await requestOtp(`+91${signUpFormData.mobileNumber}`);
+      const { error } = await requestOtp(fullPhone);
+      console.log('📝 Sign-Up: OTP request result:', { error });
       
       if (error) {
+        console.error('📝 Sign-Up: OTP request failed:', error);
         toast({
           title: "Failed to Send OTP",
-          description: error.message,
+          description: error.message || "Please try again",
           variant: "destructive",
         });
         return;
       }
       
+      console.log('📝 Sign-Up: OTP sent successfully');
       toast({
         title: "OTP Sent",
         description: "Please enter the OTP to complete registration",
       });
       setSignUpStep('otp');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('📝 Sign-Up: Unexpected error:', error);
       toast({
         title: "Error",
         description: "Failed to send OTP. Please try again.",
