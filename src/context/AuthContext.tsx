@@ -164,135 +164,137 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ✅ FIXED: Simplified verifyOtp with better error handling
   const verifyOtp = async (phone: string, otp: string) => {
-    try {
-      console.log('🔍 Verifying OTP for phone:', phone);
-      
-      const { data, error } = await supabase.functions.invoke('msg91-otp', {
-        body: { 
-          action: 'verify-otp',
-          phone: phone,
-          otp: otp
-        }
-      });
-      
-      if (error || !data?.success) {
-        throw new Error(data?.error || error?.message || 'Invalid OTP');
+  try {
+    console.log('🔍 Verifying OTP for phone:', phone);
+    
+    const { data, error } = await supabase.functions.invoke('msg91-otp', {
+      body: { 
+        action: 'verify-otp',
+        phone: phone,
+        otp: otp
       }
-
-      console.log('✅ OTP verified successfully for user:', data.user_id);
-      
-      // ✅ SIMPLIFIED: Get profile and create basic session
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('mobile_number', phone)
-          .single();
-        
-        if (profileError || !profile) {
-          console.error('Profile query error:', profileError);
-          
-          // ✅ FALLBACK: If profile query fails, create minimal session
-          console.log('⚠️ Profile not found, creating minimal session');
-          
-          const minimalUser = {
-            id: data.user_id || 'verified_user',
-            phone: phone,
-            email: '',
-            user_metadata: { mobile_number: phone },
-            app_metadata: {},
-            aud: 'authenticated',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          } as User;
-
-          const minimalSession = {
-            access_token: 'verified',
-            refresh_token: 'verified',
-            expires_in: 3600,
-            expires_at: Math.floor(Date.now() / 1000) + 3600,
-            token_type: 'bearer',
-            user: minimalUser
-          } as Session;
-
-          setUser(minimalUser);
-          setSession(minimalSession);
-          setLoading(false);
-
-          console.log('✅ Minimal session established');
-          return { error: null };
-        }
-
-        console.log('✅ Profile found:', profile);
-
-        // ✅ Create proper session with profile data
-        const userObject = {
-          id: profile.user_id,
-          phone: phone,
-          email: profile.email || '',
-          user_metadata: {
-            name: profile.name,
-            mobile_number: phone,
-            age: profile.age,
-            location: profile.location
-          },
-          app_metadata: {},
-          aud: 'authenticated',
-          created_at: profile.created_at,
-          updated_at: profile.updated_at || profile.created_at
-        } as User;
-
-        const sessionObject = {
-          access_token: `verified_${profile.user_id}`,
-          refresh_token: `refresh_${profile.user_id}`,
-          expires_in: 3600,
-          expires_at: Math.floor(Date.now() / 1000) + 3600,
-          token_type: 'bearer',
-          user: userObject
-        } as Session;
-
-        setUser(userObject);
-        setSession(sessionObject);
-        setLoading(false);
-
-        console.log('✅ Complete session established successfully');
-        return { error: null };
-        
-      } catch (sessionError: any) {
-        console.error('Session creation failed:', sessionError);
-        
-        // ✅ ULTIMATE FALLBACK: Just mark as authenticated
-        const fallbackUser = {
-          id: data.user_id || 'authenticated',
-          phone: phone,
-          email: '',
-          user_metadata: { mobile_number: phone },
-          app_metadata: {},
-          aud: 'authenticated',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        } as User;
-
-        setUser(fallbackUser);
-        setSession({ 
-          access_token: 'authenticated', 
-          user: fallbackUser 
-        } as Session);
-        setLoading(false);
-
-        console.log('✅ Fallback session established');
-        return { error: null };
-      }
-      
-    } catch (error: any) {
-      console.error('❌ Verify OTP Error:', error);
-      return { 
-        error: { 
-          message: error.message || 'Verification failed'
-        } 
-      };
+    });
+    
+    if (error || !data?.success) {
+      throw new Error(data?.error || error?.message || 'Invalid OTP');
     }
-  };
+
+    console.log('✅ OTP verified successfully for user:', data.user_id);
+    
+    // ✅ DEBUG: Try multiple phone number formats
+    console.log('🔍 Looking for profile with phone:', phone);
+    
+    const phoneVariants = [
+      phone,                                          // +918446499017
+      phone.replace('+91', ''),                      // 8446499017  
+      phone.replace('+', ''),                        // 918446499017
+      phone.startsWith('+91') ? phone.substring(3) : phone  // 8446499017
+    ];
+    
+    console.log('🔍 Trying phone variants:', phoneVariants);
+    
+    let profile = null;
+    let profileError = null;
+    
+    // Try each phone format
+    for (const phoneVariant of phoneVariants) {
+      console.log('🔍 Trying phone format:', phoneVariant);
+      
+      const { data: foundProfile, error: queryError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('mobile_number', phoneVariant)
+        .maybeSingle();  // ✅ Use maybeSingle to avoid errors
+      
+      if (!queryError && foundProfile) {
+        profile = foundProfile;
+        console.log('✅ Found profile with format:', phoneVariant);
+        break;
+      } else {
+        console.log('❌ No profile found with format:', phoneVariant, queryError);
+      }
+    }
+    
+    // ✅ FALLBACK: If no profile found, create basic session anyway
+    if (!profile) {
+      console.log('⚠️ No profile found in database, creating minimal session');
+      
+      const minimalUser = {
+        id: data.user_id || 'verified_user',
+        phone: phone,
+        email: '',
+        user_metadata: { 
+          mobile_number: phone,
+          name: 'User' // Default name
+        },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as any;
+
+      const minimalSession = {
+        access_token: 'verified',
+        refresh_token: 'verified',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: minimalUser
+      } as any;
+
+      setUser(minimalUser);
+      setSession(minimalSession);
+      setLoading(false);
+
+      console.log('✅ Minimal session established without profile');
+      return { error: null };
+    }
+
+    console.log('✅ Profile found:', profile);
+
+    // ✅ Create proper session with profile data
+    const userObject = {
+      id: profile.user_id,
+      phone: phone,
+      email: profile.email || '',
+      user_metadata: {
+        name: profile.name,
+        mobile_number: phone,
+        age: profile.age,
+        location: profile.location
+      },
+      app_metadata: {},
+      aud: 'authenticated',
+      created_at: profile.created_at,
+      updated_at: profile.updated_at || profile.created_at
+    } as any;
+
+    const sessionObject = {
+      access_token: `verified_${profile.user_id}`,
+      refresh_token: `refresh_${profile.user_id}`,
+      expires_in: 3600,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      token_type: 'bearer',
+      user: userObject
+    } as any;
+
+    setUser(userObject);
+    setSession(sessionObject);
+    setLoading(false);
+
+    console.log('✅ Complete session established successfully');
+    return { error: null };
+    
+  } catch (error: any) {
+    console.error('❌ Verify OTP Error:', error);
+    return { 
+      error: { 
+        message: error.message || 'Verification failed'
+      } 
+    };
+  }
+};
+
 
   const value = {
     isAuthenticated: !!session,
