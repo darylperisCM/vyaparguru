@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet-async';
 import { useCountUp } from '@/hooks/useCountUp';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,27 +42,16 @@ export default function Dashboard() {
     nextBillingDate,
     refetch 
   } = useSubscription();
+  const { translationsToday, emailsToday, learningStreak, loading: metricsLoading } = useDashboardMetrics();
   const [processingPayment, setProcessingPayment] = useState(false);
 
-  // Mock data - will be replaced with real data from Supabase
-  const stats = {
-    translationsToday: 12,
-    emailsGenerated: 5,
-    totalLearningHours: 24,
-    weeklyProgress: 68,
-    streak: 7
-  };
-
   // Count-up animations with staggered delays
-  const animatedTranslations = useCountUp(stats.translationsToday, 1500, 400);
-  const animatedEmails = useCountUp(stats.emailsGenerated, 1500, 600);
-  const animatedStreak = useCountUp(stats.streak, 1500, 800);
+  const animatedTranslations = useCountUp(translationsToday, 1500, 400);
+  const animatedEmails = useCountUp(emailsToday, 1500, 600);
+  const animatedStreak = useCountUp(learningStreak, 1500, 800);
 
-  const recentActivity = [
-    { type: 'translation', text: 'Translated business proposal', time: '2 hours ago' },
-    { type: 'email', text: 'Generated follow-up email', time: '4 hours ago' },
-    { type: 'industry', text: 'Completed retail vocabulary', time: '1 day ago' },
-  ];
+  // Note: Recent activity will show real data when user has activity
+  const recentActivity: Array<{ type: string; text: string; time: string }> = [];
 
   const quickActions = [
     {
@@ -409,10 +399,10 @@ export default function Dashboard() {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium">Overall Progress</span>
-                      <span className="text-sm text-muted-foreground">{stats.weeklyProgress}%</span>
+                      <span className="text-sm text-muted-foreground">0%</span>
                     </div>
                     <Progress 
-                      value={stats.weeklyProgress} 
+                      value={0} 
                       className="h-3 shadow-sm" 
                       animated={true}
                       animationDuration={2000}
@@ -427,7 +417,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1">
                         <p className="text-xs sm:text-sm font-medium text-muted-foreground">Daily Goal</p>
-                        <p className="text-base sm:text-lg font-semibold">15/20 tasks</p>
+                        <p className="text-base sm:text-lg font-semibold">{translationsToday + emailsToday}/20 tasks</p>
                       </div>
                     </div>
                     
@@ -437,7 +427,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1">
                         <p className="text-xs sm:text-sm font-medium text-muted-foreground">Learning Time</p>
-                        <p className="text-base sm:text-lg font-semibold">{stats.totalLearningHours} hours</p>
+                        <p className="text-base sm:text-lg font-semibold">0 hours</p>
                       </div>
                     </div>
                   </div>

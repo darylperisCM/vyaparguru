@@ -4,6 +4,7 @@ import { Menu, X, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import FeedbackWidget from "@/components/FeedbackWidget";
 
 const navigation = [
@@ -30,6 +31,7 @@ export default function App() {
 export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -39,6 +41,7 @@ export function SiteHeader() {
 
   const AuthButtons = ({ isMobile = false }) => {
     if (user) {
+      const displayName = profile?.name || 'User';
       return (
         <div className={`flex items-center gap-2 ${isMobile ? 'flex-col w-full' : ''}`}>
           <Button
@@ -46,7 +49,7 @@ export function SiteHeader() {
             onClick={() => navigate("/dashboard")}
             className={isMobile ? 'w-full justify-start' : ''}
           >
-            Welcome{user.email ? `, ${user.email.split('@')[0]}` : ''}
+            Welcome, {displayName}
           </Button>
           <Button
             variant="outline"
