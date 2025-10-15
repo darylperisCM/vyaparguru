@@ -86,7 +86,7 @@ export const useSubscription = () => {
       console.error('[useSubscription] Error fetching subscription:', error);
     } finally {
       // Only set loading to false after final attempt or if data found
-      if (retryCount >= 2) {
+      if (retryCount >= 3) {
         setLoading(false);
       }
     }
