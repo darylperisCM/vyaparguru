@@ -116,10 +116,10 @@ export default function AuthSignIn() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (otp.length !== 6) {
+    if (otp.length !== 4) {
       toast({
         title: "Invalid OTP",
-        description: "Please enter the complete 6-digit OTP",
+        description: "Please enter the complete 4-digit OTP",
         variant: "destructive"
       });
       return;
@@ -269,10 +269,10 @@ export default function AuthSignIn() {
   const handleSignUpVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (signUpOtp.length !== 6) {
+    if (signUpOtp.length !== 4) {
       toast({
         title: "Error",
-        description: "Please enter a valid 6-digit OTP",
+        description: "Please enter a valid 4-digit OTP",
         variant: "destructive",
       });
       return;
@@ -442,15 +442,13 @@ export default function AuthSignIn() {
                       <InputOTP
                         value={signUpOtp}
                         onChange={setSignUpOtp}
-                        maxLength={6}
+                        maxLength={4}
                       >
                         <InputOTPGroup>
                           <InputOTPSlot index={0} />
                           <InputOTPSlot index={1} />
                           <InputOTPSlot index={2} />
                           <InputOTPSlot index={3} />
-                          <InputOTPSlot index={4} />
-                          <InputOTPSlot index={5} />
                         </InputOTPGroup>
                       </InputOTP>
                     </div>
@@ -548,10 +546,10 @@ export default function AuthSignIn() {
               ) : (
                 <form onSubmit={handleVerifyOtp} className="space-y-6">
                   <div className="space-y-4">
-                    <Label htmlFor="signin-otp" className="text-center block">Enter 6-digit OTP</Label>
+                    <Label htmlFor="signin-otp" className="text-center block">Enter 4-digit OTP</Label>
                     <div className="flex justify-center">
                       <InputOTP
-                        maxLength={6}
+                        maxLength={4}
                         value={otp}
                         onChange={(value) => setOtp(value)}
                       >
@@ -560,8 +558,6 @@ export default function AuthSignIn() {
                           <InputOTPSlot index={1} />
                           <InputOTPSlot index={2} />
                           <InputOTPSlot index={3} />
-                          <InputOTPSlot index={4} />
-                          <InputOTPSlot index={5} />
                         </InputOTPGroup>
                       </InputOTP>
                     </div>
@@ -581,7 +577,7 @@ export default function AuthSignIn() {
                     type="submit" 
                     className="w-full" 
                     variant="hero"
-                    disabled={isVerifyingOtp || otp.length !== 6}
+                    disabled={isVerifyingOtp || otp.length !== 4}
                   >
                     {isVerifyingOtp ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
