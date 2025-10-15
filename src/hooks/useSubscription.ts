@@ -81,14 +81,11 @@ export const useSubscription = () => {
       }
       
       setSubscription(data);
+      setLoading(false); // Set loading to false when data is received
       console.log('[useSubscription] Subscription set:', data);
     } catch (error) {
       console.error('[useSubscription] Error fetching subscription:', error);
-    } finally {
-      // Only set loading to false after final attempt or if data found
-      if (retryCount >= 3) {
-        setLoading(false);
-      }
+      setLoading(false); // Also set loading to false on error
     }
   };
 
