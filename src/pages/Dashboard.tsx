@@ -217,116 +217,92 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Subscription Status Card */}
+          {/* Subscription Status Card - Compact */}
           {subscription && (
-            <section className="mb-6 sm:mb-8">
-              <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-xl hover:shadow-primary/20 transition-all duration-300">
-                <CardHeader className="pb-3">
+            <section className="mb-4">
+              <Card className="border border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center justify-between flex-wrap gap-2">
-                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                      <CreditCard className="h-5 w-5 text-primary" />
-                      Subscription Status
-                    </CardTitle>
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="h-4 w-4 text-primary flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {subscription.plan_name || 'VyaparGuru'}
+                          {isInTrial && (
+                            <Badge variant="secondary" className="ml-2 bg-primary/20 text-primary border-primary/30 text-xs">
+                              Trial
+                            </Badge>
+                          )}
+                          {isActive && (
+                            <Badge variant="default" className="ml-2 bg-success/20 text-success border-success/30 text-xs">
+                              Active
+                            </Badge>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {isInTrial && trialEndsAt && (
+                            <>{daysUntilTrialEnd} {daysUntilTrialEnd === 1 ? 'day' : 'days'} remaining</>
+                          )}
+                          {isActive && nextBillingDate && (
+                            <>Next billing: {nextBillingDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</>
+                          )}
+                        </p>
+                      </div>
+                    </div>
                     {isInTrial && (
-                      <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
-                        Free Trial Active
-                      </Badge>
-                    )}
-                    {isActive && (
-                      <Badge variant="default" className="bg-success/20 text-success border-success/30">
-                        Active
-                      </Badge>
+                      <Button 
+                        onClick={handleSubscribeNow}
+                        disabled={processingPayment}
+                        size="sm"
+                        className="text-xs"
+                      >
+                        {processingPayment ? (
+                          <>
+                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          'Subscribe ₹99/mo'
+                        )}
+                      </Button>
                     )}
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Plan</p>
-                      <p className="font-semibold">{subscription.plan_name || 'VyaparGuru - व्यापार गुरु'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Monthly Cost</p>
-                      <p className="font-semibold text-primary text-xl">₹99</p>
-                    </div>
-                  </div>
-
-                  {isInTrial && trialEndsAt && (
-                    <div className="bg-background/50 rounded-lg p-4 border border-primary/20">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <p className="text-sm font-medium">Trial Period</p>
-                      </div>
-                      <p className="text-2xl font-bold text-primary mb-1">
-                        {daysUntilTrialEnd} {daysUntilTrialEnd === 1 ? 'day' : 'days'} remaining
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Trial ends on {trialEndsAt.toLocaleDateString('en-IN', { 
-                          day: 'numeric', 
-                          month: 'long', 
-                          year: 'numeric' 
-                        })}
-                      </p>
-                    </div>
-                  )}
-
-                  {isActive && nextBillingDate && (
-                    <div className="bg-background/50 rounded-lg p-4 border border-success/20">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Calendar className="h-4 w-4 text-success" />
-                        <p className="text-sm font-medium">Next Billing Date</p>
-                      </div>
-                      <p className="text-lg font-semibold">
-                        {nextBillingDate.toLocaleDateString('en-IN', { 
-                          day: 'numeric', 
-                          month: 'long', 
-                          year: 'numeric' 
-                        })}
-                      </p>
-                    </div>
-                  )}
-
-                  {isInTrial && (
-                    <Button 
-                      onClick={handleSubscribeNow}
-                      disabled={processingPayment}
-                      className="w-full"
-                      size="lg"
-                    >
-                      {processingPayment ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        'Subscribe Now - ₹99/month'
-                      )}
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </section>
           )}
 
-            {/* Quick Actions Section */}
+          {/* Quick Actions Section - Enhanced */}
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-semibold text-primary mb-4 sm:mb-6 flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              Quick Actions
-            </h2>
+            <div className="text-center mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-2 flex items-center justify-center gap-2">
+                <Zap className="h-6 w-6 text-primary" />
+                Quick Actions
+              </h2>
+              <p className="text-sm text-muted-foreground">Click any card below to get started</p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {quickActions.map((action, index) => (
                 <Card 
                   key={index}
-                  className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-2 hover:scale-105 active:scale-95 min-h-[120px] sm:min-h-[140px] overflow-hidden"
+                  className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-3 active:scale-95 min-h-[180px] sm:min-h-[200px] overflow-hidden border-2 border-transparent hover:border-primary/30 relative"
                   onClick={() => navigate(action.route)}
                 >
-                  <CardContent className="p-4 sm:p-6 text-center h-full flex flex-col justify-center relative">
-                    <div className={`inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br ${action.gradient} ${action.hoverGradient} text-white mb-3 sm:mb-4 transition-all duration-300 group-hover:scale-110 shadow-lg`}>
-                      <action.icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                  {/* Shine effect on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  
+                  <CardContent className="p-6 sm:p-8 text-center h-full flex flex-col justify-center relative z-10">
+                    <div className={`inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br ${action.gradient} text-white mb-4 sm:mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-xl mx-auto`}>
+                      <action.icon className="h-8 w-8 sm:h-10 sm:w-10" />
                     </div>
-                    <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2 group-hover:text-primary transition-colors duration-300">{action.title}</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-tight group-hover:text-muted-foreground/80 transition-colors duration-300">{action.description}</p>
+                    <h3 className="font-bold text-lg sm:text-xl mb-2 group-hover:text-primary transition-colors duration-300">{action.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300 mb-4">{action.description}</p>
+                    <div className="mt-auto pt-4">
+                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary group-hover:gap-3 transition-all duration-300">
+                        Get Started 
+                        <span className="text-lg group-hover:translate-x-1 transition-transform duration-300">→</span>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
