@@ -50,13 +50,13 @@ export const useSubscription = () => {
     };
   }, [user]);
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = async (retryCount = 0) => {
     if (!user) {
       console.log('[useSubscription] No user, skipping fetch');
       return;
     }
 
-    console.log('[useSubscription] Fetching subscription for user:', user.id);
+    console.log('[useSubscription] Fetching subscription for user:', user.id, `(attempt ${retryCount + 1})`);
 
     try {
       const { data, error } = await supabase
@@ -68,13 +68,27 @@ export const useSubscription = () => {
       console.log('[useSubscription] Query result:', { data, error });
 
       if (error) throw error;
-      setSubscription(data);
       
+      // If no subscription found and we haven't exceeded retry limit
+      if (!data && retryCount < 3) {
+        const delay = Math.pow(2, retryCount) * 500; // 500ms, 1000ms, 2000ms
+        console.log(`[useSubscription] No subscription found, retrying in ${delay}ms... (attempt ${retryCount + 1}/3)`);
+        
+        setTimeout(() => {
+          fetchSubscription(retryCount + 1);
+        }, delay);
+        return;
+      }
+      
+      setSubscription(data);
       console.log('[useSubscription] Subscription set:', data);
     } catch (error) {
       console.error('[useSubscription] Error fetching subscription:', error);
     } finally {
-      setLoading(false);
+      // Only set loading to false after final attempt or if data found
+      if (retryCount >= 2) {
+        setLoading(false);
+      }
     }
   };
 
