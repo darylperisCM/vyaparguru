@@ -56,7 +56,9 @@ export default function Dashboard() {
   const quickActions = [
     {
       title: 'Start Translating',
+      titleHindi: 'अनुवाद शुरू करें',
       description: 'Hindi to English translation',
+      descriptionHindi: 'हिंदी से अंग्रेजी अनुवाद',
       icon: Languages,
       route: '/translation',
       gradient: 'from-primary to-primary-hover',
@@ -64,7 +66,9 @@ export default function Dashboard() {
     },
     {
       title: 'Write an Email',
+      titleHindi: 'ईमेल लिखें',
       description: 'Professional email assistant',
+      descriptionHindi: 'व्यावसायिक ईमेल सहायक',
       icon: Mail,
       route: '/email',
       gradient: 'from-success to-success/80',
@@ -72,7 +76,9 @@ export default function Dashboard() {
     },
     {
       title: 'Industry Modules',
+      titleHindi: 'उद्योग मॉड्यूल',
       description: 'Sector-specific learning',
+      descriptionHindi: 'क्षेत्र-विशेष सीखना',
       icon: Building2,
       route: '/industry',
       gradient: 'from-muted-foreground to-muted-foreground/80',
@@ -295,11 +301,28 @@ export default function Dashboard() {
                     <div className={`inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br ${action.gradient} text-white mb-4 sm:mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-xl mx-auto`}>
                       <action.icon className="h-8 w-8 sm:h-10 sm:w-10" />
                     </div>
-                    <h3 className="font-bold text-lg sm:text-xl mb-2 group-hover:text-primary transition-colors duration-300">{action.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300 mb-4">{action.description}</p>
+                    <div className="mb-2">
+                      <h3 className="font-bold text-lg sm:text-xl group-hover:text-primary transition-colors duration-300">
+                        {action.title}
+                      </h3>
+                      <p className="text-base sm:text-lg font-semibold text-muted-foreground/90 mt-1 font-hindi">
+                        {action.titleHindi}
+                      </p>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <p className="text-sm text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300">
+                        {action.description}
+                      </p>
+                      <p className="text-sm text-muted-foreground/80 leading-relaxed mt-1 font-hindi">
+                        {action.descriptionHindi}
+                      </p>
+                    </div>
+                    
                     <div className="mt-auto pt-4">
                       <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary group-hover:gap-3 transition-all duration-300">
-                        Get Started 
+                        <span>Get Started</span>
+                        <span className="font-hindi">शुरू करें</span>
                         <span className="text-lg group-hover:translate-x-1 transition-transform duration-300">→</span>
                       </div>
                     </div>
