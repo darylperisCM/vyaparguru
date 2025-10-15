@@ -183,15 +183,21 @@ Deno.serve(async (req) => {
         userId = existingProfile.user_id;
         console.log('Existing user found:', userId);
         
-        // Set a temporary password for token generation
+        // Generate temporary email for internal auth
+        const tempEmail = `${userId}@temp.placeholder`;
         const tempPassword = crypto.randomUUID();
+        
+        // Update user with temporary email and password
         await supabaseAdmin.auth.admin.updateUserById(userId, {
-          password: tempPassword
+          email: tempEmail,
+          password: tempPassword,
+          email_confirm: true, // Skip email confirmation
+          phone_confirm: true,
         });
         
-        // Sign in to get real session tokens
+        // Sign in with EMAIL to get real session tokens
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          phone: phone,
+          email: tempEmail, // Use email instead of phone
           password: tempPassword,
         });
         
@@ -206,8 +212,18 @@ Deno.serve(async (req) => {
       } else {
         // New user - create auth user
         console.log('Creating new user...');
+        
+        // Generate temporary user ID first
+        const tempUserId = crypto.randomUUID();
+        const tempEmail = `${tempUserId}@temp.placeholder`;
+        const tempPassword = crypto.randomUUID();
+        
+        // Create user with temporary email
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          phone: phone,
+          email: tempEmail,
+          phone: phone, // Store phone for reference
+          password: tempPassword,
+          email_confirm: true, // Skip email confirmation
           phone_confirm: true,
         });
 
@@ -219,16 +235,10 @@ Deno.serve(async (req) => {
         userId = newUser.user.id;
         isNewUser = true;
         console.log('New user created:', userId);
-
-        // Set a temporary password for token generation
-        const tempPassword = crypto.randomUUID();
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
-          password: tempPassword
-        });
         
-        // Sign in to get real session tokens
+        // Sign in with EMAIL to get real session tokens
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          phone: phone,
+          email: tempEmail, // Use email instead of phone
           password: tempPassword,
         });
         
