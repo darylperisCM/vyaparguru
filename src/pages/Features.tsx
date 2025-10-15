@@ -13,28 +13,40 @@ import {
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
-const features = [
+const primaryFeatures = [
   {
     icon: Languages,
     title: "Real-Time Translation Coach",
     titleHindi: "रीयल-टाइम अनुवाद कोच",
     description: "Instantly translate between Hindi and English with context-aware suggestions for business communication.",
-    descriptionHindi: "व्यापारिक संवाद के लिए संदर्भ-सचेत सुझावों के साथ हिंदी और अंग्रेजी के बीच तुरंत अनुवाद करें।"
+    descriptionHindi: "व्यापारिक संवाद के लिए संदर्भ-सचेत सुझावों के साथ हिंदी और अंग्रेजी के बीच तुरंत अनुवाद करें।",
+    route: "/translation",
+    ctaText: "Start Translating",
+    ctaTextHindi: "अनुवाद शुरू करें"
   },
   {
     icon: Mail,
     title: "Email Writing Assistant",
     titleHindi: "ईमेल लेखन सहायक",
     description: "Professional email templates and AI-powered writing assistance for perfect business emails.",
-    descriptionHindi: "पूर्ण व्यापारिक ईमेल के लिए पेशेवर ईमेल टेम्प्लेट और AI-संचालित लेखन सहायता।"
+    descriptionHindi: "पूर्ण व्यापारिक ईमेल के लिए पेशेवर ईमेल टेम्प्लेट और AI-संचालित लेखन सहायता।",
+    route: "/email",
+    ctaText: "Write Email",
+    ctaTextHindi: "ईमेल लिखें"
   },
   {
     icon: Building2,
     title: "Industry-Specific Modules",
     titleHindi: "उद्योग-विशिष्ट मॉड्यूल",
     description: "Specialized vocabulary and phrases tailored for your specific industry and business needs.",
-    descriptionHindi: "आपकी विशिष्ट उद्योग और व्यापारिक आवश्यकताओं के लिए विशेष शब्दावली और वाक्यांश।"
+    descriptionHindi: "आपकी विशिष्ट उद्योग और व्यापारिक आवश्यकताओं के लिए विशेष शब्दावली और वाक्यांश।",
+    route: "/industry",
+    ctaText: "Explore Modules",
+    ctaTextHindi: "मॉड्यूल देखें"
   },
+];
+
+const additionalFeatures = [
   {
     icon: Zap,
     title: "AI-Powered Learning",
@@ -101,10 +113,57 @@ export default function Features() {
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Primary Features - Highlighted */}
       <section className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => {
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-foreground mb-2">Core Features</h2>
+          <p className="text-lg font-hindi text-primary">मुख्य सुविधाएं</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          {primaryFeatures.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <Card key={index} className="card-elegant border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+                <CardHeader>
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-hover rounded-xl flex items-center justify-center mb-4 shadow-lg">
+                    <Icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2 text-foreground">
+                    {feature.title}
+                  </h3>
+                  <h4 className="text-lg font-semibold font-hindi text-primary">
+                    {feature.titleHindi}
+                  </h4>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <CardDescription className="text-muted-foreground mb-2 text-base">
+                      {feature.description}
+                    </CardDescription>
+                    <CardDescription className="text-sm font-hindi text-muted-foreground/80">
+                      {feature.descriptionHindi}
+                    </CardDescription>
+                  </div>
+                  <Button variant="default" className="w-full" asChild>
+                    <NavLink to={feature.route}>
+                      {feature.ctaText} • <span className="font-hindi">{feature.ctaTextHindi}</span>
+                    </NavLink>
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Additional Features */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-foreground mb-2">Additional Benefits</h2>
+          <p className="text-lg font-hindi text-primary">अतिरिक्त लाभ</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {additionalFeatures.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <Card key={index} className="card-elegant">
@@ -115,7 +174,7 @@ export default function Features() {
                   <h3 className="text-xl font-semibold mb-2">
                     {feature.title}
                   </h3>
-                  <h4 className="text-base font-medium hindi-text text-primary">
+                  <h4 className="text-base font-medium font-hindi text-primary">
                     {feature.titleHindi}
                   </h4>
                 </CardHeader>
@@ -123,7 +182,7 @@ export default function Features() {
                   <CardDescription className="text-muted-foreground mb-3">
                     {feature.description}
                   </CardDescription>
-                  <CardDescription className="text-sm hindi-text text-muted-foreground/80">
+                  <CardDescription className="text-sm font-hindi text-muted-foreground/80">
                     {feature.descriptionHindi}
                   </CardDescription>
                 </CardContent>
