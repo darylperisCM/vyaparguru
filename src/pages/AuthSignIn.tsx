@@ -235,7 +235,7 @@ export default function AuthSignIn() {
     try {
       console.log('📝 Sign-Up: Requesting OTP for:', fullPhone);
       
-      const { error: otpError } = await requestOtp(fullPhone);
+      const { error: otpError } = await requestOtp(fullPhone, true);
       
       if (otpError) {
         console.error('📝 Sign-Up: OTP request failed:', otpError);

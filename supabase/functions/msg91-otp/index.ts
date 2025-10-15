@@ -13,6 +13,7 @@ interface OTPRequestBody {
   email?: string;
   age?: string;
   location?: string;
+  isSignUp?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -22,8 +23,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, phone, otp, name, email, age, location }: OTPRequestBody = await req.json();
-    console.log(`MSG91 OTP Action: ${action} for phone: ${phone}`);
+    const { action, phone, otp, name, email, age, location, isSignUp }: OTPRequestBody = await req.json();
+    console.log(`MSG91 OTP Action: ${action} for phone: ${phone} (isSignUp: ${isSignUp})`);
 
     const msg91AuthKey = Deno.env.get('MSG91_AUTH_KEY');
     if (!msg91AuthKey) {
@@ -41,6 +42,31 @@ Deno.serve(async (req) => {
       
       if (!templateId) {
         throw new Error('MSG91_TEMPLATE_ID is not configured');
+      }
+
+      // Skip user existence check for sign-up flow
+      if (!isSignUp) {
+        // For sign-in: Check if user exists
+        const { data: existingProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('user_id')
+          .eq('mobile_number', phone)
+          .maybeSingle();
+
+        if (!existingProfile) {
+          console.log('❌ User not found for sign-in');
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              message: 'This phone number is not registered. Please sign up first.',
+              action_required: 'signup'
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        console.log('✅ User exists, proceeding with OTP send');
+      } else {
+        console.log('📝 Sign-up flow: Skipping user existence check');
       }
 
       // Format phone number

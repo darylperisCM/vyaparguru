@@ -9,7 +9,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  requestOtp: (phone: string) => Promise<{ error: any }>;
+  requestOtp: (phone: string, isSignUp?: boolean) => Promise<{ error: any }>;
   verifyOtp: (phone: string, otp: string, profileData?: { name: string; email?: string; age?: string; location?: string }) => Promise<{ error: any }>;
   loading: boolean;
 }
@@ -74,14 +74,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
-  const requestOtp = async (phone: string) => {
+  const requestOtp = async (phone: string, isSignUp?: boolean) => {
     try {
-      console.log('📱 Requesting OTP for phone:', phone);
+      console.log('📱 Requesting OTP for phone:', phone, 'isSignUp:', isSignUp);
       
       const { data, error } = await supabase.functions.invoke('msg91-otp', {
         body: { 
           action: 'send-otp',
-          phone: phone
+          phone: phone,
+          isSignUp: isSignUp || false
         }
       });
       
