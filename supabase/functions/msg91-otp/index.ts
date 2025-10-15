@@ -69,17 +69,22 @@ Deno.serve(async (req) => {
         console.log('📝 Sign-up flow: Skipping user existence check');
       }
 
-      // Format phone number
-      const formattedPhone = phone.startsWith('+91') ? phone.substring(3) : phone;
+      // Format phone number - ensure consistent format: 91XXXXXXXXXX
+      let formattedPhone = phone.startsWith('+91') ? phone.substring(3) : phone;
+      // Remove leading 91 if present (in case phone was passed as 91XXXXXXXXXX)
+      if (formattedPhone.startsWith('91') && formattedPhone.length === 12) {
+        formattedPhone = formattedPhone.substring(2);
+      }
       
       console.log('🚀 Sending OTP via MSG91:');
       console.log('  📱 Phone (original):', phone);
       console.log('  📱 Phone (formatted):', formattedPhone);
+      console.log('  📱 Phone (final for MSG91):', `91${formattedPhone}`);
       console.log('  📋 Template ID:', templateId);
       console.log('  🔑 Auth Key exists:', !!msg91AuthKey);
 
       const requestBody = {
-        mobile: formattedPhone,
+        mobile: `91${formattedPhone}`,
         template_id: templateId,
       };
       console.log('  📦 Request body:', JSON.stringify(requestBody));
@@ -127,8 +132,15 @@ Deno.serve(async (req) => {
         throw new Error('OTP is required for verification');
       }
 
-      // Verify OTP with MSG91
+      // Verify OTP with MSG91 - use same format as send
+      let verifyPhone = phone.startsWith('+91') ? phone.substring(3) : phone;
+      // Remove leading 91 if present
+      if (verifyPhone.startsWith('91') && verifyPhone.length === 12) {
+        verifyPhone = verifyPhone.substring(2);
+      }
+      
       console.log('Verifying OTP with MSG91...');
+      console.log('  📱 Verify phone (final):', `91${verifyPhone}`);
       const verifyResponse = await fetch('https://control.msg91.com/api/v5/otp/verify', {
         method: 'POST',
         headers: {
@@ -137,7 +149,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           otp: otp,
-          mobile: phone.startsWith('+91') ? phone.substring(3) : phone,
+          mobile: `91${verifyPhone}`,
         }),
       });
 
