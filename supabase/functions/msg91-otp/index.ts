@@ -226,6 +226,13 @@ Deno.serve(async (req) => {
         console.error('Error generating session:', sessionError);
         throw new Error('Failed to generate session');
       }
+      
+      console.log('Session data structure:', {
+        has_properties: !!sessionData.properties,
+        properties_keys: sessionData.properties ? Object.keys(sessionData.properties) : [],
+        has_access_token: !!sessionData.properties?.access_token,
+        has_refresh_token: !!sessionData.properties?.refresh_token
+      });
 
       // Store phone-user mapping
       await supabaseAdmin

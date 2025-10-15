@@ -154,12 +154,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       console.log('✅ OTP verified successfully for user:', data.user_id);
-      console.log('🔑 Received real Supabase tokens from edge function');
+      console.log('🔑 Edge function response data:', data);
       
       // Use the real Supabase auth tokens from the edge function
       if (!data.access_token || !data.refresh_token) {
+        console.error('❌ Missing tokens in response:', { 
+          has_access_token: !!data.access_token,
+          has_refresh_token: !!data.refresh_token,
+          response_keys: Object.keys(data)
+        });
         throw new Error('No authentication tokens received');
       }
+      
+      console.log('✅ Tokens found, setting session...');
 
       // Set the real session using Supabase's setSession
       const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
