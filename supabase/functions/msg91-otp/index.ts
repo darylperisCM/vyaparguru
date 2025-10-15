@@ -169,11 +169,40 @@ Deno.serve(async (req) => {
 
       let userId: string;
       let isNewUser = false;
+      let accessToken: string;
+      let refreshToken: string;
+
+      // Create a regular Supabase client for authentication
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_ANON_KEY')!
+      );
 
       if (existingProfile) {
-        // Existing user - use their user_id
+        // Existing user - generate tokens
         userId = existingProfile.user_id;
         console.log('Existing user found:', userId);
+        
+        // Set a temporary password for token generation
+        const tempPassword = crypto.randomUUID();
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          password: tempPassword
+        });
+        
+        // Sign in to get real session tokens
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          phone: phone,
+          password: tempPassword,
+        });
+        
+        if (signInError || !signInData.session) {
+          console.error('Error signing in existing user:', signInError);
+          throw new Error('Failed to create session for existing user');
+        }
+        
+        accessToken = signInData.session.access_token;
+        refreshToken = signInData.session.refresh_token;
+        console.log('✅ Tokens generated for existing user');
       } else {
         // New user - create auth user
         console.log('Creating new user...');
@@ -190,6 +219,27 @@ Deno.serve(async (req) => {
         userId = newUser.user.id;
         isNewUser = true;
         console.log('New user created:', userId);
+
+        // Set a temporary password for token generation
+        const tempPassword = crypto.randomUUID();
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          password: tempPassword
+        });
+        
+        // Sign in to get real session tokens
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          phone: phone,
+          password: tempPassword,
+        });
+        
+        if (signInError || !signInData.session) {
+          console.error('Error signing in new user:', signInError);
+          throw new Error('Failed to create session for new user');
+        }
+        
+        accessToken = signInData.session.access_token;
+        refreshToken = signInData.session.refresh_token;
+        console.log('✅ Real session tokens generated');
 
         // CRITICAL: Create profile for new user - this triggers the 3-day trial subscription!
         console.log('Creating profile with data:', { name, email, age, location });
@@ -212,28 +262,6 @@ Deno.serve(async (req) => {
         console.log('✅ Profile created - subscription trigger should fire now');
       }
 
-      // Generate session token
-      console.log('Generating session token...');
-      const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'magiclink',
-        email: `${userId}@temp.placeholder`, // Placeholder email
-        options: {
-          redirectTo: `${req.headers.get('origin') || 'http://localhost:8080'}/`,
-        }
-      });
-
-      if (sessionError || !sessionData) {
-        console.error('Error generating session:', sessionError);
-        throw new Error('Failed to generate session');
-      }
-      
-      console.log('Session data structure:', {
-        has_properties: !!sessionData.properties,
-        properties_keys: sessionData.properties ? Object.keys(sessionData.properties) : [],
-        has_access_token: !!sessionData.properties?.access_token,
-        has_refresh_token: !!sessionData.properties?.refresh_token
-      });
-
       // Store phone-user mapping
       await supabaseAdmin
         .from('phone_auth')
@@ -249,8 +277,8 @@ Deno.serve(async (req) => {
           success: true,
           user_id: userId,
           is_new_user: isNewUser,
-          access_token: sessionData.properties.access_token,
-          refresh_token: sessionData.properties.refresh_token,
+          access_token: accessToken,
+          refresh_token: refreshToken,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
