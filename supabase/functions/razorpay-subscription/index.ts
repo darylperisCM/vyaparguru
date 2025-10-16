@@ -1,10 +1,38 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schemas
+const uuidSchema = z.string().uuid('Invalid user or subscription ID format');
+
+const actionSchema = z.enum(
+  ['create-plan', 'create-subscription', 'cancel-subscription', 'check-status'],
+  { errorMap: () => ({ message: 'Invalid action' }) }
+);
+
+const createSubscriptionSchema = z.object({
+  action: z.literal('create-subscription'),
+  userId: uuidSchema,
+});
+
+const cancelSubscriptionSchema = z.object({
+  action: z.literal('cancel-subscription'),
+  subscriptionId: z.string().min(1, 'Subscription ID is required'),
+});
+
+const checkStatusSchema = z.object({
+  action: z.literal('check-status'),
+  subscriptionId: z.string().min(1, 'Subscription ID is required'),
+});
+
+const createPlanSchema = z.object({
+  action: z.literal('create-plan'),
+});
 
 const RAZORPAY_KEY_ID = Deno.env.get('RAZORPAY_KEY_ID')!;
 const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET')!;
@@ -45,9 +73,75 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { action, userId, subscriptionId } = await req.json();
+    
+    // Extract and verify JWT token
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    console.log(`Razorpay subscription action: ${action}`);
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error('Invalid auth token:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const rawBody = await req.json();
+    
+    // Validate action first
+    let action: string;
+    try {
+      action = actionSchema.parse(rawBody.action);
+    } catch (validationError: any) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid action',
+          details: validationError.errors || validationError.message
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate request body based on action
+    let validatedData: any;
+    try {
+      if (action === 'create-plan') {
+        validatedData = createPlanSchema.parse(rawBody);
+      } else if (action === 'create-subscription') {
+        validatedData = createSubscriptionSchema.parse(rawBody);
+        // Verify the userId matches the authenticated user
+        if (validatedData.userId !== user.id) {
+          return new Response(
+            JSON.stringify({ error: 'Cannot create subscription for another user' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } else if (action === 'cancel-subscription') {
+        validatedData = cancelSubscriptionSchema.parse(rawBody);
+      } else if (action === 'check-status') {
+        validatedData = checkStatusSchema.parse(rawBody);
+      }
+    } catch (validationError: any) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid input data',
+          details: validationError.errors || validationError.message
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { userId, subscriptionId } = validatedData;
+
+    console.log(`Razorpay subscription action: ${action} by user ${user.id.substring(0, 8)}***`);
 
     // Create or get plan
     if (action === 'create-plan') {
@@ -212,8 +306,34 @@ serve(async (req) => {
 
     // Cancel subscription
     if (action === 'cancel-subscription') {
-      if (!subscriptionId) {
-        throw new Error('subscriptionId is required');
+      // Verify ownership: user must own the subscription they're trying to cancel
+      const { data: subscription, error: fetchError } = await supabase
+        .from('subscriptions')
+        .select('user_id, rzp_subscription_id')
+        .eq('rzp_subscription_id', subscriptionId)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error('Error fetching subscription:', fetchError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to verify subscription ownership' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!subscription) {
+        return new Response(
+          JSON.stringify({ error: 'Subscription not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (subscription.user_id !== user.id) {
+        console.warn(`User ${user.id.substring(0, 8)}*** attempted to cancel subscription owned by ${subscription.user_id.substring(0, 8)}***`);
+        return new Response(
+          JSON.stringify({ error: 'You do not have permission to cancel this subscription' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       const cancelResponse = await fetch(
@@ -231,7 +351,10 @@ serve(async (req) => {
       if (!cancelResponse.ok) {
         const error = await cancelResponse.text();
         console.error('Razorpay cancel subscription error:', error);
-        throw new Error(`Failed to cancel subscription: ${error}`);
+        return new Response(
+          JSON.stringify({ error: 'Failed to cancel subscription. Please try again or contact support.' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       const cancelledSub = await cancelResponse.json();
@@ -257,8 +380,34 @@ serve(async (req) => {
 
     // Check subscription status
     if (action === 'check-status') {
-      if (!subscriptionId) {
-        throw new Error('subscriptionId is required');
+      // Verify ownership: user must own the subscription they're checking
+      const { data: subscription, error: fetchError } = await supabase
+        .from('subscriptions')
+        .select('user_id, rzp_subscription_id')
+        .eq('rzp_subscription_id', subscriptionId)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error('Error fetching subscription:', fetchError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to verify subscription ownership' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!subscription) {
+        return new Response(
+          JSON.stringify({ error: 'Subscription not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (subscription.user_id !== user.id) {
+        console.warn(`User ${user.id.substring(0, 8)}*** attempted to check subscription owned by ${subscription.user_id.substring(0, 8)}***`);
+        return new Response(
+          JSON.stringify({ error: 'You do not have permission to view this subscription' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       const statusResponse = await fetch(
@@ -273,7 +422,10 @@ serve(async (req) => {
       if (!statusResponse.ok) {
         const error = await statusResponse.text();
         console.error('Razorpay check status error:', error);
-        throw new Error(`Failed to check status: ${error}`);
+        return new Response(
+          JSON.stringify({ error: 'Failed to check subscription status. Please try again or contact support.' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       const subscriptionData = await statusResponse.json();
@@ -288,10 +440,16 @@ serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in razorpay-subscription:', error);
+    
+    // Safe error messages for users
+    const safeErrorMessage = error.message?.includes('Failed to')
+      ? error.message
+      : 'An error occurred processing your request. Please try again or contact support.';
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: safeErrorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

@@ -1,9 +1,56 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schemas
+const phoneSchema = z.string()
+  .regex(/^\+?91?[6-9]\d{9}$/, 'Invalid Indian phone number format');
+
+const otpSchema = z.string()
+  .regex(/^\d{4,6}$/, 'OTP must be 4-6 digits');
+
+const nameSchema = z.string()
+  .min(1, 'Name is required')
+  .max(100, 'Name too long')
+  .trim();
+
+const emailSchema = z.string()
+  .email('Invalid email format')
+  .max(255, 'Email too long')
+  .optional()
+  .or(z.literal(''));
+
+const ageSchema = z.number()
+  .int('Age must be an integer')
+  .min(13, 'Must be at least 13 years old')
+  .max(120, 'Invalid age');
+
+const locationSchema = z.string()
+  .max(100, 'Location too long')
+  .trim()
+  .optional()
+  .or(z.literal(''));
+
+const sendOtpSchema = z.object({
+  action: z.literal('send-otp'),
+  phone: phoneSchema,
+  isSignUp: z.boolean().optional(),
+});
+
+const verifyOtpSchema = z.object({
+  action: z.literal('verify-otp'),
+  phone: phoneSchema,
+  otp: otpSchema,
+  name: nameSchema.optional(),
+  email: emailSchema,
+  age: z.string().optional(),
+  location: locationSchema,
+  isSignUp: z.boolean().optional(),
+});
 
 interface OTPRequestBody {
   action: 'send-otp' | 'verify-otp';
@@ -23,7 +70,42 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, phone, otp, name, email, age, location, isSignUp }: OTPRequestBody = await req.json();
+    const rawBody = await req.json();
+    
+    // Validate input based on action
+    let validatedData: any;
+    try {
+      if (rawBody.action === 'send-otp') {
+        validatedData = sendOtpSchema.parse(rawBody);
+      } else if (rawBody.action === 'verify-otp') {
+        validatedData = verifyOtpSchema.parse(rawBody);
+        // Convert age string to number if provided
+        if (validatedData.age) {
+          const ageNum = parseInt(validatedData.age, 10);
+          ageSchema.parse(ageNum);
+          validatedData.ageNumber = ageNum;
+        }
+      } else {
+        throw new Error('Invalid action. Must be "send-otp" or "verify-otp"');
+      }
+    } catch (validationError: any) {
+      console.error('Input validation failed:', validationError.message);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid input data',
+          details: validationError.errors || validationError.message
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    const { action, phone, otp, name, email, location, isSignUp } = validatedData;
+    const ageNumber = validatedData.ageNumber;
+
     // Sanitize phone number for logging
     const sanitizedPhone = phone?.replace(/\d(?=\d{4})/g, '*') || '***';
     console.log(`OTP Action: ${action} (isSignUp: ${isSignUp})`);
@@ -272,7 +354,7 @@ Deno.serve(async (req) => {
               user_id: userId,
               mobile_number: phone,
               name: name || 'User',
-              age: age ? parseInt(age) : 25,
+              age: ageNumber || 25,
               email: email || null,
               location: location || null,
             });
@@ -321,10 +403,25 @@ Deno.serve(async (req) => {
     }
 
     throw new Error('Invalid action');
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in msg91-otp function:', error);
+    
+    // Provide safe error messages - don't leak internal details
+    const safeErrorMessage = 
+      error.message?.includes('template') || 
+      error.message?.includes('balance') ||
+      error.message?.includes('DND') ||
+      error.message?.includes('registered') ||
+      error.message?.includes('Invalid') ||
+      error.message?.includes('configured')
+        ? error.message
+        : 'An error occurred. Please try again or contact support.';
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: safeErrorMessage 
+      }),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
