@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const requestOtp = async (phone: string, isSignUp?: boolean) => {
     try {
-      console.log('📱 Requesting OTP for phone:', phone, 'isSignUp:', isSignUp);
+      console.log('Requesting OTP');
       
       const { data, error } = await supabase.functions.invoke('msg91-otp', {
         body: { 
@@ -86,17 +86,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
-      console.log('📡 Edge function response:', { data, error });
-      
       if (error) {
-        console.error('❌ Edge function error:', error);
+        console.error('Edge function error');
         throw new Error(error.message || 'Failed to send OTP');
       }
       
       if (!data?.success) {
         if (data?.action_required === 'signup') {
-          console.log('⚠️ User not registered, redirecting to signup');
-          return { 
+          console.log('User not registered, redirecting to signup');
+          return {
             error: { 
               message: data.message,
               requiresSignup: true
@@ -104,16 +102,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
         }
         
-        console.error('❌ MSG91 API error:', data);
+        console.error('MSG91 API error');
         throw new Error(data?.message || 'Failed to send OTP');
       }
       
-      console.log('✅ OTP sent successfully via MSG91');
+      console.log('OTP sent successfully');
       return { error: null };
       
     } catch (error: any) {
-      console.error('❌ Request OTP Error:', error);
-      return { 
+      console.error('Request OTP Error');
+      return {
         error: { 
           message: error.message || 'Failed to send OTP - please try again',
           originalError: error 
@@ -128,9 +126,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     profileData?: { name: string; email?: string; age?: string; location?: string }
   ) => {
     try {
-      console.log('🔍 Verifying OTP for phone:', phone);
+      console.log('Verifying OTP');
       
-      const requestBody: any = { 
+      const requestBody: any = {
         action: 'verify-otp',
         phone: phone,
         otp: otp
@@ -142,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         requestBody.email = profileData.email;
         requestBody.age = profileData.age;
         requestBody.location = profileData.location;
-        console.log('Including profile data for new user registration');
+        console.log('Including profile data for new user');
       }
       
       const { data, error } = await supabase.functions.invoke('msg91-otp', {
@@ -160,8 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(errorMessage);
       }
 
-      console.log('✅ OTP verified successfully for user:', data.user_id);
-      console.log('🔑 Received real Supabase tokens from edge function');
+      console.log('OTP verified successfully');
       
       // Use the real Supabase auth tokens from the edge function
       if (!data.access_token || !data.refresh_token) {
@@ -175,18 +172,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (sessionError) {
-        console.error('❌ Error setting session:', sessionError);
+        console.error('Error setting session');
         throw new Error('Failed to establish session');
       }
 
-      console.log('✅ Real Supabase session established successfully');
-      console.log('✅ User authenticated with real JWT tokens');
+      console.log('Session established successfully');
       
       // The onAuthStateChange listener will handle setting user and session state
       return { error: null };
       
     } catch (error: any) {
-      console.error('❌ Verify OTP Error:', error);
+      console.error('Verify OTP Error');
       
       // Provide friendly error message
       let friendlyMessage = error.message || 'Verification failed';

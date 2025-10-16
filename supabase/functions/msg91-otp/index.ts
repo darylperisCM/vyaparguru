@@ -24,7 +24,9 @@ Deno.serve(async (req) => {
 
   try {
     const { action, phone, otp, name, email, age, location, isSignUp }: OTPRequestBody = await req.json();
-    console.log(`MSG91 OTP Action: ${action} for phone: ${phone} (isSignUp: ${isSignUp})`);
+    // Sanitize phone number for logging
+    const sanitizedPhone = phone?.replace(/\d(?=\d{4})/g, '*') || '***';
+    console.log(`OTP Action: ${action} (isSignUp: ${isSignUp})`);
 
     const msg91AuthKey = Deno.env.get('MSG91_AUTH_KEY');
     if (!msg91AuthKey) {
@@ -54,7 +56,7 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (!existingProfile) {
-          console.log('❌ User not found for sign-in');
+          console.log('User not found for sign-in');
           return new Response(
             JSON.stringify({ 
               success: false, 
@@ -64,9 +66,9 @@ Deno.serve(async (req) => {
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        console.log('✅ User exists, proceeding with OTP send');
+        console.log('User exists, proceeding with OTP send');
       } else {
-        console.log('📝 Sign-up flow: Skipping user existence check');
+        console.log('Sign-up flow: Skipping user existence check');
       }
 
       // Format phone number - ensure consistent format: 91XXXXXXXXXX
@@ -76,18 +78,12 @@ Deno.serve(async (req) => {
         formattedPhone = formattedPhone.substring(2);
       }
       
-      console.log('🚀 Sending OTP via MSG91:');
-      console.log('  📱 Phone (original):', phone);
-      console.log('  📱 Phone (formatted):', formattedPhone);
-      console.log('  📱 Phone (final for MSG91):', `91${formattedPhone}`);
-      console.log('  📋 Template ID:', templateId);
-      console.log('  🔑 Auth Key exists:', !!msg91AuthKey);
+      console.log('Sending OTP via MSG91');
 
       const requestBody = {
         mobile: `91${formattedPhone}`,
         template_id: templateId,
       };
-      console.log('  📦 Request body:', JSON.stringify(requestBody));
 
       const response = await fetch('https://control.msg91.com/api/v5/otp', {
         method: 'POST',
@@ -99,13 +95,11 @@ Deno.serve(async (req) => {
       });
 
       const result = await response.json();
-      console.log('📡 MSG91 API Response:');
-      console.log('  Status:', response.status);
-      console.log('  Response:', JSON.stringify(result, null, 2));
+      console.log('MSG91 API Status:', response.status);
 
       if (!response.ok || result.type === 'error') {
         const errorMsg = result.message || 'Failed to send OTP';
-        console.error('❌ MSG91 Error:', errorMsg);
+        console.error('MSG91 Error:', errorMsg);
         
         // Provide helpful error messages
         let userMessage = errorMsg;
@@ -120,7 +114,7 @@ Deno.serve(async (req) => {
         throw new Error(userMessage);
       }
 
-      console.log('✅ OTP sent successfully!');
+      console.log('OTP sent successfully');
       return new Response(
         JSON.stringify({ success: true, message: 'OTP sent successfully' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -149,8 +143,7 @@ Deno.serve(async (req) => {
           verifyPhone = verifyPhone.substring(2);
         }
         
-        console.log('Verifying OTP with MSG91...');
-        console.log('  📱 Verify phone (final):', `91${verifyPhone}`);
+        console.log('Verifying OTP with MSG91');
         const verifyResponse = await fetch('https://control.msg91.com/api/v5/otp/verify', {
           method: 'POST',
           headers: {
@@ -164,10 +157,9 @@ Deno.serve(async (req) => {
         });
 
         const verifyResult = await verifyResponse.json();
-        console.log('MSG91 Verify OTP Response:', verifyResult);
 
         if (!verifyResponse.ok || verifyResult.type !== 'success') {
-          console.error('❌ OTP verification failed:', verifyResult.message);
+          console.error('OTP verification failed');
           return new Response(
             JSON.stringify({ 
               success: false, 
@@ -202,7 +194,7 @@ Deno.serve(async (req) => {
         if (existingProfile) {
           // Existing user - generate tokens
           userId = existingProfile.user_id;
-          console.log('Existing user found:', userId);
+          console.log('Existing user found');
           
           // Generate temporary email for internal auth
           const tempEmail = `${userId}@temp.placeholder`;
@@ -229,10 +221,10 @@ Deno.serve(async (req) => {
           
           accessToken = signInData.session.access_token;
           refreshToken = signInData.session.refresh_token;
-          console.log('✅ Tokens generated for existing user');
+          console.log('Session created for existing user');
         } else {
           // New user - create auth user
-          console.log('Creating new user...');
+          console.log('Creating new user');
           
           // Generate temporary user ID first
           const tempUserId = crypto.randomUUID();
@@ -255,7 +247,7 @@ Deno.serve(async (req) => {
 
           userId = newUser.user.id;
           isNewUser = true;
-          console.log('New user created:', userId);
+          console.log('New user created');
           
           // Sign in with EMAIL to get real session tokens
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -270,10 +262,10 @@ Deno.serve(async (req) => {
           
           accessToken = signInData.session.access_token;
           refreshToken = signInData.session.refresh_token;
-          console.log('✅ Real session tokens generated');
+          console.log('Session tokens generated');
 
           // CRITICAL: Create profile for new user - this triggers the 3-day trial subscription!
-          console.log('Creating profile with data:', { name, email, age, location });
+          console.log('Creating user profile');
           const { error: profileError } = await supabaseAdmin
             .from('profiles')
             .insert({
@@ -286,11 +278,11 @@ Deno.serve(async (req) => {
             });
 
           if (profileError) {
-            console.error('❌ Error creating profile:', profileError);
+            console.error('Error creating profile');
             throw new Error('Failed to create user profile');
           }
           
-          console.log('✅ Profile created - subscription trigger should fire now');
+          console.log('Profile created - subscription trigger should fire');
         }
 
         // Store phone-user mapping
@@ -314,7 +306,7 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } catch (error: any) {
-        console.error('❌ Error in verify-otp:', error);
+        console.error('Error in verify-otp:', error.message);
         return new Response(
           JSON.stringify({ 
             success: false, 

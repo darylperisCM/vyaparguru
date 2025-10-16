@@ -47,7 +47,7 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { action, userId, subscriptionId } = await req.json();
 
-    console.log(`Razorpay action: ${action}`, { userId, subscriptionId });
+    console.log(`Razorpay subscription action: ${action}`);
 
     // Create or get plan
     if (action === 'create-plan') {
@@ -76,7 +76,7 @@ serve(async (req) => {
       }
 
       const plan: CreatePlanResponse = await planResponse.json();
-      console.log('Plan created:', plan);
+      console.log('Plan created');
 
       return new Response(JSON.stringify({ planId: plan.id }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -107,7 +107,7 @@ serve(async (req) => {
 
         if (existingPlan) {
           planId = existingPlan.id;
-          console.log('Using existing plan:', planId);
+          console.log('Using existing plan');
         } else {
           // Create new plan
           const createPlanResp = await fetch(`${RAZORPAY_API_URL}/plans`, {
@@ -129,7 +129,7 @@ serve(async (req) => {
 
           const newPlan = await createPlanResp.json();
           planId = newPlan.id;
-          console.log('Created new plan:', planId);
+          console.log('Created new plan');
         }
       } else {
         throw new Error('Failed to fetch plans from Razorpay');
@@ -159,7 +159,7 @@ serve(async (req) => {
       }
 
       const subscription: CreateSubscriptionResponse = await subscriptionResponse.json();
-      console.log('Subscription created:', subscription);
+      console.log('Razorpay subscription created');
 
       // Get existing trial_ends_at from database (set by database trigger)
       const { data: existingSub } = await supabase

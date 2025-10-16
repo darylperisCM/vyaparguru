@@ -151,7 +151,7 @@ export default function Dashboard() {
           description: 'व्यापार में English, सफलता में Confidence!',
           image: '/assets/fulllogo.png',
           handler: async function (response: any) {
-            console.log('Payment successful:', response);
+            console.log('Payment successful');
             toast({
               title: "Payment Successful!",
               description: "Your subscription is now active.",
@@ -197,7 +197,7 @@ export default function Dashboard() {
         rzp.open();
       };
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('Payment error');
       
       if (retryCount < MAX_RETRIES) {
         toast({

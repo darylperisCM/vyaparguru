@@ -41,7 +41,7 @@ serve(async (req) => {
     }
 
     const event = JSON.parse(body);
-    console.log('Razorpay webhook event:', event.event);
+    console.log('Razorpay webhook event received:', event.event);
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
@@ -66,7 +66,7 @@ serve(async (req) => {
       .single();
 
     if (fetchError || !subscription) {
-      console.error('Subscription not found:', rzpSubscriptionId, fetchError);
+      console.error('Subscription not found in database');
       return new Response(JSON.stringify({ error: 'Subscription not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

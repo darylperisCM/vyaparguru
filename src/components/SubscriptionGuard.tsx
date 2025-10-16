@@ -22,18 +22,6 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
 
-  // Log subscription state for debugging
-  console.log('[SubscriptionGuard] State:', {
-    user: user?.id,
-    hasAccess,
-    subscription: subscription?.id,
-    status: subscription?.status,
-    isInTrial,
-    isActive,
-    isPendingPayment,
-    isExpired
-  });
-
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate('/auth/sign-in');
@@ -55,7 +43,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
 
       // If no Razorpay subscription ID, create it first
       if (!subscriptionId) {
-        console.log('No Razorpay subscription ID found, creating one...');
+        console.log('Creating Razorpay subscription');
         
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
@@ -72,14 +60,14 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
         });
 
         if (subError || !subData?.subscription_id) {
-          console.error('Failed to create Razorpay subscription:', subError);
+          console.error('Failed to create Razorpay subscription');
           setProcessingPayment(false);
           setShowPaymentModal(false);
           return;
         }
 
         subscriptionId = subData.subscription_id;
-        console.log('Created Razorpay subscription:', subscriptionId);
+        console.log('Razorpay subscription created');
       }
 
       // Load Razorpay script
@@ -96,7 +84,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
           description: 'व्यापार में English, सफलता में Confidence!',
           image: '/assets/fulllogo.png',
           handler: async function (response: any) {
-            console.log('Payment successful:', response);
+            console.log('Payment successful');
             toast({
               title: "Payment Successful!",
               description: "Your subscription is now active.",
@@ -145,7 +133,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
         rzp.open();
       };
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('Payment error');
       
       if (retryCount < MAX_RETRIES) {
         toast({
@@ -208,12 +196,12 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  console.log('[SubscriptionGuard] Manually refreshing subscription...');
-                  refetch();
-                }}
-                className="flex-1"
+            <Button
+              onClick={() => {
+                console.log('Refreshing subscription');
+                refetch();
+              }}
+              className="flex-1"
               >
                 🔄 Retry Subscription Fetch
               </Button>

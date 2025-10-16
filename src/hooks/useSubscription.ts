@@ -52,11 +52,11 @@ export const useSubscription = () => {
 
   const fetchSubscription = async (retryCount = 0) => {
     if (!user) {
-      console.log('[useSubscription] No user, skipping fetch');
+      console.log('No user, skipping subscription fetch');
       return;
     }
 
-    console.log('[useSubscription] Fetching subscription for user:', user.id, `(attempt ${retryCount + 1})`);
+    console.log('Fetching subscription');
 
     try {
       const { data, error } = await supabase
@@ -65,14 +65,12 @@ export const useSubscription = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      console.log('[useSubscription] Query result:', { data, error });
-
       if (error) throw error;
       
       // If no subscription found and we haven't exceeded retry limit
       if (!data && retryCount < 3) {
         const delay = Math.pow(2, retryCount) * 500; // 500ms, 1000ms, 2000ms
-        console.log(`[useSubscription] No subscription found, retrying in ${delay}ms... (attempt ${retryCount + 1}/3)`);
+        console.log(`No subscription found, retrying in ${delay}ms...`);
         
         setTimeout(() => {
           fetchSubscription(retryCount + 1);
@@ -82,9 +80,8 @@ export const useSubscription = () => {
       
       setSubscription(data);
       setLoading(false); // Set loading to false when data is received
-      console.log('[useSubscription] Subscription set:', data);
     } catch (error) {
-      console.error('[useSubscription] Error fetching subscription:', error);
+      console.error('Error fetching subscription');
       setLoading(false); // Also set loading to false on error
     }
   };
@@ -103,16 +100,6 @@ export const useSubscription = () => {
     : 0;
 
   const hasAccess = isInTrial || isActive;
-
-  console.log('[useSubscription] Current state:', {
-    subscriptionExists: !!subscription,
-    status: subscription?.status,
-    isInTrial,
-    isActive,
-    hasAccess,
-    trialEndsAt: subscription?.trial_ends_at,
-    daysUntilTrialEnd
-  });
 
   return {
     subscription,
