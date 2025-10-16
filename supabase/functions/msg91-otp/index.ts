@@ -105,10 +105,13 @@ Deno.serve(async (req) => {
 
     const { action, phone, otp, name, email, location, isSignUp } = validatedData;
     const ageNumber = validatedData.ageNumber;
+    
+    // Explicitly handle isSignUp flag with default
+    const isSignUpFlag = isSignUp ?? false;
 
     // Sanitize phone number for logging
     const sanitizedPhone = phone?.replace(/\d(?=\d{4})/g, '*') || '***';
-    console.log(`OTP Action: ${action} (isSignUp: ${isSignUp})`);
+    console.log(`🔍 OTP Action: ${action} | Raw isSignUp: ${isSignUp} | Computed isSignUpFlag: ${isSignUpFlag}`);
 
     const msg91AuthKey = Deno.env.get('MSG91_AUTH_KEY');
     if (!msg91AuthKey) {
@@ -129,7 +132,7 @@ Deno.serve(async (req) => {
       }
 
       // Skip user existence check for sign-up flow
-      if (!isSignUp) {
+      if (!isSignUpFlag) {
         // For sign-in: Check if user exists
         const { data: existingProfile } = await supabaseAdmin
           .from('profiles')

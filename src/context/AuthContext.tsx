@@ -76,13 +76,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const requestOtp = async (phone: string, isSignUp?: boolean) => {
     try {
-      console.log('Requesting OTP');
+      // Debug logging to track what's being sent
+      const isSignUpValue = isSignUp === true;
+      console.log('🔍 requestOtp called with:', { phone: phone.replace(/\d(?=\d{4})/g, '*'), isSignUp, computed: isSignUpValue });
       
       const { data, error } = await supabase.functions.invoke('msg91-otp', {
         body: { 
           action: 'send-otp',
           phone: phone,
-          isSignUp: isSignUp || false
+          isSignUp: isSignUpValue
         }
       });
       
