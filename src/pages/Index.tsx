@@ -170,7 +170,7 @@ export default function Index() {
             <NavLink to="/features" className="block">
               <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer h-full">
                 <CardContent className="pt-6">
-                  <img src={translationIcon} alt="Translation Coach" className="w-12 h-12 rounded-lg mx-auto mb-4" />
+                  <img src={translationIcon} alt="Translation Coach" className="w-12 h-12 rounded-lg mx-auto mb-4" loading="lazy" />
                   <h3 className="font-semibold text-lg mb-2 text-primary">तुरंत अनुवाद</h3>
                   <p className="text-sm text-muted-foreground">Hindi to professional English translation with voice coaching</p>
                 </CardContent>
@@ -180,7 +180,7 @@ export default function Index() {
             <NavLink to="/features" className="block">
               <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer h-full">
                 <CardContent className="pt-6">
-                  <img src={emailIcon} alt="Email Assistant" className="w-12 h-12 rounded-lg mx-auto mb-4" />
+                  <img src={emailIcon} alt="Email Assistant" className="w-12 h-12 rounded-lg mx-auto mb-4" loading="lazy" />
                   <h3 className="font-semibold text-lg mb-2 text-primary">ईमेल सहायक</h3>
                   <p className="text-sm text-muted-foreground">Generate professional business emails from your Hindi ideas</p>
                 </CardContent>
@@ -190,7 +190,7 @@ export default function Index() {
             <NavLink to="/features" className="block">
               <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer h-full">
                 <CardContent className="pt-6">
-                  <img src={industryIcon} alt="Industry Modules" className="w-12 h-12 rounded-lg mx-auto mb-4" />
+                  <img src={industryIcon} alt="Industry Modules" className="w-12 h-12 rounded-lg mx-auto mb-4" loading="lazy" />
                   <h3 className="font-semibold text-lg mb-2 text-primary">उद्योग मॉड्यूल</h3>
                   <p className="text-sm text-muted-foreground">Specialized training for retail, food, manufacturing & services</p>
                 </CardContent>

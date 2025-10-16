@@ -90,9 +90,12 @@ export function SiteHeader() {
   <NavLink to="/" aria-label="Vyapar Guru Home" className="flex items-center gap-3">
     {/* Use the high-res icon you saved; or keep your existing path if you prefer */}
     <img
-      src="/footer-logo.png"                  // or "/assets/fulllogo_transparent_nobuffer.png"
+      src="/footer-logo.png"
       alt="व्यापार गुरु / Vyapar Guru"
       className="h-12 w-12 md:h-12 md:w-12 object-contain"
+      width="48"
+      height="48"
+      fetchPriority="high"
     />
     <span className="font-bold leading-tight text-xl md:text-2xl">
       <span className="text-primary">व्यापार गुरु</span>

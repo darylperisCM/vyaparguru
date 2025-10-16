@@ -29,14 +29,17 @@
     <meta name="twitter:description" content="AI-powered Business English for Hindi speakers. ₹99/month only." />
     <meta name="twitter:image" content="https://vyaparguru.info/og-image.png" />
 
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/footer-logo.png" as="image" type="image/png" />
+    
     <!-- Optional: Preconnects for YouTube poster/iframe -->
     <link rel="preconnect" href="https://www.youtube.com" />
     <link rel="preconnect" href="https://i.ytimg.com" />
     <link rel="preconnect" href="https://img.youtube.com" />
     
-    <!-- Google Analytics -->
+    <!-- Google Analytics (deferred for better performance) -->
     <link rel="preconnect" href="https://www.googletagmanager.com" />
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5M62HCRBB5"></script>
+    <script defer src="https://www.googletagmanager.com/gtag/js?id=G-5M62HCRBB5"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
@@ -52,6 +55,6 @@
     <script type="module" src="/src/main.tsx"></script>
 
     <!-- Elfsight platform script (required for the Feedback widget) -->
-    <script src="https://elfsightcdn.com/platform.js" async></script>
+    <script src="https://elfsightcdn.com/platform.js" defer></script>
   </body>
 </html>
