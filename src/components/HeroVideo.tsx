@@ -1,10 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function HeroVideo() {
   const [play, setPlay] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const videoId = "y818qiCzKCk";
-  const posterHQ = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-  const posterFallback = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  
+  // Use lower resolution poster for mobile
+  const posterMobile = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  const posterDesktop = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+  const posterFallback = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+
+  // Detect mobile on mount
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const posterSrc = isMobile ? posterMobile : posterDesktop;
 
   return (
     <div className="mx-auto" style={{ maxWidth: 1200 }}>
@@ -34,12 +48,13 @@ export default function HeroVideo() {
               zIndex: 10,
             }}
           >
-            {/* Try maxres; if it 404s, browser falls back to hqdefault via onError */}
+            {/* Responsive poster: mobile uses lower res for faster loading */}
             <img
-              src={posterHQ}
+              src={posterSrc}
               onError={(e) => { (e.currentTarget as HTMLImageElement).src = posterFallback; }}
               alt="VyaparGuru demo poster"
-              fetchPriority="high"
+              fetchPriority={isMobile ? "auto" : "high"}
+              loading={isMobile ? "eager" : "eager"}
               decoding="async"
               style={{
                 position: "absolute",

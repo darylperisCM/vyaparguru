@@ -2,10 +2,22 @@ import { useState, useEffect } from "react";
 
 export default function FeedbackWidget() {
   const [open, setOpen] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   useEffect(() => {
     console.log("[FeedbackWidget] mounted");
   }, []);
+
+  // Load Elfsight script only when modal opens
+  useEffect(() => {
+    if (open && !scriptLoaded) {
+      const script = document.createElement('script');
+      script.src = 'https://static.elfsight.com/platform/platform.js';
+      script.async = true;
+      script.onload = () => setScriptLoaded(true);
+      document.body.appendChild(script);
+    }
+  }, [open, scriptLoaded]);
 
   return (
     <>
@@ -37,11 +49,17 @@ export default function FeedbackWidget() {
               ✕
             </button>
 
-            {/* Elfsight container */}
-            <div
-              className="elfsight-app-7e915384-2ea3-4868-a577-899d188fc9f4"
-              data-elfsight-app-lazy
-            />
+            {/* Elfsight container - loads script on demand */}
+            {scriptLoaded ? (
+              <div
+                className="elfsight-app-7e915384-2ea3-4868-a577-899d188fc9f4"
+                data-elfsight-app-lazy
+              />
+            ) : (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-gray-500">Loading feedback form...</p>
+              </div>
+            )}
           </div>
         </div>
       )}
