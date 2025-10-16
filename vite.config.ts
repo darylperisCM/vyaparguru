@@ -1,18 +1,33 @@
-import { defineConfig } from "vite";
+import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import type { IncomingMessage, ServerResponse } from "http";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+    },
   },
   plugins: [
     react(),
     mode === 'development' &&
     componentTagger(),
+    {
+      name: 'configure-response-headers',
+      configureServer: (server) => {
+        server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+          if (req.url?.endsWith('.xml')) {
+            res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+          }
+          next();
+        });
+      },
+    } as Plugin,
   ].filter(Boolean),
   resolve: {
     alias: {
