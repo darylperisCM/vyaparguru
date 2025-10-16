@@ -1,5 +1,25 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// Helper function to handle subscription errors
+function handleSubscriptionError(error: any, navigate?: any, toast?: any): boolean {
+  if (error?.requiresSubscription && navigate && toast) {
+    toast({
+      title: "Subscription Required",
+      description: error.message,
+      variant: "destructive",
+      duration: 5000
+    });
+    
+    // Redirect to pricing page after 2 seconds
+    setTimeout(() => {
+      navigate('/pricing');
+    }, 2000);
+    
+    return true; // Error was handled
+  }
+  return false; // Error should be thrown
+}
+
 export interface TranslationResponse {
   translatedText: string;
   confidence: number;
@@ -28,13 +48,20 @@ export class APIService {
   static async translateWithGoogle(
     text: string, 
     sourceLang: string, 
-    targetLang: string
+    targetLang: string,
+    navigate?: any,
+    toast?: any
   ): Promise<TranslationResponse> {
     const { data, error } = await supabase.functions.invoke('google-translate', {
       body: { text, sourceLang, targetLang }
     });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (data?.requiresSubscription && handleSubscriptionError(data, navigate, toast)) {
+        throw new Error('SUBSCRIPTION_REQUIRED');
+      }
+      throw new Error(error.message);
+    }
     return data;
   }
 
@@ -42,13 +69,20 @@ export class APIService {
   static async translateWithBhashini(
     text: string,
     sourceLang: string, 
-    targetLang: string
+    targetLang: string,
+    navigate?: any,
+    toast?: any
   ): Promise<TranslationResponse> {
     const { data, error } = await supabase.functions.invoke('bhashini-translate', {
       body: { text, sourceLang, targetLang }
     });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (data?.requiresSubscription && handleSubscriptionError(data, navigate, toast)) {
+        throw new Error('SUBSCRIPTION_REQUIRED');
+      }
+      throw new Error(error.message);
+    }
     return data;
   }
 
@@ -56,13 +90,20 @@ export class APIService {
   static async generateWithOpenAI(
     message: string,
     context: string,
-    purpose?: string
+    purpose?: string,
+    navigate?: any,
+    toast?: any
   ): Promise<ChatResponse> {
     const { data, error } = await supabase.functions.invoke('openai-chat', {
       body: { message, context, purpose }
     });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (data?.requiresSubscription && handleSubscriptionError(data, navigate, toast)) {
+        throw new Error('SUBSCRIPTION_REQUIRED');
+      }
+      throw new Error(error.message);
+    }
     return data;
   }
 
@@ -70,25 +111,39 @@ export class APIService {
   static async synthesizeSpeech(
     text: string,
     language = 'en-IN',
-    voice = 'en-IN-Wavenet-A'
+    voice = 'en-IN-Wavenet-A',
+    navigate?: any,
+    toast?: any
   ): Promise<SpeechResponse> {
     const { data, error } = await supabase.functions.invoke('google-speech', {
       body: { text, language, voice }
     });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (data?.requiresSubscription && handleSubscriptionError(data, navigate, toast)) {
+        throw new Error('SUBSCRIPTION_REQUIRED');
+      }
+      throw new Error(error.message);
+    }
     return data;
   }
 
   static async transcribeSpeech(
     audioData: string,
-    language = 'hi-IN'
+    language = 'hi-IN',
+    navigate?: any,
+    toast?: any
   ): Promise<TranscriptionResponse> {
     const { data, error } = await supabase.functions.invoke('google-speech?action=transcribe', {
       body: { audioData, language }
     });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (data?.requiresSubscription && handleSubscriptionError(data, navigate, toast)) {
+        throw new Error('SUBSCRIPTION_REQUIRED');
+      }
+      throw new Error(error.message);
+    }
     return data;
   }
 
@@ -96,8 +151,10 @@ export class APIService {
   static async translate(
     text: string,
     sourceLang: string,
-    targetLang: string
+    targetLang: string,
+    navigate?: any,
+    toast?: any
   ): Promise<TranslationResponse> {
-    return await this.translateWithGoogle(text, sourceLang, targetLang);
+    return await this.translateWithGoogle(text, sourceLang, targetLang, navigate, toast);
   }
 }

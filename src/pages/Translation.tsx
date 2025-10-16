@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Translation() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const { isRecording, startRecording, stopRecording, error: recordingError } = useAudioRecording();
@@ -66,7 +68,7 @@ export default function Translation() {
     
     setIsTranslating(true);
     try {
-      const result = await APIService.translate(hindiText, 'hi', 'en');
+      const result = await APIService.translate(hindiText, 'hi', 'en', navigate, toast);
       setEnglishText(result.translatedText);
       setConfidence(Math.round(result.confidence * 100));
       
@@ -87,13 +89,15 @@ export default function Translation() {
         title: "Translation Complete",
         description: "Translated using Google Translate"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Translation error:', error);
-      toast({
-        title: "Translation Failed", 
-        description: "Please try again",
-        variant: "destructive"
-      });
+      if (error.message !== 'SUBSCRIPTION_REQUIRED') {
+        toast({
+          title: "Translation Failed", 
+          description: "Please try again",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsTranslating(false);
     }
@@ -126,7 +130,7 @@ export default function Translation() {
             description: "Converting speech to text...",
           });
           
-          const result = await APIService.transcribeSpeech(audioData, 'hi-IN');
+          const result = await APIService.transcribeSpeech(audioData, 'hi-IN', navigate, toast);
           setHindiText(result.transcription);
           
           toast({
@@ -134,12 +138,14 @@ export default function Translation() {
             description: `Confidence: ${Math.round(result.confidence * 100)}%`,
           });
         }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to process audio",
-          variant: "destructive"
-        });
+      } catch (error: any) {
+        if (error.message !== 'SUBSCRIPTION_REQUIRED') {
+          toast({
+            title: "Error",
+            description: "Failed to process audio",
+            variant: "destructive"
+          });
+        }
         setIsListening(false);
       }
     }
@@ -158,7 +164,7 @@ export default function Translation() {
 
     setIsSpeaking(true);
     try {
-      const result = await APIService.synthesizeSpeech(englishText, 'en-IN', 'en-IN-Wavenet-A');
+      const result = await APIService.synthesizeSpeech(englishText, 'en-IN', 'en-IN-Wavenet-A', navigate, toast);
 
       if (result.success) {
         // Directly play the returned data URL
@@ -181,13 +187,15 @@ export default function Translation() {
           description: "Text-to-speech generated successfully"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Speech synthesis error:', error);
-      toast({
-        title: "Speech Failed",
-        description: "Could not generate audio",
-        variant: "destructive"
-      });
+      if (error.message !== 'SUBSCRIPTION_REQUIRED') {
+        toast({
+          title: "Speech Failed",
+          description: "Could not generate audio",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsSpeaking(false);
     }

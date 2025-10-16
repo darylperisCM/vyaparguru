@@ -1,4 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { validateSubscriptionAccess, getSubscriptionErrorResponse } from '../_shared/subscriptionValidator.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,27 @@ serve(async (req) => {
   }
 
   try {
+    // ===== SUBSCRIPTION VALIDATION =====
+    const authHeader = req.headers.get('Authorization');
+    
+    try {
+      const { user, subscription } = await validateSubscriptionAccess(authHeader);
+      console.log('Speech API access granted:', {
+        userId: user.id.substring(0, 8) + '***',
+        status: subscription.status
+      });
+    } catch (error: any) {
+      const errorResponse = getSubscriptionErrorResponse(error.message);
+      return new Response(
+        JSON.stringify(errorResponse),
+        {
+          status: error.message === 'AUTHENTICATION_REQUIRED' ? 401 : 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    // ===== END VALIDATION =====
+
     const url = new URL(req.url)
     const action = url.searchParams.get('action') || 'synthesize'
     const body = await req.json()

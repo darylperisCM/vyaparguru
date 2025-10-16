@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { validateSubscriptionAccess, getSubscriptionErrorResponse } from '../_shared/subscriptionValidator.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,27 @@ serve(async (req) => {
   }
 
   try {
+    // ===== SUBSCRIPTION VALIDATION =====
+    const authHeader = req.headers.get('Authorization');
+    
+    try {
+      const { user, subscription } = await validateSubscriptionAccess(authHeader);
+      console.log('Bhashini translation access granted:', {
+        userId: user.id.substring(0, 8) + '***',
+        status: subscription.status
+      });
+    } catch (error: any) {
+      const errorResponse = getSubscriptionErrorResponse(error.message);
+      return new Response(
+        JSON.stringify(errorResponse),
+        {
+          status: error.message === 'AUTHENTICATION_REQUIRED' ? 401 : 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    // ===== END VALIDATION =====
+
     const { text, sourceLang, targetLang }: BhashiniRequest = await req.json();
 
     // Input validation

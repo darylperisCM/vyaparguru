@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ interface EmailTemplate {
 }
 
 export default function EmailAssistant() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
@@ -151,7 +153,7 @@ export default function EmailAssistant() {
       const context = `Email Assistant - Generate a ${tone} ${template?.title} email`;
       const message = `Subject: ${subject}\nKey Points: ${keyPoints}\nTone: ${tone}\nPlease generate a professional business email.`;
 
-      const result = await APIService.generateWithOpenAI(message, context, template?.category);
+      const result = await APIService.generateWithOpenAI(message, context, template?.category, navigate, toast);
       setGeneratedEmail(result.generatedText);
       
       // Save AI message to database
@@ -170,13 +172,15 @@ export default function EmailAssistant() {
         title: "Email Generated",
         description: "Professional email created successfully"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Email generation error:', error);
-      toast({
-        title: "Generation Failed",
-        description: "Please try again",
-        variant: "destructive"
-      });
+      if (error.message !== 'SUBSCRIPTION_REQUIRED') {
+        toast({
+          title: "Generation Failed",
+          description: "Please try again",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsGenerating(false);
     }
