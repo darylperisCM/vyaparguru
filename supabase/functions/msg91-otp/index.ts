@@ -128,170 +128,204 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'verify-otp') {
-      if (!otp) {
-        throw new Error('OTP is required for verification');
-      }
-
-      // Verify OTP with MSG91 - use same format as send
-      let verifyPhone = phone.startsWith('+91') ? phone.substring(3) : phone;
-      // Remove leading 91 if present
-      if (verifyPhone.startsWith('91') && verifyPhone.length === 12) {
-        verifyPhone = verifyPhone.substring(2);
-      }
-      
-      console.log('Verifying OTP with MSG91...');
-      console.log('  📱 Verify phone (final):', `91${verifyPhone}`);
-      const verifyResponse = await fetch('https://control.msg91.com/api/v5/otp/verify', {
-        method: 'POST',
-        headers: {
-          'authkey': msg91AuthKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          otp: otp,
-          mobile: `91${verifyPhone}`,
-        }),
-      });
-
-      const verifyResult = await verifyResponse.json();
-      console.log('MSG91 Verify OTP Response:', verifyResult);
-
-      if (!verifyResponse.ok || verifyResult.type !== 'success') {
-        throw new Error(`Invalid OTP: ${verifyResult.message || 'Verification failed'}`);
-      }
-
-      // Check if user exists (by checking if phone exists in profiles table)
-      const { data: existingProfile } = await supabaseAdmin
-        .from('profiles')
-        .select('user_id')
-        .eq('mobile_number', phone)
-        .maybeSingle();
-
-      let userId: string;
-      let isNewUser = false;
-      let accessToken: string;
-      let refreshToken: string;
-
-      // Create a regular Supabase client for authentication
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_ANON_KEY')!
-      );
-
-      if (existingProfile) {
-        // Existing user - generate tokens
-        userId = existingProfile.user_id;
-        console.log('Existing user found:', userId);
-        
-        // Generate temporary email for internal auth
-        const tempEmail = `${userId}@temp.placeholder`;
-        const tempPassword = crypto.randomUUID();
-        
-        // Update user with temporary email and password
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
-          email: tempEmail,
-          password: tempPassword,
-          email_confirm: true, // Skip email confirmation
-          phone_confirm: true,
-        });
-        
-        // Sign in with EMAIL to get real session tokens
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: tempEmail, // Use email instead of phone
-          password: tempPassword,
-        });
-        
-        if (signInError || !signInData.session) {
-          console.error('Error signing in existing user:', signInError);
-          throw new Error('Failed to create session for existing user');
-        }
-        
-        accessToken = signInData.session.access_token;
-        refreshToken = signInData.session.refresh_token;
-        console.log('✅ Tokens generated for existing user');
-      } else {
-        // New user - create auth user
-        console.log('Creating new user...');
-        
-        // Generate temporary user ID first
-        const tempUserId = crypto.randomUUID();
-        const tempEmail = `${tempUserId}@temp.placeholder`;
-        const tempPassword = crypto.randomUUID();
-        
-        // Create user with temporary email
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email: tempEmail,
-          phone: phone, // Store phone for reference
-          password: tempPassword,
-          email_confirm: true, // Skip email confirmation
-          phone_confirm: true,
-        });
-
-        if (createError || !newUser.user) {
-          console.error('Error creating user:', createError);
-          throw new Error('Failed to create user account');
+      try {
+        if (!otp) {
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'OTP is required for verification' 
+            }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
         }
 
-        userId = newUser.user.id;
-        isNewUser = true;
-        console.log('New user created:', userId);
-        
-        // Sign in with EMAIL to get real session tokens
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: tempEmail, // Use email instead of phone
-          password: tempPassword,
-        });
-        
-        if (signInError || !signInData.session) {
-          console.error('Error signing in new user:', signInError);
-          throw new Error('Failed to create session for new user');
+        // Verify OTP with MSG91 - use same format as send
+        let verifyPhone = phone.startsWith('+91') ? phone.substring(3) : phone;
+        // Remove leading 91 if present
+        if (verifyPhone.startsWith('91') && verifyPhone.length === 12) {
+          verifyPhone = verifyPhone.substring(2);
         }
         
-        accessToken = signInData.session.access_token;
-        refreshToken = signInData.session.refresh_token;
-        console.log('✅ Real session tokens generated');
+        console.log('Verifying OTP with MSG91...');
+        console.log('  📱 Verify phone (final):', `91${verifyPhone}`);
+        const verifyResponse = await fetch('https://control.msg91.com/api/v5/otp/verify', {
+          method: 'POST',
+          headers: {
+            'authkey': msg91AuthKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            otp: otp,
+            mobile: `91${verifyPhone}`,
+          }),
+        });
 
-        // CRITICAL: Create profile for new user - this triggers the 3-day trial subscription!
-        console.log('Creating profile with data:', { name, email, age, location });
-        const { error: profileError } = await supabaseAdmin
+        const verifyResult = await verifyResponse.json();
+        console.log('MSG91 Verify OTP Response:', verifyResult);
+
+        if (!verifyResponse.ok || verifyResult.type !== 'success') {
+          console.error('❌ OTP verification failed:', verifyResult.message);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Incorrect OTP entered. Please try again.',
+              details: verifyResult.message 
+            }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        }
+
+        // Check if user exists (by checking if phone exists in profiles table)
+        const { data: existingProfile } = await supabaseAdmin
           .from('profiles')
-          .insert({
-            user_id: userId,
-            mobile_number: phone,
-            name: name || 'User',
-            age: age ? parseInt(age) : 25,
-            email: email || null,
-            location: location || null,
+          .select('user_id')
+          .eq('mobile_number', phone)
+          .maybeSingle();
+
+        let userId: string;
+        let isNewUser = false;
+        let accessToken: string;
+        let refreshToken: string;
+
+        // Create a regular Supabase client for authentication
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_ANON_KEY')!
+        );
+
+        if (existingProfile) {
+          // Existing user - generate tokens
+          userId = existingProfile.user_id;
+          console.log('Existing user found:', userId);
+          
+          // Generate temporary email for internal auth
+          const tempEmail = `${userId}@temp.placeholder`;
+          const tempPassword = crypto.randomUUID();
+          
+          // Update user with temporary email and password
+          await supabaseAdmin.auth.admin.updateUserById(userId, {
+            email: tempEmail,
+            password: tempPassword,
+            email_confirm: true, // Skip email confirmation
+            phone_confirm: true,
+          });
+          
+          // Sign in with EMAIL to get real session tokens
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: tempEmail, // Use email instead of phone
+            password: tempPassword,
+          });
+          
+          if (signInError || !signInData.session) {
+            console.error('Error signing in existing user:', signInError);
+            throw new Error('Failed to create session for existing user');
+          }
+          
+          accessToken = signInData.session.access_token;
+          refreshToken = signInData.session.refresh_token;
+          console.log('✅ Tokens generated for existing user');
+        } else {
+          // New user - create auth user
+          console.log('Creating new user...');
+          
+          // Generate temporary user ID first
+          const tempUserId = crypto.randomUUID();
+          const tempEmail = `${tempUserId}@temp.placeholder`;
+          const tempPassword = crypto.randomUUID();
+          
+          // Create user with temporary email
+          const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+            email: tempEmail,
+            phone: phone, // Store phone for reference
+            password: tempPassword,
+            email_confirm: true, // Skip email confirmation
+            phone_confirm: true,
           });
 
-        if (profileError) {
-          console.error('❌ Error creating profile:', profileError);
-          throw new Error('Failed to create user profile');
+          if (createError || !newUser.user) {
+            console.error('Error creating user:', createError);
+            throw new Error('Failed to create user account');
+          }
+
+          userId = newUser.user.id;
+          isNewUser = true;
+          console.log('New user created:', userId);
+          
+          // Sign in with EMAIL to get real session tokens
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: tempEmail, // Use email instead of phone
+            password: tempPassword,
+          });
+          
+          if (signInError || !signInData.session) {
+            console.error('Error signing in new user:', signInError);
+            throw new Error('Failed to create session for new user');
+          }
+          
+          accessToken = signInData.session.access_token;
+          refreshToken = signInData.session.refresh_token;
+          console.log('✅ Real session tokens generated');
+
+          // CRITICAL: Create profile for new user - this triggers the 3-day trial subscription!
+          console.log('Creating profile with data:', { name, email, age, location });
+          const { error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .insert({
+              user_id: userId,
+              mobile_number: phone,
+              name: name || 'User',
+              age: age ? parseInt(age) : 25,
+              email: email || null,
+              location: location || null,
+            });
+
+          if (profileError) {
+            console.error('❌ Error creating profile:', profileError);
+            throw new Error('Failed to create user profile');
+          }
+          
+          console.log('✅ Profile created - subscription trigger should fire now');
         }
-        
-        console.log('✅ Profile created - subscription trigger should fire now');
+
+        // Store phone-user mapping
+        await supabaseAdmin
+          .from('phone_auth')
+          .upsert({
+            phone_number: phone,
+            user_id: userId,
+            otp_hash: null,
+            otp_expires_at: null,
+          });
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            user_id: userId,
+            is_new_user: isNewUser,
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error: any) {
+        console.error('❌ Error in verify-otp:', error);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: error.message || 'Failed to verify OTP' 
+          }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
       }
-
-      // Store phone-user mapping
-      await supabaseAdmin
-        .from('phone_auth')
-        .upsert({
-          phone_number: phone,
-          user_id: userId,
-          otp_hash: null,
-          otp_expires_at: null,
-        });
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          user_id: userId,
-          is_new_user: isNewUser,
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
 
     throw new Error('Invalid action');
