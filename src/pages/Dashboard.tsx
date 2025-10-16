@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet-async';
 import { useCountUp } from '@/hooks/useCountUp';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useProfile } from '@/hooks/useProfile';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { profile } = useProfile();
   const { 
     subscription, 
     isInTrial, 
@@ -94,7 +96,8 @@ export default function Dashboard() {
     });
   };
 
-  const handleSubscribeNow = async () => {
+  const handleSubscribeNow = async (retryCount = 0) => {
+    const MAX_RETRIES = 3;
     setProcessingPayment(true);
 
     try {
@@ -144,8 +147,8 @@ export default function Dashboard() {
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           subscription_id: subscriptionId,
-          name: 'VyaparGuru',
-          description: 'VyaparGuru - व्यापार गुरु',
+          name: 'VyaparGuru - व्यापार गुरु',
+          description: 'व्यापार में English, सफलता में Confidence!',
           image: '/assets/fulllogo.png',
           handler: async function (response: any) {
             console.log('Payment successful:', response);
@@ -156,32 +159,34 @@ export default function Dashboard() {
             window.location.reload();
           },
           prefill: {
-            email: user?.email || '',
-            contact: ''
+            name: profile?.name || '',
+            email: profile?.email || user?.email || '',
+            contact: profile?.mobile_number || ''
+          },
+          notes: {
+            user_id: user?.id || '',
+            user_name: profile?.name || '',
+            mobile: profile?.mobile_number || ''
           },
           theme: {
-            color: '#FF6B6B'
+            color: '#FF5722'
           },
           modal: {
             ondismiss: function () {
+              setProcessingPayment(false);
+              toast({
+                title: "Payment Cancelled",
+                description: "You can try again anytime.",
+              });
+            },
+            onescape: function () {
               setProcessingPayment(false);
             }
           },
           config: {
             display: {
-              blocks: {
-                banks: {
-                  name: 'Pay via UPI',
-                  instruments: [
-                    {
-                      method: 'upi'
-                    }
-                  ]
-                }
-              },
-              sequence: ['block.banks'],
               preferences: {
-                show_default_blocks: false
+                show_default_blocks: true
               }
             }
           }
@@ -193,12 +198,24 @@ export default function Dashboard() {
       };
     } catch (error) {
       console.error('Payment error:', error);
-      toast({
-        title: "Payment Error",
-        description: error instanceof Error ? error.message : "Failed to open payment gateway. Please try again.",
-        variant: "destructive"
-      });
-      setProcessingPayment(false);
+      
+      if (retryCount < MAX_RETRIES) {
+        toast({
+          title: "Retrying...",
+          description: `Attempt ${retryCount + 1} of ${MAX_RETRIES}`,
+        });
+        
+        setTimeout(() => {
+          handleSubscribeNow(retryCount + 1);
+        }, 2000 * (retryCount + 1));
+      } else {
+        toast({
+          title: "Payment Failed",
+          description: error instanceof Error ? error.message : "Failed to open payment gateway. Please try again later or contact support.",
+          variant: "destructive"
+        });
+        setProcessingPayment(false);
+      }
     }
   };
 
@@ -257,10 +274,10 @@ export default function Dashboard() {
                     </div>
                     {isInTrial && (
                       <Button 
-                        onClick={handleSubscribeNow}
+                        onClick={() => handleSubscribeNow()}
                         disabled={processingPayment}
                         size="sm"
-                        className="text-xs"
+                        className="text-xs bg-[#FF5722] hover:bg-[#E64A19]"
                       >
                         {processingPayment ? (
                           <>
@@ -268,7 +285,7 @@ export default function Dashboard() {
                             Processing...
                           </>
                         ) : (
-                          'Subscribe ₹99/mo'
+                          'Subscribe for ₹99/month'
                         )}
                       </Button>
                     )}

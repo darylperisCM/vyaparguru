@@ -2,10 +2,12 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useProfile } from '@/hooks/useProfile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface SubscriptionGuardProps {
   children: ReactNode;
@@ -14,7 +16,9 @@ interface SubscriptionGuardProps {
 export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const { hasAccess, loading, subscription, isPendingPayment, isExpired, isInTrial, isActive, refetch } = useSubscription();
+  const { profile } = useProfile();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
 
@@ -42,7 +46,8 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
     }
   }, [hasAccess, loading, isPendingPayment, isExpired]);
 
-  const handlePayment = async () => {
+  const handlePayment = async (retryCount = 0) => {
+    const MAX_RETRIES = 3;
     setProcessingPayment(true);
 
     try {
@@ -87,42 +92,49 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           subscription_id: subscriptionId,
-          name: 'VyaparGuru',
-          description: 'VyaparGuru - व्यापार गुरु',
+          name: 'VyaparGuru - व्यापार गुरु',
+          description: 'व्यापार में English, सफलता में Confidence!',
           image: '/assets/fulllogo.png',
           handler: async function (response: any) {
             console.log('Payment successful:', response);
+            toast({
+              title: "Payment Successful!",
+              description: "Your subscription is now active.",
+            });
             setShowPaymentModal(false);
             window.location.reload();
           },
           prefill: {
-            email: '',
-            contact: ''
+            name: profile?.name || '',
+            email: profile?.email || user?.email || '',
+            contact: profile?.mobile_number || ''
+          },
+          notes: {
+            user_id: user?.id || '',
+            user_name: profile?.name || '',
+            mobile: profile?.mobile_number || ''
           },
           theme: {
-            color: '#FF6B6B'
+            color: '#FF5722'
           },
           modal: {
             ondismiss: function () {
+              setProcessingPayment(false);
+              setShowPaymentModal(false);
+              toast({
+                title: "Payment Cancelled",
+                description: "You can try again anytime.",
+              });
+            },
+            onescape: function () {
               setProcessingPayment(false);
               setShowPaymentModal(false);
             }
           },
           config: {
             display: {
-              blocks: {
-                banks: {
-                  name: 'Pay via UPI',
-                  instruments: [
-                    {
-                      method: 'upi'
-                    }
-                  ]
-                }
-              },
-              sequence: ['block.banks'],
               preferences: {
-                show_default_blocks: false
+                show_default_blocks: true
               }
             }
           }
@@ -134,7 +146,24 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
       };
     } catch (error) {
       console.error('Payment error:', error);
-      setProcessingPayment(false);
+      
+      if (retryCount < MAX_RETRIES) {
+        toast({
+          title: "Retrying...",
+          description: `Attempt ${retryCount + 1} of ${MAX_RETRIES}`,
+        });
+        
+        setTimeout(() => {
+          handlePayment(retryCount + 1);
+        }, 2000 * (retryCount + 1));
+      } else {
+        toast({
+          title: "Payment Failed",
+          description: "Please try again later or contact support.",
+          variant: "destructive"
+        });
+        setProcessingPayment(false);
+      }
     }
   };
 
@@ -231,7 +260,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
             </div>
 
             <Button 
-              onClick={handlePayment}
+              onClick={() => handlePayment()}
               disabled={processingPayment}
               className="w-full"
               size="lg"
@@ -242,12 +271,12 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
                   Processing...
                 </>
               ) : (
-                'Pay ₹99 via UPI'
+                'Subscribe for ₹99/month'
               )}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
-              Secure payment powered by Razorpay. UPI only.
+              सुरक्षित भुगतान Razorpay द्वारा संचालित • Secure payment powered by Razorpay
             </p>
           </CardContent>
         </Card>

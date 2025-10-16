@@ -86,6 +86,24 @@ export default function Index() {
   </div>
 </section>
 
+      {/* Subscribe CTA Section - For Authenticated Users */}
+      {isAuthenticated && (
+        <section className="py-12 bg-gradient-to-r from-[#FF5722]/10 to-primary/10">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold mb-4 text-primary">
+              Subscribe for ₹99/month • ₹99/महीना की सदस्यता लें
+            </h2>
+            <p className="text-lg text-muted-foreground mb-6">
+              Complete access to all features • सभी सुविधाओं तक पूर्ण पहुंच
+            </p>
+            <NavLink to="/dashboard">
+              <Button size="lg" className="bg-[#FF5722] hover:bg-[#E64A19] text-white">
+                Subscribe Now • अभी सब्सक्राइब करें
+              </Button>
+            </NavLink>
+          </div>
+        </section>
+      )}
 
       {/* Problem Section */}
       <section className="py-16 bg-muted/30">
