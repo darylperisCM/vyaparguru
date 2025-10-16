@@ -119,7 +119,7 @@ export default function Dashboard() {
           }
         });
 
-        if (subError || !subData?.subscription_id) {
+        if (subError || !subData?.subscriptionId) {
           console.error('Failed to create Razorpay subscription:', subError);
           toast({
             title: "Error",
@@ -130,7 +130,7 @@ export default function Dashboard() {
           return;
         }
 
-        subscriptionId = subData.subscription_id;
+        subscriptionId = subData.subscriptionId;
         console.log('Created Razorpay subscription:', subscriptionId);
         
         // Refetch subscription to get updated data
