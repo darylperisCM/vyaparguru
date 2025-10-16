@@ -39,18 +39,6 @@ export default function AuthSignIn() {
   const [signUpResendTimer, setSignUpResendTimer] = useState(60);
   const [isResendingSignUpOtp, setIsResendingSignUpOtp] = useState(false);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   // Timer for Sign-In OTP
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -92,6 +80,18 @@ export default function AuthSignIn() {
       if (interval) clearInterval(interval);
     };
   }, [signUpStep, signUpResendTimer]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const validatePhone = (phoneNumber: string) => {
     const digits = phoneNumber.replace(/\D/g, '');
