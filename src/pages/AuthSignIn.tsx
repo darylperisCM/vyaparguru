@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate, NavLink } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,9 @@ export default function AuthSignIn() {
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [isRequestingOtp, setIsRequestingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [canResendSignInOtp, setCanResendSignInOtp] = useState(false);
+  const [signInResendTimer, setSignInResendTimer] = useState(60);
+  const [isResendingSignInOtp, setIsResendingSignInOtp] = useState(false);
   
   // Sign Up States
   const [signUpStep, setSignUpStep] = useState<'form' | 'otp'>('form');
@@ -32,6 +35,9 @@ export default function AuthSignIn() {
     mobileNumber: ''
   });
   const [signUpOtp, setSignUpOtp] = useState('');
+  const [canResendSignUpOtp, setCanResendSignUpOtp] = useState(false);
+  const [signUpResendTimer, setSignUpResendTimer] = useState(60);
+  const [isResendingSignUpOtp, setIsResendingSignUpOtp] = useState(false);
 
   if (loading) {
     return (
@@ -44,6 +50,48 @@ export default function AuthSignIn() {
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  // Timer for Sign-In OTP
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (step === 'otp' && signInResendTimer > 0) {
+      interval = setInterval(() => {
+        setSignInResendTimer((prev) => {
+          if (prev <= 1) {
+            setCanResendSignInOtp(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [step, signInResendTimer]);
+
+  // Timer for Sign-Up OTP
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (signUpStep === 'otp' && signUpResendTimer > 0) {
+      interval = setInterval(() => {
+        setSignUpResendTimer((prev) => {
+          if (prev <= 1) {
+            setCanResendSignUpOtp(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [signUpStep, signUpResendTimer]);
 
   const validatePhone = (phoneNumber: string) => {
     const digits = phoneNumber.replace(/\D/g, '');
@@ -100,6 +148,8 @@ export default function AuthSignIn() {
           description: "Please enter the OTP to continue"
         });
         setStep('otp');
+        setSignInResendTimer(60);
+        setCanResendSignInOtp(false);
       }
     } catch (error: any) {
       console.error('🔐 Sign-In: Unexpected error:', error);
@@ -159,6 +209,44 @@ export default function AuthSignIn() {
   const handleBackToPhone = () => {
     setStep('phone');
     setOtp('');
+    setSignInResendTimer(60);
+    setCanResendSignInOtp(false);
+  };
+
+  const handleResendSignInOtp = async () => {
+    setIsResendingSignInOtp(true);
+    const fullPhone = `+91${phone}`;
+    
+    try {
+      const { error } = await requestOtp(fullPhone);
+      
+      if (error) {
+        toast({
+          title: "Failed to Send OTP",
+          description: error.message || "Please try again",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      toast({
+        title: "OTP Sent!",
+        description: "A new OTP has been sent to your mobile"
+      });
+      
+      setSignInResendTimer(60);
+      setCanResendSignInOtp(false);
+      setOtp('');
+      
+    } catch (error: any) {
+      toast({
+        title: "Failed to Send OTP",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsResendingSignInOtp(false);
+    }
   };
 
   // Sign Up Functions
@@ -253,6 +341,8 @@ export default function AuthSignIn() {
         description: "Please enter the OTP to complete registration",
       });
       setSignUpStep('otp');
+      setSignUpResendTimer(60);
+      setCanResendSignUpOtp(false);
 
     } catch (error: any) {
       console.error('📝 Sign-Up: Unexpected error:', error);
@@ -325,6 +415,44 @@ export default function AuthSignIn() {
   const handleSignUpBackToForm = () => {
     setSignUpStep('form');
     setSignUpOtp('');
+    setSignUpResendTimer(60);
+    setCanResendSignUpOtp(false);
+  };
+
+  const handleResendSignUpOtp = async () => {
+    setIsResendingSignUpOtp(true);
+    const fullPhone = `+91${signUpFormData.mobileNumber}`;
+    
+    try {
+      const { error: otpError } = await requestOtp(fullPhone, true);
+      
+      if (otpError) {
+        toast({
+          title: "Failed to Send OTP",
+          description: otpError.message || "Please try again",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "OTP Sent!",
+        description: "A new OTP has been sent to your mobile",
+      });
+      
+      setSignUpResendTimer(60);
+      setCanResendSignUpOtp(false);
+      setSignUpOtp('');
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to resend OTP. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResendingSignUpOtp(false);
+    }
   };
 
   return (
@@ -473,6 +601,25 @@ export default function AuthSignIn() {
                       type="button"
                       variant="outline"
                       className="w-full"
+                      onClick={handleResendSignUpOtp}
+                      disabled={!canResendSignUpOtp || isResendingSignUpOtp}
+                    >
+                      {isResendingSignUpOtp ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : canResendSignUpOtp ? (
+                        'Resend OTP'
+                      ) : (
+                        `Resend OTP in ${signUpResendTimer}s`
+                      )}
+                    </Button>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
                       onClick={handleSignUpBackToForm}
                       disabled={signUpLoading}
                     >
@@ -561,31 +708,52 @@ export default function AuthSignIn() {
                         </InputOTPGroup>
                       </InputOTP>
                     </div>
-                    <div className="text-center space-y-2">
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={handleBackToPhone}
-                        className="text-xs"
-                      >
-                        Change number
-                      </Button>
-                    </div>
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    variant="hero"
-                    disabled={isVerifyingOtp || otp.length !== 4}
-                  >
-                    {isVerifyingOtp ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <KeyRound className="h-4 w-4 mr-2" />
-                    )}
-                    {isVerifyingOtp ? 'Verifying...' : 'Verify & Continue'}
-                  </Button>
+                  
+                  <div className="space-y-3">
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      variant="hero"
+                      disabled={isVerifyingOtp || otp.length !== 4}
+                    >
+                      {isVerifyingOtp ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <KeyRound className="h-4 w-4 mr-2" />
+                      )}
+                      {isVerifyingOtp ? 'Verifying...' : 'Verify & Continue'}
+                    </Button>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleResendSignInOtp}
+                      disabled={!canResendSignInOtp || isResendingSignInOtp}
+                    >
+                      {isResendingSignInOtp ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : canResendSignInOtp ? (
+                        'Resend OTP'
+                      ) : (
+                        `Resend OTP in ${signInResendTimer}s`
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={handleBackToPhone}
+                      className="w-full text-xs"
+                    >
+                      Change number
+                    </Button>
+                  </div>
                 </form>
               )}
             </CardContent>

@@ -24,12 +24,35 @@ const AuthSignUp = () => {
     mobileNumber: ''
   });
   const [otp, setOtp] = useState('');
+  const [canResendOtp, setCanResendOtp] = useState(false);
+  const [resendTimer, setResendTimer] = useState(60);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
       navigate('/dashboard');
     }
   }, [isAuthenticated, authLoading, navigate]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (step === 'otp' && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => {
+          if (prev <= 1) {
+            setCanResendOtp(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [step, resendTimer]);
 
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
@@ -127,6 +150,8 @@ const AuthSignUp = () => {
         description: "Please enter the OTP to complete registration",
       });
       setStep('otp');
+      setResendTimer(60);
+      setCanResendOtp(false);
 
     } catch (error: any) {
       console.error('📝 Sign-Up: Unexpected error:', error);
@@ -143,10 +168,10 @@ const AuthSignUp = () => {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (otp.length !== 6) {
+    if (otp.length !== 4) {
       toast({
         title: "Error",
-        description: "Please enter a valid 6-digit OTP",
+        description: "Please enter a valid 4-digit OTP",
         variant: "destructive",
       });
       return;
@@ -203,6 +228,44 @@ const AuthSignUp = () => {
   const handleBackToForm = () => {
     setStep('form');
     setOtp('');
+    setResendTimer(60);
+    setCanResendOtp(false);
+  };
+
+  const handleResendOtp = async () => {
+    setIsResending(true);
+    const fullPhone = `+91${formData.mobileNumber}`;
+    
+    try {
+      const { error: otpError } = await requestOtp(fullPhone, true);
+      
+      if (otpError) {
+        toast({
+          title: "Failed to Send OTP",
+          description: otpError.message || "Please try again",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "OTP Sent!",
+        description: "A new OTP has been sent to your mobile",
+      });
+      
+      setResendTimer(60);
+      setCanResendOtp(false);
+      setOtp('');
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to resend OTP. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
   };
 
   if (authLoading) {
@@ -314,15 +377,13 @@ const AuthSignUp = () => {
                   <InputOTP
                     value={otp}
                     onChange={setOtp}
-                    maxLength={6}
+                    maxLength={4}
                   >
                     <InputOTPGroup>
                       <InputOTPSlot index={0} />
                       <InputOTPSlot index={1} />
                       <InputOTPSlot index={2} />
                       <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
@@ -340,6 +401,25 @@ const AuthSignUp = () => {
                     </>
                   ) : (
                     'Complete Registration'
+                  )}
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleResendOtp}
+                  disabled={!canResendOtp || isResending}
+                >
+                  {isResending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : canResendOtp ? (
+                    'Resend OTP'
+                  ) : (
+                    `Resend OTP in ${resendTimer}s`
                   )}
                 </Button>
                 

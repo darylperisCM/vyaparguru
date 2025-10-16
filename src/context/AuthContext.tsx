@@ -150,7 +150,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error || !data?.success) {
-        throw new Error(data?.error || error?.message || 'Invalid OTP');
+        const errorMessage = data?.error || error?.message || 'Invalid OTP';
+        
+        // Provide user-friendly error message for OTP mismatch
+        if (errorMessage.includes('OTP not match') || errorMessage.includes('Invalid OTP') || errorMessage.toLowerCase().includes('otp')) {
+          throw new Error('Incorrect OTP entered. Please try again.');
+        }
+        
+        throw new Error(errorMessage);
       }
 
       console.log('✅ OTP verified successfully for user:', data.user_id);
@@ -180,9 +187,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
     } catch (error: any) {
       console.error('❌ Verify OTP Error:', error);
+      
+      // Provide friendly error message
+      let friendlyMessage = error.message || 'Verification failed';
+      if (friendlyMessage.includes('OTP not match') || friendlyMessage.includes('Invalid OTP') || friendlyMessage.toLowerCase().includes('otp')) {
+        friendlyMessage = 'Incorrect OTP entered. Please try again.';
+      }
+      
       return { 
         error: { 
-          message: error.message || 'Verification failed'
+          message: friendlyMessage
         } 
       };
     }
