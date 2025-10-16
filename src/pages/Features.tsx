@@ -91,30 +91,40 @@ export default function Features() {
       </Helmet>
       <div className="min-h-screen bg-gradient-subtle">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            Powerful Features
-            <span className="block text-2xl md:text-3xl hindi-text text-primary mt-2">
-              शक्तिशाली सुविधाएं
-            </span>
-          </h1>
-          <p className="text-xl text-muted-foreground mb-4">
-            Everything you need to master business English communication
-          </p>
-          <p className="text-lg hindi-text text-muted-foreground mb-8">
-            व्यापारिक अंग्रेजी संवाद में महारत हासिल करने के लिए आवश्यक सब कुछ
-          </p>
-          <Button variant="hero" size="xl" asChild>
-            <NavLink to="/auth/sign-in">
-              Start Learning Today • आज सीखना शुरू करें
-            </NavLink>
-          </Button>
+      <section className="container mx-auto px-4 py-8 md:py-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            {/* Left side - Text content */}
+            <div className="text-center md:text-left flex-1">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4">
+                Powerful Features
+                <span className="block text-2xl md:text-3xl hindi-text text-primary mt-2">
+                  शक्तिशाली सुविधाएं
+                </span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground mb-2">
+                Everything you need to master business English communication
+              </p>
+              <p className="text-base md:text-lg hindi-text text-muted-foreground">
+                व्यापारिक अंग्रेजी संवाद में महारत हासिल करने के लिए आवश्यक सब कुछ
+              </p>
+            </div>
+            
+            {/* Right side - CTA button */}
+            <div className="flex-shrink-0">
+              <Button variant="hero" size="lg" asChild className="whitespace-normal h-auto py-3 px-6">
+                <NavLink to="/auth/sign-in">
+                  <span className="block">Start Learning Today</span>
+                  <span className="block text-sm mt-1 hindi-text">आज सीखना शुरू करें</span>
+                </NavLink>
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Primary Features - Highlighted */}
-      <section className="container mx-auto px-4 py-16">
+      <section className="container mx-auto px-4 pt-8 pb-16">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-foreground mb-2">Core Features</h2>
           <p className="text-lg font-hindi text-primary">मुख्य सुविधाएं</p>
