@@ -85,6 +85,43 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
           image: '/assets/fulllogo.png',
           handler: async function (response: any) {
             console.log('Payment successful');
+            
+            // Google Ads Conversion Tracking
+            if (typeof window !== 'undefined' && (window as any).gtag) {
+              // Standard conversion event
+              (window as any).gtag('event', 'conversion', {
+                'send_to': 'AW-7845176239/CONVERSION_LABEL', // Replace CONVERSION_LABEL with actual label from Google Ads
+                'value': 99.0,
+                'currency': 'INR',
+                'transaction_id': response.razorpay_payment_id || '',
+              });
+              
+              // Enhanced conversions with user data
+              (window as any).gtag('set', 'user_data', {
+                'email': profile?.email || user?.email || '',
+                'phone_number': profile?.mobile_number || '',
+                'address': {
+                  'first_name': profile?.name?.split(' ')[0] || '',
+                  'last_name': profile?.name?.split(' ').slice(1).join(' ') || '',
+                }
+              });
+              
+              // Purchase event for remarketing
+              (window as any).gtag('event', 'purchase', {
+                'send_to': 'AW-7845176239',
+                'value': 99.0,
+                'currency': 'INR',
+                'transaction_id': response.razorpay_payment_id || '',
+                'items': [{
+                  'id': 'vyaparguru-subscription',
+                  'name': 'VyaparGuru Monthly Subscription',
+                  'category': 'Subscription',
+                  'price': 99.0,
+                  'quantity': 1
+                }]
+              });
+            }
+            
             toast({
               title: "Payment Successful!",
               description: "Your subscription is now active.",
