@@ -90,7 +90,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
             if (typeof window !== 'undefined' && (window as any).gtag) {
               // Standard conversion event
               (window as any).gtag('event', 'conversion', {
-                'send_to': 'AW-7845176239/CONVERSION_LABEL', // Replace CONVERSION_LABEL with actual label from Google Ads
+                'send_to': 'AW-342370220/CONVERSION_LABEL', // Replace CONVERSION_LABEL with actual label from Google Ads
                 'value': 99.0,
                 'currency': 'INR',
                 'transaction_id': response.razorpay_payment_id || '',
@@ -108,7 +108,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
               
               // Purchase event for remarketing
               (window as any).gtag('event', 'purchase', {
-                'send_to': 'AW-7845176239',
+                'send_to': 'AW-342370220',
                 'value': 99.0,
                 'currency': 'INR',
                 'transaction_id': response.razorpay_payment_id || '',
