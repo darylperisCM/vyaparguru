@@ -230,6 +230,9 @@ serve(async (req) => {
       }
 
       // Create subscription (trial is managed by our app, not Razorpay)
+      // Set start_at to 5 minutes in future to give user time to complete payment
+      const startAt = Math.floor(Date.now() / 1000) + 300; // 5 minutes from now
+      
       const subscriptionResponse = await fetch(`${RAZORPAY_API_URL}/subscriptions`, {
         method: 'POST',
         headers: {
@@ -240,7 +243,7 @@ serve(async (req) => {
           plan_id: planId,
           customer_notify: 1,
           total_count: 120, // 10 years of monthly charges
-          start_at: Math.floor(Date.now() / 1000), // Charge ₹99 immediately
+          start_at: startAt, // 5 minutes buffer for payment completion
           notes: {
             user_id: userId
           }
