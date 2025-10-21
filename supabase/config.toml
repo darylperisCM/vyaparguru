@@ -15,6 +15,9 @@ verify_jwt = true
 [functions.razorpay-subscription]
 verify_jwt = true
 
+[functions.razorpay-check-status]
+verify_jwt = true
+
 [functions.razorpay-webhook]
 verify_jwt = false
 
