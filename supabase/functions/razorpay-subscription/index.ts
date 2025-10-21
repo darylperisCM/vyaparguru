@@ -253,7 +253,9 @@ serve(async (req) => {
       }
 
       const subscription: CreateSubscriptionResponse = await subscriptionResponse.json();
-      console.log('Razorpay subscription created');
+      console.log('✅ Razorpay subscription created:', subscription.id);
+      console.log('📊 Subscription status:', subscription.status);
+      console.log('📅 Next billing:', subscription.next_billing_at);
 
       // Get existing trial_ends_at from database (set by database trigger)
       const { data: existingSub } = await supabase
@@ -261,6 +263,8 @@ serve(async (req) => {
         .select('trial_ends_at')
         .eq('user_id', userId)
         .single();
+      
+      console.log('📝 Updating subscription in database for user:', userId.substring(0, 8) + '***');
 
       // Update Supabase subscription record with Razorpay subscription ID
       // Keep the trial_ends_at that was set by the database trigger
@@ -276,9 +280,11 @@ serve(async (req) => {
         .eq('user_id', userId);
 
       if (updateError) {
-        console.error('Failed to update subscription in DB:', updateError);
+        console.error('❌ Failed to update subscription in DB:', updateError);
         throw updateError;
       }
+      
+      console.log('✅ Database updated successfully');
 
       // Log event
       const { data: subData } = await supabase

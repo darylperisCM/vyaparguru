@@ -41,37 +41,89 @@ serve(async (req) => {
     }
 
     const event = JSON.parse(body);
-    console.log('Razorpay webhook event received:', event.event);
+    const eventType = event.event;
+    const payload = event.payload;
+    
+    console.log('🔔 Razorpay webhook event received:', eventType);
+    console.log('📦 Payload keys:', Object.keys(payload || {}));
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    const eventType = event.event;
-    const payload = event.payload;
-    const subscriptionEntity = payload?.subscription?.entity || payload?.payment?.entity;
+    // Extract relevant entities
+    const subscriptionEntity = payload?.subscription?.entity;
+    const paymentEntity = payload?.payment?.entity;
+    
+    console.log('📊 Subscription entity:', subscriptionEntity?.id || 'none');
+    console.log('💳 Payment entity:', paymentEntity?.id || 'none');
 
-    if (!subscriptionEntity) {
-      console.log('No subscription entity in payload');
-      return new Response(JSON.stringify({ received: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    // Get Razorpay subscription ID from various possible locations
+    let rzpSubscriptionId = 
+      subscriptionEntity?.id || 
+      paymentEntity?.subscription_id ||
+      payload?.subscription?.entity?.id;
+    
+    // For payment.failed events, also check notes for user_id
+    const userId = paymentEntity?.notes?.user_id || subscriptionEntity?.notes?.user_id;
+    
+    console.log('🔍 Looking for subscription:', rzpSubscriptionId || 'none');
+    console.log('👤 User ID from notes:', userId || 'none');
+
+    // Try to find subscription in database
+    let subscription: any = null;
+    let fetchError: any = null;
+
+    if (rzpSubscriptionId) {
+      const result = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('rzp_subscription_id', rzpSubscriptionId)
+        .maybeSingle();
+      
+      subscription = result.data;
+      fetchError = result.error;
+    }
+    
+    // If not found by rzp_subscription_id, try by user_id for payment.failed events
+    if (!subscription && userId && eventType === 'payment.failed') {
+      console.log('🔄 Attempting to find subscription by user_id:', userId);
+      const result = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      subscription = result.data;
+      fetchError = result.error;
+      
+      if (subscription) {
+        console.log('✅ Found subscription by user_id');
+      }
     }
 
-    const rzpSubscriptionId = subscriptionEntity.id || payload?.subscription?.entity?.id;
-
-    // Find subscription in database
-    const { data: subscription, error: fetchError } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('rzp_subscription_id', rzpSubscriptionId)
-      .single();
-
     if (fetchError || !subscription) {
-      console.error('Subscription not found in database');
+      console.error('❌ Subscription not found in database');
+      console.error('   Searched rzp_subscription_id:', rzpSubscriptionId);
+      console.error('   Searched user_id:', userId);
+      console.error('   Fetch error:', fetchError?.message);
+      
+      // For payment.failed, acknowledge but don't block
+      if (eventType === 'payment.failed') {
+        return new Response(JSON.stringify({ 
+          received: true, 
+          warning: 'Subscription not found but payment.failed acknowledged'
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
       return new Response(JSON.stringify({ error: 'Subscription not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+    
+    console.log('✅ Subscription found:', subscription.id);
 
     // Handle different webhook events
     switch (eventType) {
@@ -168,12 +220,21 @@ serve(async (req) => {
         break;
 
       case 'payment.failed':
-        console.log('Payment failed');
+        console.log('💸 Payment failed - Reason:', paymentEntity?.error_reason || 'unknown');
+        console.log('💸 Payment failed - Description:', paymentEntity?.error_description || 'none');
+        
+        const updateData: any = {
+          status: 'payment_failed'
+        };
+        
+        // If we have a payment ID, store it for reference
+        if (paymentEntity?.id) {
+          updateData.razorpay_payment_id = paymentEntity.id;
+        }
+        
         await supabase
           .from('subscriptions')
-          .update({
-            status: 'payment_failed'
-          })
+          .update(updateData)
           .eq('id', subscription.id);
 
         await supabase.from('subscription_events').insert({
@@ -182,6 +243,8 @@ serve(async (req) => {
           razorpay_event_id: event.id,
           event_data: payload
         });
+        
+        console.log('✅ Payment failure recorded in database');
         break;
 
       default:
