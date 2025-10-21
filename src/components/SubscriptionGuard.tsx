@@ -84,11 +84,14 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
           description: 'व्यापार में English, सफलता में Confidence!',
           image: '/assets/fulllogo.png',
           handler: async function (response: any) {
-            console.log('Payment successful');
+            console.log('✅ Payment successful - Razorpay Response:', response);
             
             // Google Ads Conversion Tracking
             if (typeof window !== 'undefined' && (window as any).gtag) {
+              console.log('🎯 Google Ads gtag detected - firing conversion events');
+              
               // Standard conversion event
+              console.log('📊 Firing conversion event: AW-342370220/KmozCNKM3q8bEKzPoKMB');
               (window as any).gtag('event', 'conversion', {
                 'send_to': 'AW-342370220/KmozCNKM3q8bEKzPoKMB',
                 'value': 99.0,
@@ -97,6 +100,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
               });
               
               // Enhanced conversions with user data
+              console.log('👤 Setting enhanced conversion user data');
               (window as any).gtag('set', 'user_data', {
                 'email': profile?.email || user?.email || '',
                 'phone_number': profile?.mobile_number || '',
@@ -107,6 +111,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
               });
               
               // Purchase event for remarketing
+              console.log('🛒 Firing purchase event for remarketing');
               (window as any).gtag('event', 'purchase', {
                 'send_to': 'AW-342370220',
                 'value': 99.0,
@@ -120,6 +125,10 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
                   'quantity': 1
                 }]
               });
+              
+              console.log('✅ All Google Ads tracking events fired successfully');
+            } else {
+              console.error('❌ Google Ads gtag not found - conversion tracking not fired');
             }
             
             toast({
