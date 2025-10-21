@@ -99,9 +99,7 @@ export const useSubscription = () => {
     ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0;
 
-  const isTrialExpired = isInTrial && trialEndsAt && trialEndsAt.getTime() < Date.now();
-
-  const hasAccess = (isInTrial && !isTrialExpired) || isActive;
+  const hasAccess = isInTrial || isActive;
 
   return {
     subscription,
@@ -111,7 +109,6 @@ export const useSubscription = () => {
     isPendingPayment,
     isExpired,
     isCancelled,
-    isTrialExpired,
     hasAccess,
     trialEndsAt,
     nextBillingDate,

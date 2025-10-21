@@ -91,9 +91,7 @@ export default function Translation() {
       });
     } catch (error: any) {
       console.error('Translation error:', error);
-      if (error.message === 'SUBSCRIPTION_REQUIRED') {
-        // Already handled by apiService
-      } else {
+      if (error.message !== 'SUBSCRIPTION_REQUIRED') {
         toast({
           title: "Translation Failed", 
           description: "Please try again",
@@ -141,9 +139,7 @@ export default function Translation() {
           });
         }
       } catch (error: any) {
-        if (error.message === 'SUBSCRIPTION_REQUIRED') {
-          // Already handled by apiService
-        } else {
+        if (error.message !== 'SUBSCRIPTION_REQUIRED') {
           toast({
             title: "Error",
             description: "Failed to process audio",
@@ -193,9 +189,7 @@ export default function Translation() {
       }
     } catch (error: any) {
       console.error('Speech synthesis error:', error);
-      if (error.message === 'SUBSCRIPTION_REQUIRED') {
-        // Already handled by apiService
-      } else {
+      if (error.message !== 'SUBSCRIPTION_REQUIRED') {
         toast({
           title: "Speech Failed",
           description: "Could not generate audio",

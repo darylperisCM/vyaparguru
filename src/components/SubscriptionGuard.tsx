@@ -15,7 +15,7 @@ interface SubscriptionGuardProps {
 
 export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
   const { isAuthenticated, loading: authLoading, user } = useAuth();
-  const { hasAccess, loading, subscription, isPendingPayment, isExpired, isInTrial, isActive, isTrialExpired, refetch } = useSubscription();
+  const { hasAccess, loading, subscription, isPendingPayment, isExpired, isInTrial, isActive, refetch } = useSubscription();
   const { profile } = useProfile();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -29,47 +29,46 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
   }, [isAuthenticated, authLoading, navigate]);
 
   useEffect(() => {
-    if (!loading && !hasAccess && (isPendingPayment || isExpired || isTrialExpired)) {
+    if (!loading && !hasAccess && (isPendingPayment || isExpired)) {
       setShowPaymentModal(true);
     }
-  }, [hasAccess, loading, isPendingPayment, isExpired, isTrialExpired]);
+  }, [hasAccess, loading, isPendingPayment, isExpired]);
 
   const handlePayment = async (retryCount = 0) => {
     const MAX_RETRIES = 3;
     setProcessingPayment(true);
 
     try {
-      // Always create a fresh Razorpay subscription (don't reuse trial subscriptions)
-      console.log('Creating fresh Razorpay subscription for payment');
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('User not authenticated');
-        setProcessingPayment(false);
-        return;
-      }
+      let subscriptionId = subscription?.rzp_subscription_id;
 
-      const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
-        body: { 
-          action: 'create-subscription',
-          userId: user.id 
+      // If no Razorpay subscription ID, create it first
+      if (!subscriptionId) {
+        console.log('Creating Razorpay subscription');
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.error('User not authenticated');
+          setProcessingPayment(false);
+          return;
         }
-      });
 
-      if (subError || !subData?.subscription_id) {
-        console.error('Failed to create Razorpay subscription:', subError);
-        toast({
-          title: "Subscription Creation Failed",
-          description: "Unable to create subscription. Please try again.",
-          variant: "destructive"
+        const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
+          body: { 
+            action: 'create-subscription',
+            userId: user.id 
+          }
         });
-        setProcessingPayment(false);
-        setShowPaymentModal(false);
-        return;
-      }
 
-      const subscriptionId = subData.subscription_id;
-      console.log('Fresh Razorpay subscription created:', subscriptionId)
+        if (subError || !subData?.subscription_id) {
+          console.error('Failed to create Razorpay subscription');
+          setProcessingPayment(false);
+          setShowPaymentModal(false);
+          return;
+        }
+
+        subscriptionId = subData.subscription_id;
+        console.log('Razorpay subscription created');
+      }
 
       // Load Razorpay script
       const script = document.createElement('script');
@@ -132,64 +131,12 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
               console.error('❌ Google Ads gtag not found - conversion tracking not fired');
             }
             
-            // Show processing message
             toast({
-              title: "Payment Received!",
-              description: "Verifying your payment...",
+              title: "Payment Successful!",
+              description: "Your subscription is now active.",
             });
-            
-            // Wait for webhook to process (3 seconds)
-            console.log('⏳ Waiting 3 seconds for webhook to process payment...');
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            
-            // Verify payment was recorded in database
-            console.log('🔍 Verifying payment in database...');
-            const { data: updatedSub, error: fetchError } = await supabase
-              .from('subscriptions')
-              .select('status, razorpay_payment_id, rzp_subscription_id')
-              .eq('user_id', user?.id)
-              .single();
-            
-            if (fetchError) {
-              console.error('❌ Error fetching subscription:', fetchError);
-            } else {
-              console.log('📊 Updated subscription:', updatedSub);
-            }
-            
-            if (updatedSub?.status === 'active' || updatedSub?.razorpay_payment_id) {
-              console.log('✅ Payment verified in database - reloading page');
-              toast({
-                title: "Payment Successful!",
-                description: "Your subscription is now active.",
-              });
-              setShowPaymentModal(false);
-              window.location.reload();
-            } else {
-              console.log('⚠️ Payment not yet reflected in database - showing processing message');
-              toast({
-                title: "Payment Processing",
-                description: "Your payment is being processed. This may take a few moments. Please refresh if you don't see your subscription activate.",
-                duration: 10000
-              });
-              setProcessingPayment(false);
-              
-              // Retry verification after 5 more seconds
-              setTimeout(async () => {
-                console.log('🔄 Retrying payment verification...');
-                const { data: retrySub } = await supabase
-                  .from('subscriptions')
-                  .select('status, razorpay_payment_id')
-                  .eq('user_id', user?.id)
-                  .single();
-                
-                if (retrySub?.status === 'active' || retrySub?.razorpay_payment_id) {
-                  console.log('✅ Payment verified on retry - reloading');
-                  window.location.reload();
-                } else {
-                  console.log('⚠️ Payment still not verified after retry');
-                }
-              }, 5000);
-            }
+            setShowPaymentModal(false);
+            window.location.reload();
           },
           prefill: {
             name: profile?.name || '',
@@ -329,13 +276,9 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
             <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
               <CreditCard className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">
-              {isTrialExpired ? 'Trial Period Ended' : 'Subscription Required'}
-            </CardTitle>
+            <CardTitle className="text-2xl">Trial Period Ended</CardTitle>
             <CardDescription>
-              {isTrialExpired 
-                ? 'Your 3-day free trial has ended. Subscribe now to continue accessing all features.'
-                : 'Subscribe to access all VyaparGuru features and grow your business with confidence.'}
+              Your 3-day free trial has ended. Subscribe now to continue accessing all features.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

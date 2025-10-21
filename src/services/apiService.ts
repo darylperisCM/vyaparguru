@@ -1,21 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // Helper function to handle subscription errors
-function handleSubscriptionError(data: any, navigate?: any, toast?: any): boolean {
-  if (data?.requiresSubscription && navigate && toast) {
-    const message = data.message || "Your trial has ended. Subscribe for ₹99/month to continue using VyaparGuru features.";
-    
+function handleSubscriptionError(error: any, navigate?: any, toast?: any): boolean {
+  if (error?.requiresSubscription && navigate && toast) {
     toast({
       title: "Subscription Required",
-      description: message,
+      description: error.message,
       variant: "destructive",
-      duration: 6000,
-      action: {
-        altText: "Subscribe",
-        label: "Subscribe Now",
-        onClick: () => navigate('/pricing')
-      }
+      duration: 5000
     });
+    
+    // Redirect to pricing page after 2 seconds
+    setTimeout(() => {
+      navigate('/pricing');
+    }, 2000);
     
     return true; // Error was handled
   }
