@@ -39,36 +39,37 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
     setProcessingPayment(true);
 
     try {
-      let subscriptionId = subscription?.rzp_subscription_id;
-
-      // If no Razorpay subscription ID, create it first
-      if (!subscriptionId) {
-        console.log('Creating Razorpay subscription');
-        
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          console.error('User not authenticated');
-          setProcessingPayment(false);
-          return;
-        }
-
-        const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
-          body: { 
-            action: 'create-subscription',
-            userId: user.id 
-          }
-        });
-
-        if (subError || !subData?.subscription_id) {
-          console.error('Failed to create Razorpay subscription');
-          setProcessingPayment(false);
-          setShowPaymentModal(false);
-          return;
-        }
-
-        subscriptionId = subData.subscription_id;
-        console.log('Razorpay subscription created');
+      // Always create a fresh Razorpay subscription (don't reuse trial subscriptions)
+      console.log('Creating fresh Razorpay subscription for payment');
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('User not authenticated');
+        setProcessingPayment(false);
+        return;
       }
+
+      const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
+        body: { 
+          action: 'create-subscription',
+          userId: user.id 
+        }
+      });
+
+      if (subError || !subData?.subscription_id) {
+        console.error('Failed to create Razorpay subscription:', subError);
+        toast({
+          title: "Subscription Creation Failed",
+          description: "Unable to create subscription. Please try again.",
+          variant: "destructive"
+        });
+        setProcessingPayment(false);
+        setShowPaymentModal(false);
+        return;
+      }
+
+      const subscriptionId = subData.subscription_id;
+      console.log('Fresh Razorpay subscription created:', subscriptionId)
 
       // Load Razorpay script
       const script = document.createElement('script');
@@ -131,12 +132,64 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
               console.error('❌ Google Ads gtag not found - conversion tracking not fired');
             }
             
+            // Show processing message
             toast({
-              title: "Payment Successful!",
-              description: "Your subscription is now active.",
+              title: "Payment Received!",
+              description: "Verifying your payment...",
             });
-            setShowPaymentModal(false);
-            window.location.reload();
+            
+            // Wait for webhook to process (3 seconds)
+            console.log('⏳ Waiting 3 seconds for webhook to process payment...');
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Verify payment was recorded in database
+            console.log('🔍 Verifying payment in database...');
+            const { data: updatedSub, error: fetchError } = await supabase
+              .from('subscriptions')
+              .select('status, razorpay_payment_id, rzp_subscription_id')
+              .eq('user_id', user?.id)
+              .single();
+            
+            if (fetchError) {
+              console.error('❌ Error fetching subscription:', fetchError);
+            } else {
+              console.log('📊 Updated subscription:', updatedSub);
+            }
+            
+            if (updatedSub?.status === 'active' || updatedSub?.razorpay_payment_id) {
+              console.log('✅ Payment verified in database - reloading page');
+              toast({
+                title: "Payment Successful!",
+                description: "Your subscription is now active.",
+              });
+              setShowPaymentModal(false);
+              window.location.reload();
+            } else {
+              console.log('⚠️ Payment not yet reflected in database - showing processing message');
+              toast({
+                title: "Payment Processing",
+                description: "Your payment is being processed. This may take a few moments. Please refresh if you don't see your subscription activate.",
+                duration: 10000
+              });
+              setProcessingPayment(false);
+              
+              // Retry verification after 5 more seconds
+              setTimeout(async () => {
+                console.log('🔄 Retrying payment verification...');
+                const { data: retrySub } = await supabase
+                  .from('subscriptions')
+                  .select('status, razorpay_payment_id')
+                  .eq('user_id', user?.id)
+                  .single();
+                
+                if (retrySub?.status === 'active' || retrySub?.razorpay_payment_id) {
+                  console.log('✅ Payment verified on retry - reloading');
+                  window.location.reload();
+                } else {
+                  console.log('⚠️ Payment still not verified after retry');
+                }
+              }, 5000);
+            }
           },
           prefill: {
             name: profile?.name || '',
