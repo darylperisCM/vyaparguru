@@ -12,14 +12,53 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom Animations */
+/* 🚨 ENHANCED: Performance-optimized animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { 
+    opacity: 0; 
+    transform: translateZ(0); /* GPU acceleration */
+  }
+  to { 
+    opacity: 1; 
+    transform: translateZ(0);
+  }
 }
+
 @keyframes slideInUp {
-  from { transform: translateY(40px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { 
+    transform: translateY(40px) translateZ(0); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0) translateZ(0); 
+    opacity: 1; 
+  }
+}
+
+/* 🚨 NEW: Payment success animation for conversion tracking */
+@keyframes successPulse {
+  0% { 
+    transform: scale(1); 
+    box-shadow: 0 0 0 0 hsl(142 76% 36% / 0.7);
+  }
+  70% { 
+    transform: scale(1.05); 
+    box-shadow: 0 0 0 10px hsl(142 76% 36% / 0);
+  }
+  100% { 
+    transform: scale(1); 
+    box-shadow: 0 0 0 0 hsl(142 76% 36% / 0);
+  }
+}
+
+/* 🚨 NEW: Loading animation for subscription states */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
 }
 
 .animate-fadeIn {
@@ -30,23 +69,34 @@
   animation: slideInUp 0.3s ease-out forwards;
 }
 
+/* 🚨 NEW: Payment success animation */
+.animate-successPulse {
+  animation: successPulse 2s ease-in-out;
+}
+
+/* 🚨 NEW: Loading skeleton for better UX */
+.animate-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
 
 /* Floating Elfsight widget: middle-right */
 #elfsight-float {
   position: fixed;
   top: 50%;
-  right: 16px;          /* tweak spacing from edge */
+  right: 16px;          
   transform: translateY(-50%);
-  z-index: 2147483000;  /* very high so it stays above content */
-  pointer-events: auto; /* allow interactions */
+  z-index: 2147483000;  
+  pointer-events: auto; 
 }
 
-/* Optional: size constraints so it doesn’t overwhelm the layout */
+/* Optional: size constraints */
 #elfsight-float .elfsight-app-7e915384-2ea3-4868-a577-899d188fc9f4 {
-  max-width: 360px;     /* adjust to taste */
+  max-width: 360px;     
 }
 
-/* Mobile: dock lower-right to avoid covering content */
+/* Mobile: dock lower-right */
 @media (max-width: 640px) {
   #elfsight-float {
     top: auto;
@@ -56,40 +106,56 @@
   }
 }
 
+/* 🚨 NEW: Razorpay payment modal optimizations */
+.razorpay-container {
+  font-family: var(--font-english) !important;
+}
+
+.razorpay-container .hindi-text {
+  font-family: var(--font-hindi) !important;
+}
 
 @layer base {
   :root {
-    /* Core Brand Colors - Based on Reference Design */
-    --background: 32 18% 98%;  /* Light cream/off-white */
-    --foreground: 210 11% 17%;  /* Dark charcoal for headings */
+    /* Core Brand Colors - VyaparGuru Theme */
+    --background: 32 18% 98%;  /* Light cream */
+    --foreground: 210 11% 17%;  /* Dark charcoal */
 
-    --card: 0 0% 100%;  /* Pure white for cards */
+    --card: 0 0% 100%;  /* Pure white */
     --card-foreground: 210 11% 17%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 210 11% 17%;
 
-    /* Primary Coral Accent - Darkened for WCAG AA compliance */
-    --primary: 11 100% 47%;  /* Darker coral for 4.5:1 contrast with white */
+    /* Primary VyaparGuru Coral - Optimized for accessibility */
+    --primary: 11 100% 47%;  /* #D73502 - WCAG AA compliant */
     --primary-foreground: 0 0% 100%;
     --primary-hover: 11 100% 42%;
     --primary-glow: 11 100% 60%;
+    --primary-light: 11 100% 95%; /* Very light coral for backgrounds */
 
     /* Secondary Neutral */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 210 11% 17%;
 
-    --muted: 220 14% 96%;  /* Light neutral */
-    --muted-foreground: 215 16% 47%;  /* Medium gray for body text */
+    --muted: 220 14% 96%;  
+    --muted-foreground: 215 16% 47%;  
 
-    --accent: 11 100% 60%;  /* Using coral as accent */
+    --accent: 11 100% 60%;  /* Coral accent */
     --accent-foreground: 0 0% 100%;
 
-    /* Status Colors */
-    --success: 142 76% 36%;  /* Soft green */
+    /* 🚨 ENHANCED: Status colors for subscription states */
+    --success: 142 76% 36%;  /* Green for active subscription */
     --success-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --success-light: 142 76% 95%; /* Light green background */
+    
+    --warning: 45 100% 60%;  /* Orange for trial ending */
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 45 100% 95%; /* Light orange background */
+    
+    --destructive: 0 84% 60%;  /* Red for expired/failed */
     --destructive-foreground: 0 0% 100%;
+    --destructive-light: 0 84% 95%; /* Light red background */
 
     /* UI Elements */
     --border: 220 13% 91%;
@@ -99,7 +165,7 @@
     /* Design System Tokens */
     --radius: 0.75rem;  /* 12px rounded corners */
     
-    /* Beautiful Gradients */
+    /* 🚨 ENHANCED: More gradient options */
     --gradient-coral-blue: linear-gradient(135deg, hsl(11 100% 60%), hsl(220 100% 70%));
     --gradient-coral-purple: linear-gradient(135deg, hsl(11 100% 60%), hsl(280 100% 70%));
     --gradient-coral-green: linear-gradient(135deg, hsl(11 100% 60%), hsl(142 76% 36%));
@@ -107,10 +173,20 @@
     --gradient-subtle: linear-gradient(180deg, hsl(32 18% 98%), hsl(220 14% 96%));
     --gradient-hero: linear-gradient(135deg, hsl(11 100% 60%) 0%, hsl(220 100% 70%) 50%, hsl(280 100% 70%) 100%);
     
+    /* 🚨 NEW: Payment success gradient */
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 76% 50%) 100%);
+    
+    /* 🚨 NEW: Subscription status gradients */
+    --gradient-trial: linear-gradient(135deg, hsl(45 100% 60%) 0%, hsl(45 100% 50%) 100%);
+    --gradient-expired: linear-gradient(135deg, hsl(0 84% 60%) 0%, hsl(0 84% 50%) 100%);
+    
     /* Elegant Shadows */
     --shadow-card: 0 4px 6px -1px hsl(220 13% 91% / 0.1), 0 2px 4px -1px hsl(220 13% 91% / 0.06);
     --shadow-card-hover: 0 10px 15px -3px hsl(220 13% 91% / 0.1), 0 4px 6px -2px hsl(220 13% 91% / 0.05);
     --shadow-coral-glow: 0 0 0 1px hsl(11 100% 60% / 0.1), 0 0 20px hsl(11 100% 60% / 0.2);
+    
+    /* 🚨 NEW: Payment modal shadow */
+    --shadow-modal: 0 25px 50px -12px hsl(220 13% 91% / 0.25);
     
     /* Typography Scale */
     --font-hindi: 'Noto Sans Devanagari', sans-serif;
@@ -119,49 +195,36 @@
     /* Smooth Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-fast: all 0.15s ease-out;
+    --transition-spring: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
+    /* Sidebar */
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
@@ -184,12 +247,19 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-english);
+    /* 🚨 ENHANCED: Better font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   
   /* Hindi Text Styling */
   .hindi-text {
     font-family: var(--font-hindi);
-    font-feature-settings: 'kern' 1, 'liga' 1;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'dlig' 1;
+    /* 🚨 ENHANCED: Better Devanagari rendering */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
   
   /* Beautiful Cards */
@@ -200,6 +270,19 @@
   .card-elegant:hover {
     @apply shadow-[var(--shadow-card-hover)];
     transform: translateY(-2px);
+  }
+  
+  /* 🚨 NEW: Subscription status cards */
+  .card-success {
+    @apply bg-gradient-to-br from-green-50 to-green-100 border border-green-200;
+  }
+  
+  .card-warning {
+    @apply bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200;
+  }
+  
+  .card-error {
+    @apply bg-gradient-to-br from-red-50 to-red-100 border border-red-200;
   }
   
   /* Gradient Backgrounds */
@@ -221,5 +304,97 @@
   
   .gradient-hero {
     background: var(--gradient-hero);
+  }
+  
+  /* 🚨 NEW: Payment & subscription gradients */
+  .gradient-success {
+    background: var(--gradient-success);
+  }
+  
+  .gradient-trial {
+    background: var(--gradient-trial);
+  }
+  
+  .gradient-expired {
+    background: var(--gradient-expired);
+  }
+}
+
+/* 🚨 NEW: Utility classes for subscription states */
+@layer utilities {
+  .status-active {
+    @apply text-green-700 bg-green-100 border-green-200;
+  }
+  
+  .status-trial {
+    @apply text-orange-700 bg-orange-100 border-orange-200;
+  }
+  
+  .status-expired {
+    @apply text-red-700 bg-red-100 border-red-200;
+  }
+  
+  .status-pending {
+    @apply text-blue-700 bg-blue-100 border-blue-200;
+  }
+  
+  /* Payment button states */
+  .btn-payment {
+    @apply bg-primary hover:bg-primary-hover text-primary-foreground font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl;
+  }
+  
+  .btn-payment:hover {
+    transform: translateY(-1px);
+  }
+  
+  .btn-payment:active {
+    transform: translateY(0);
+  }
+  
+  /* Loading states for async operations */
+  .loading-skeleton {
+    @apply animate-shimmer bg-gray-200 rounded;
+  }
+}
+
+/* 🚨 NEW: Print styles for receipts/invoices */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+  
+  .hindi-text {
+    font-size: 14pt; /* Larger for Hindi readability */
+  }
+}
+
+/* 🚨 NEW: Focus management for accessibility */
+.focus-visible:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --primary: 11 100% 35%;
+    --border: 220 13% 80%;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
