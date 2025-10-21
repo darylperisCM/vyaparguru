@@ -1,118 +1,463 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { ReactNode, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useProfile } from '@/hooks/useProfile';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Loader2, CreditCard } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-interface Subscription {
-  id: string;
-  user_id: string;
-  status: string;
-  trial_ends_at: string | null;
-  next_billing_date: string | null;
-  rzp_subscription_id: string | null;
-  plan_name: string | null;
-  cancelled_at: string | null;
-  created_at: string;
+interface SubscriptionGuardProps {
+  children: ReactNode;
 }
 
-export const useSubscription = () => {
-  const { user } = useAuth();
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [loading, setLoading] = useState(true);
+export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const { hasAccess, loading, subscription, isPendingPayment, isExpired, isInTrial, isActive, refetch } = useSubscription();
+  const { profile } = useProfile();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      setSubscription(null);
-      setLoading(false);
-      return;
+    if (!authLoading && !isAuthenticated) {
+      navigate('/auth/sign-in');
     }
+  }, [isAuthenticated, authLoading, navigate]);
 
-    fetchSubscription();
-
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('subscription-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'subscriptions',
-          filter: `user_id=eq.${user.id}`
-        },
-        () => {
-          fetchSubscription();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
-
-  const fetchSubscription = async (retryCount = 0) => {
-    if (!user) {
-      console.log('No user, skipping subscription fetch');
-      return;
+  useEffect(() => {
+    if (!loading && !hasAccess && (isPendingPayment || isExpired)) {
+      setShowPaymentModal(true);
     }
+  }, [hasAccess, loading, isPendingPayment, isExpired]);
 
-    console.log('Fetching subscription');
+  // 🚨 FIX: Fire Google Ads conversion with proper error handling
+  const fireGoogleAdsConversion = (transactionId: string, additionalData?: any) => {
+    try {
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        console.log('🎯 Google Ads gtag detected - firing conversion events');
+        
+        // Standard conversion event
+        console.log('📊 Firing conversion event: AW-342370220/KmozCNKM3q8bEKzPoKMB');
+        (window as any).gtag('event', 'conversion', {
+          'send_to': 'AW-342370220/KmozCNKM3q8bEKzPoKMB',
+          'value': 99.0,
+          'currency': 'INR',
+          'transaction_id': transactionId,
+          'custom_parameters': {
+            'subscription_type': 'monthly',
+            'plan_name': 'VyaparGuru',
+            'payment_method': 'razorpay'
+          }
+        });
+        
+        // Enhanced conversions with user data
+        console.log('👤 Setting enhanced conversion user data');
+        (window as any).gtag('set', 'user_data', {
+          'email': profile?.email || user?.email || '',
+          'phone_number': profile?.mobile_number || '',
+          'address': {
+            'first_name': profile?.name?.split(' ')[0] || '',
+            'last_name': profile?.name?.split(' ').slice(1).join(' ') || '',
+          }
+        });
+        
+        // Purchase event for remarketing
+        console.log('🛒 Firing purchase event for remarketing');
+        (window as any).gtag('event', 'purchase', {
+          'send_to': 'AW-342370220',
+          'value': 99.0,
+          'currency': 'INR',
+          'transaction_id': transactionId,
+          'items': [{
+            'id': 'vyaparguru-subscription',
+            'name': 'VyaparGuru Monthly Subscription',
+            'category': 'Subscription',
+            'price': 99.0,
+            'quantity': 1
+          }]
+        });
+        
+        console.log('✅ All Google Ads tracking events fired successfully');
+        return true;
+      } else {
+        console.error('❌ Google Ads gtag not found - conversion tracking not fired');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error firing Google Ads conversion:', error);
+      return false;
+    }
+  };
+
+  const handlePayment = async (retryCount = 0) => {
+    const MAX_RETRIES = 3;
+    setProcessingPayment(true);
 
     try {
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      let subscriptionId = subscription?.rzp_subscription_id;
 
-      if (error) throw error;
+      // If no Razorpay subscription ID, create it first
+      if (!subscriptionId) {
+        console.log('Creating Razorpay subscription with immediate billing');
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.error('User not authenticated');
+          setProcessingPayment(false);
+          return;
+        }
+
+        const { data: subData, error: subError } = await supabase.functions.invoke('razorpay-subscription', {
+          body: { 
+            action: 'create-subscription',
+            userId: user.id 
+          }
+        });
+
+        if (subError || !subData?.subscriptionId) { // 🚨 FIX: Use correct field name
+          console.error('Failed to create Razorpay subscription:', subError);
+          toast({
+            title: "Subscription Creation Failed",
+            description: "Please try again or contact support.",
+            variant: "destructive"
+          });
+          setProcessingPayment(false);
+          setShowPaymentModal(false);
+          return;
+        }
+
+        subscriptionId = subData.subscriptionId; // 🚨 FIX: Correct field name
+        console.log('Razorpay subscription created with immediate billing:', subscriptionId);
+
+        // 🚨 NEW: Check if immediate charge was successful
+        if (subData.immediateCharge) {
+          console.log('✅ Immediate charge confirmed - subscription should be active');
+          
+          // Fire conversion immediately since payment already happened
+          fireGoogleAdsConversion(subscriptionId, { immediate_charge: true });
+          
+          // Still proceed with Razorpay modal for UX consistency
+        }
+      }
+
+      // Load Razorpay script
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      document.body.appendChild(script);
+
+      script.onload = () => {
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          subscription_id: subscriptionId,
+          name: 'VyaparGuru - व्यापार गुरु',
+          description: 'व्यापार में English, सफलता में Confidence!',
+          image: '/assets/fulllogo.png',
+          handler: async function (response: any) {
+            console.log('✅ Payment successful - Razorpay Response:', response);
+            
+            // Fire Google Ads Conversion Tracking
+            const conversionFired = fireGoogleAdsConversion(
+              response.razorpay_payment_id || subscriptionId,
+              { payment_response: response }
+            );
+            
+            if (!conversionFired) {
+              // Log for debugging but don't block user flow
+              console.warn('⚠️ Google Ads conversion may not have fired properly');
+            }
+            
+            // Show processing message
+            toast({
+              title: "Processing Payment...",
+              description: "Please wait while we confirm your subscription.",
+            });
+
+            // 🚨 FIX: Updated polling with correct response structure
+            const pollStatus = async (attempts = 0): Promise<boolean> => {
+              const MAX_ATTEMPTS = 10; // 30 seconds total (3s * 10)
+              
+              if (attempts >= MAX_ATTEMPTS) {
+                console.error('❌ Polling timeout - subscription status not confirmed');
+                return false;
+              }
+
+              try {
+                const { data, error } = await supabase.functions.invoke('razorpay-check-status', {
+                  body: { subscriptionId }
+                });
+
+                if (error) {
+                  console.error('Error checking status:', error);
+                  await new Promise(resolve => setTimeout(resolve, 3000));
+                  return pollStatus(attempts + 1);
+                }
+
+                console.log(`Poll attempt ${attempts + 1}:`, data);
+
+                // 🚨 FIX: Use correct response structure
+                const status = data?.subscription?.status || data?.status;
+                console.log(`Status = ${status}`);
+
+                if (status === 'active' || status === 'authenticated') {
+                  console.log('✅ Subscription confirmed as active!');
+                  return true;
+                }
+
+                // Wait and retry
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                return pollStatus(attempts + 1);
+
+              } catch (err) {
+                console.error('Polling error:', err);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                return pollStatus(attempts + 1);
+              }
+            };
+
+            // Start polling
+            const isActive = await pollStatus();
+
+            if (isActive) {
+              toast({
+                title: "Payment Successful!",
+                description: "Your subscription is now active. Welcome to VyaparGuru!",
+              });
+              setShowPaymentModal(false);
+              setProcessingPayment(false);
+              
+              // Refresh the subscription data and reload
+              await refetch();
+              window.location.reload();
+            } else {
+              toast({
+                title: "Payment Received",
+                description: "Your payment is being processed. Please refresh in a few moments.",
+              });
+              setShowPaymentModal(false);
+              setProcessingPayment(false);
+            }
+          },
+          prefill: {
+            name: profile?.name || '',
+            email: profile?.email || user?.email || '',
+            contact: profile?.mobile_number || ''
+          },
+          notes: {
+            user_id: user?.id || '',
+            user_name: profile?.name || '',
+            mobile: profile?.mobile_number || ''
+          },
+          theme: {
+            color: '#FF5722'
+          },
+          modal: {
+            ondismiss: function () {
+              setProcessingPayment(false);
+              setShowPaymentModal(false);
+              toast({
+                title: "Payment Cancelled",
+                description: "You can try again anytime.",
+              });
+            },
+            onescape: function () {
+              setProcessingPayment(false);
+              setShowPaymentModal(false);
+            }
+          },
+          config: {
+            display: {
+              preferences: {
+                show_default_blocks: true
+              }
+            }
+          }
+        };
+
+        // @ts-ignore
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+        setProcessingPayment(false); // Reset processing state when modal opens
+      };
+
+      script.onerror = () => {
+        console.error('Failed to load Razorpay script');
+        toast({
+          title: "Payment System Error",
+          description: "Please check your connection and try again.",
+          variant: "destructive"
+        });
+        setProcessingPayment(false);
+      };
+
+    } catch (error) {
+      console.error('Payment error:', error);
       
-      // If no subscription found and we haven't exceeded retry limit
-      if (!data && retryCount < 3) {
-        const delay = Math.pow(2, retryCount) * 500; // 500ms, 1000ms, 2000ms
-        console.log(`No subscription found, retrying in ${delay}ms...`);
+      if (retryCount < MAX_RETRIES) {
+        toast({
+          title: "Retrying...",
+          description: `Attempt ${retryCount + 1} of ${MAX_RETRIES}`,
+        });
         
         setTimeout(() => {
-          fetchSubscription(retryCount + 1);
-        }, delay);
-        return;
+          handlePayment(retryCount + 1);
+        }, 2000 * (retryCount + 1));
+      } else {
+        toast({
+          title: "Payment Failed",
+          description: "Please try again later or contact support.",
+          variant: "destructive"
+        });
+        setProcessingPayment(false);
       }
-      
-      setSubscription(data);
-      setLoading(false); // Set loading to false when data is received
-    } catch (error) {
-      console.error('Error fetching subscription');
-      setLoading(false); // Also set loading to false on error
     }
   };
 
-  const isInTrial = subscription?.status === 'trial';
-  const isActive = subscription?.status === 'active';
-  const isPendingPayment = subscription?.status === 'pending_payment';
-  const isExpired = subscription?.status === 'expired' || subscription?.status === 'payment_failed';
-  const isCancelled = subscription?.status === 'cancelled';
+  // Rest of your component remains the same...
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  const trialEndsAt = subscription?.trial_ends_at ? new Date(subscription.trial_ends_at) : null;
-  const nextBillingDate = subscription?.next_billing_date ? new Date(subscription.next_billing_date) : null;
+  // Debug card when subscription exists but hasAccess is false
+  if (!hasAccess && subscription && !showPaymentModal) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-2xl w-full">
+          <CardHeader>
+            <CardTitle className="text-center">🔍 Debug Information</CardTitle>
+            <CardDescription className="text-center">
+              Subscription found but access denied - investigating...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2 text-sm bg-muted p-4 rounded-lg font-mono">
+              <div><strong>Auth Status:</strong> {isAuthenticated ? 'Authenticated ✓' : 'Not Authenticated ✗'}</div>
+              <div><strong>User ID:</strong> {user?.id || 'N/A'}</div>
+              <div className="border-t pt-2 mt-2">
+                <div><strong>Subscription Found:</strong> Yes ✓</div>
+                <div><strong>Subscription ID:</strong> {subscription.id}</div>
+                <div><strong>Subscription Status:</strong> {subscription.status}</div>
+                <div><strong>Trial Ends At:</strong> {subscription.trial_ends_at || 'N/A'}</div>
+                <div><strong>Razorpay Sub ID:</strong> {subscription.rzp_subscription_id || 'NULL'}</div>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <div><strong>Is In Trial:</strong> {isInTrial ? 'Yes ✓' : 'No ✗'}</div>
+                <div><strong>Is Active:</strong> {isActive ? 'Yes ✓' : 'No ✗'}</div>
+                <div><strong>Is Expired:</strong> {isExpired ? 'Yes' : 'No'}</div>
+                <div><strong>Is Pending Payment:</strong> {isPendingPayment ? 'Yes' : 'No'}</div>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <div className="text-red-500"><strong>Has Access:</strong> {hasAccess ? 'Yes ✓' : 'No ✗'}</div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  console.log('Refreshing subscription');
+                  refetch();
+                }}
+                className="flex-1"
+              >
+                🔄 Retry Subscription Fetch
+              </Button>
+              <Button
+                onClick={() => navigate('/pricing')}
+                variant="outline"
+                className="flex-1"
+              >
+                View Plans
+              </Button>
+            </div>
+            <p className="text-xs text-center text-muted-foreground">
+              Please check browser console for detailed logs
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const daysUntilTrialEnd = trialEndsAt 
-    ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : 0;
+  if (!hasAccess && showPaymentModal) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+              <CreditCard className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">Trial Period Ended</CardTitle>
+            <CardDescription>
+              Your 3-day free trial has ended. Subscribe now to continue accessing all features.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-muted p-4 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-muted-foreground">Plan</span>
+                <span className="font-semibold">VyaparGuru - व्यापार गुरु</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Price</span>
+                <span className="text-2xl font-bold text-primary">₹99<span className="text-sm font-normal">/month</span></span>
+              </div>
+              {/* 🚨 NEW: Show immediate billing notice */}
+              <div className="mt-2 text-xs text-center text-muted-foreground border-t pt-2">
+                ⚡ Immediate access after payment • तुरंत सक्रिय
+              </div>
+            </div>
 
-  const hasAccess = isInTrial || isActive;
+            <Button 
+              onClick={() => handlePayment()}
+              disabled={processingPayment}
+              className="w-full"
+              size="lg"
+            >
+              {processingPayment ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Subscribe for ₹99/month'
+              )}
+            </Button>
 
-  return {
-    subscription,
-    loading,
-    isInTrial,
-    isActive,
-    isPendingPayment,
-    isExpired,
-    isCancelled,
-    hasAccess,
-    trialEndsAt,
-    nextBillingDate,
-    daysUntilTrialEnd,
-    refetch: fetchSubscription
-  };
+            <p className="text-xs text-center text-muted-foreground">
+              सुरक्षित भुगतान Razorpay द्वारा संचालित • Secure payment powered by Razorpay
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <CardTitle>Subscription Required</CardTitle>
+            <CardDescription>
+              Please subscribe to access this feature
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate('/pricing')} className="w-full">
+              View Plans
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 };
