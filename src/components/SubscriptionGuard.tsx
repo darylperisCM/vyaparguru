@@ -131,12 +131,68 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
               console.error('❌ Google Ads gtag not found - conversion tracking not fired');
             }
             
+            // Show processing message
             toast({
-              title: "Payment Successful!",
-              description: "Your subscription is now active.",
+              title: "Processing Payment...",
+              description: "Please wait while we confirm your subscription.",
             });
-            setShowPaymentModal(false);
-            window.location.reload();
+
+            // Poll Razorpay status until subscription is active
+            const pollStatus = async (attempts = 0): Promise<boolean> => {
+              const MAX_ATTEMPTS = 10; // 30 seconds total (3s * 10)
+              
+              if (attempts >= MAX_ATTEMPTS) {
+                console.error('❌ Polling timeout - subscription status not confirmed');
+                return false;
+              }
+
+              try {
+                const { data, error } = await supabase.functions.invoke('razorpay-check-status', {
+                  body: { subscriptionId }
+                });
+
+                if (error) {
+                  console.error('Error checking status:', error);
+                  // Wait and retry
+                  await new Promise(resolve => setTimeout(resolve, 3000));
+                  return pollStatus(attempts + 1);
+                }
+
+                console.log(`Poll attempt ${attempts + 1}: Status = ${data?.status}`);
+
+                if (data?.status === 'active' || data?.status === 'authenticated') {
+                  console.log('✅ Subscription confirmed as active!');
+                  return true;
+                }
+
+                // Wait and retry
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                return pollStatus(attempts + 1);
+
+              } catch (err) {
+                console.error('Polling error:', err);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                return pollStatus(attempts + 1);
+              }
+            };
+
+            // Start polling
+            const isActive = await pollStatus();
+
+            if (isActive) {
+              toast({
+                title: "Payment Successful!",
+                description: "Your subscription is now active.",
+              });
+              setShowPaymentModal(false);
+              window.location.reload();
+            } else {
+              toast({
+                title: "Payment Received",
+                description: "Your payment is being processed. Please refresh in a few moments.",
+              });
+              setShowPaymentModal(false);
+            }
           },
           prefill: {
             name: profile?.name || '',

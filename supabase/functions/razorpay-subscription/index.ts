@@ -195,14 +195,17 @@ serve(async (req) => {
       
       if (listPlansResponse.ok) {
         const plansData = await listPlansResponse.json();
+        // CRITICAL: Check if existing plan has correct amount (₹99 = 9900 paise)
         const existingPlan = plansData.items?.find((p: any) => 
           p.item.amount === PLAN_AMOUNT && p.period === 'monthly'
         );
 
         if (existingPlan) {
           planId = existingPlan.id;
-          console.log('Using existing plan');
+          console.log(`Using existing plan with correct amount: ₹${PLAN_AMOUNT/100}`);
         } else {
+          console.log(`No plan found with amount ₹${PLAN_AMOUNT/100}, creating new plan`);
+          // Create new plan with correct amount
           // Create new plan
           const createPlanResp = await fetch(`${RAZORPAY_API_URL}/plans`, {
             method: 'POST',
