@@ -240,6 +240,7 @@ serve(async (req) => {
           plan_id: planId,
           customer_notify: 1,
           total_count: 120, // 10 years of monthly charges
+          start_at: Math.floor(Date.now() / 1000), // Charge ₹99 immediately
           notes: {
             user_id: userId
           }
