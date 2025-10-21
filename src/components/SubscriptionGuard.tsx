@@ -15,7 +15,7 @@ interface SubscriptionGuardProps {
 
 export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
   const { isAuthenticated, loading: authLoading, user } = useAuth();
-  const { hasAccess, loading, subscription, isPendingPayment, isExpired, isInTrial, isActive, refetch } = useSubscription();
+  const { hasAccess, loading, subscription, isPendingPayment, isExpired, isInTrial, isActive, isTrialExpired, refetch } = useSubscription();
   const { profile } = useProfile();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -29,10 +29,10 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
   }, [isAuthenticated, authLoading, navigate]);
 
   useEffect(() => {
-    if (!loading && !hasAccess && (isPendingPayment || isExpired)) {
+    if (!loading && !hasAccess && (isPendingPayment || isExpired || isTrialExpired)) {
       setShowPaymentModal(true);
     }
-  }, [hasAccess, loading, isPendingPayment, isExpired]);
+  }, [hasAccess, loading, isPendingPayment, isExpired, isTrialExpired]);
 
   const handlePayment = async (retryCount = 0) => {
     const MAX_RETRIES = 3;
@@ -276,9 +276,13 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
             <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
               <CreditCard className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Trial Period Ended</CardTitle>
+            <CardTitle className="text-2xl">
+              {isTrialExpired ? 'Trial Period Ended' : 'Subscription Required'}
+            </CardTitle>
             <CardDescription>
-              Your 3-day free trial has ended. Subscribe now to continue accessing all features.
+              {isTrialExpired 
+                ? 'Your 3-day free trial has ended. Subscribe now to continue accessing all features.'
+                : 'Subscribe to access all VyaparGuru features and grow your business with confidence.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
