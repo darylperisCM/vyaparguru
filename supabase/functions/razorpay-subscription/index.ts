@@ -230,9 +230,6 @@ serve(async (req) => {
       }
 
       // Create subscription (trial is managed by our app, not Razorpay)
-      // Set start_at to 5 minutes in future to give user time to complete payment
-      const startAt = Math.floor(Date.now() / 1000) + 300; // 5 minutes from now
-      
       const subscriptionResponse = await fetch(`${RAZORPAY_API_URL}/subscriptions`, {
         method: 'POST',
         headers: {
@@ -243,7 +240,6 @@ serve(async (req) => {
           plan_id: planId,
           customer_notify: 1,
           total_count: 120, // 10 years of monthly charges
-          start_at: startAt, // 5 minutes buffer for payment completion
           notes: {
             user_id: userId
           }
@@ -257,9 +253,7 @@ serve(async (req) => {
       }
 
       const subscription: CreateSubscriptionResponse = await subscriptionResponse.json();
-      console.log('✅ Razorpay subscription created:', subscription.id);
-      console.log('📊 Subscription status:', subscription.status);
-      console.log('📅 Next billing:', subscription.next_billing_at);
+      console.log('Razorpay subscription created');
 
       // Get existing trial_ends_at from database (set by database trigger)
       const { data: existingSub } = await supabase
@@ -267,8 +261,6 @@ serve(async (req) => {
         .select('trial_ends_at')
         .eq('user_id', userId)
         .single();
-      
-      console.log('📝 Updating subscription in database for user:', userId.substring(0, 8) + '***');
 
       // Update Supabase subscription record with Razorpay subscription ID
       // Keep the trial_ends_at that was set by the database trigger
@@ -284,11 +276,9 @@ serve(async (req) => {
         .eq('user_id', userId);
 
       if (updateError) {
-        console.error('❌ Failed to update subscription in DB:', updateError);
+        console.error('Failed to update subscription in DB:', updateError);
         throw updateError;
       }
-      
-      console.log('✅ Database updated successfully');
 
       // Log event
       const { data: subData } = await supabase
