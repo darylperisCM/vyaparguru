@@ -28,11 +28,12 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
     }
   }, [isAuthenticated, authLoading, navigate]);
 
+  // FIXED: More explicit check for expired trials
   useEffect(() => {
-    if (!loading && !hasAccess && (isPendingPayment || isExpired)) {
+    if (!loading && !hasAccess && subscription?.status === 'trial_expired') {
       setShowPaymentModal(true);
     }
-  }, [hasAccess, loading, isPendingPayment, isExpired]);
+  }, [hasAccess, loading, subscription?.status]);
 
   const handlePayment = async (retryCount = 0) => {
     const MAX_RETRIES = 3;
@@ -265,65 +266,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
     );
   }
 
-  // Debug card when subscription exists but hasAccess is false
-  if (!hasAccess && subscription && !showPaymentModal) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-2xl w-full">
-          <CardHeader>
-            <CardTitle className="text-center">🔍 Debug Information</CardTitle>
-            <CardDescription className="text-center">
-              Subscription found but access denied - investigating...
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2 text-sm bg-muted p-4 rounded-lg font-mono">
-              <div><strong>Auth Status:</strong> {isAuthenticated ? 'Authenticated ✓' : 'Not Authenticated ✗'}</div>
-              <div><strong>User ID:</strong> {user?.id || 'N/A'}</div>
-              <div className="border-t pt-2 mt-2">
-                <div><strong>Subscription Found:</strong> Yes ✓</div>
-                <div><strong>Subscription ID:</strong> {subscription.id}</div>
-                <div><strong>Subscription Status:</strong> {subscription.status}</div>
-                <div><strong>Trial Ends At:</strong> {subscription.trial_ends_at || 'N/A'}</div>
-                <div><strong>Razorpay Sub ID:</strong> {subscription.rzp_subscription_id || 'NULL'}</div>
-              </div>
-              <div className="border-t pt-2 mt-2">
-                <div><strong>Is In Trial:</strong> {isInTrial ? 'Yes ✓' : 'No ✗'}</div>
-                <div><strong>Is Active:</strong> {isActive ? 'Yes ✓' : 'No ✗'}</div>
-                <div><strong>Is Expired:</strong> {isExpired ? 'Yes' : 'No'}</div>
-                <div><strong>Is Pending Payment:</strong> {isPendingPayment ? 'Yes' : 'No'}</div>
-              </div>
-              <div className="border-t pt-2 mt-2">
-                <div className="text-red-500"><strong>Has Access:</strong> {hasAccess ? 'Yes ✓' : 'No ✗'}</div>
-              </div>
-            </div>
-            <div className="flex gap-2">
-            <Button
-              onClick={() => {
-                console.log('Refreshing subscription');
-                refetch();
-              }}
-              className="flex-1"
-              >
-                🔄 Retry Subscription Fetch
-              </Button>
-              <Button
-                onClick={() => navigate('/pricing')}
-                variant="outline"
-                className="flex-1"
-              >
-                View Plans
-              </Button>
-            </div>
-            <p className="text-xs text-center text-muted-foreground">
-              Please check browser console for detailed logs
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+  // FIXED: PAYMENT MODAL FIRST (checked before debug card)
   if (!hasAccess && showPaymentModal) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
@@ -374,6 +317,66 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
     );
   }
 
+  // Debug card when subscription exists but hasAccess is false (MOVED AFTER payment modal)
+  if (!hasAccess && subscription && !showPaymentModal) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-2xl w-full">
+          <CardHeader>
+            <CardTitle className="text-center">🔍 Debug Information</CardTitle>
+            <CardDescription className="text-center">
+              Subscription found but access denied - investigating...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2 text-sm bg-muted p-4 rounded-lg font-mono">
+              <div><strong>Auth Status:</strong> {isAuthenticated ? 'Authenticated ✓' : 'Not Authenticated ✗'}</div>
+              <div><strong>User ID:</strong> {user?.id || 'N/A'}</div>
+              <div className="border-t pt-2 mt-2">
+                <div><strong>Subscription Found:</strong> Yes ✓</div>
+                <div><strong>Subscription ID:</strong> {subscription.id}</div>
+                <div><strong>Subscription Status:</strong> {subscription.status}</div>
+                <div><strong>Trial Ends At:</strong> {subscription.trial_ends_at || 'N/A'}</div>
+                <div><strong>Razorpay Sub ID:</strong> {subscription.rzp_subscription_id || 'NULL'}</div>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <div><strong>Is In Trial:</strong> {isInTrial ? 'Yes ✓' : 'No ✗'}</div>
+                <div><strong>Is Active:</strong> {isActive ? 'Yes ✓' : 'No ✗'}</div>
+                <div><strong>Is Expired:</strong> {isExpired ? 'Yes' : 'No'}</div>
+                <div><strong>Is Pending Payment:</strong> {isPendingPayment ? 'Yes' : 'No'}</div>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <div className="text-red-500"><strong>Has Access:</strong> {hasAccess ? 'Yes ✓' : 'No ✗'}</div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  console.log('Refreshing subscription');
+                  refetch();
+                }}
+                className="flex-1"
+              >
+                🔄 Retry Subscription Fetch
+              </Button>
+              <Button
+                onClick={() => setShowPaymentModal(true)}
+                variant="outline"
+                className="flex-1"
+              >
+                Show Payment Modal
+              </Button>
+            </div>
+            <p className="text-xs text-center text-muted-foreground">
+              Please check browser console for detailed logs
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Final fallback
   if (!hasAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -385,10 +388,9 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-           <Button onClick={() => setShowPaymentModal(true)} className="w-full">
-  Subscribe Now • अब सदस्यता लें
-</Button>
-
+            <Button onClick={() => setShowPaymentModal(true)} className="w-full">
+              Subscribe Now • अब सदस्यता लें
+            </Button>
           </CardContent>
         </Card>
       </div>
