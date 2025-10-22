@@ -385,9 +385,10 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate('/pricing')} className="w-full">
-              View Plans
-            </Button>
+           <Button onClick={() => setShowPaymentModal(true)} className="w-full">
+  Subscribe Now • अब सदस्यता लें
+</Button>
+
           </CardContent>
         </Card>
       </div>
