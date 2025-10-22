@@ -25,6 +25,9 @@ interface UseSubscriptionReturn {
   isInTrial: boolean;
   isExpired: boolean;
   isPendingPayment: boolean;
+  daysUntilTrialEnd: number;
+  trialEndsAt: Date | null;
+  nextBillingDate: Date | null;
   refetch: () => Promise<void>;
 }
 
@@ -94,6 +97,13 @@ export const useSubscription = (): UseSubscriptionReturn => {
   
   const hasAccess = isActive || isInTrial;
 
+  // Calculate additional fields
+  const trialEndsAt = subscription?.trial_ends_at ? new Date(subscription.trial_ends_at) : null;
+  const nextBillingDate = subscription?.next_billing_date ? new Date(subscription.next_billing_date) : null;
+  const daysUntilTrialEnd = trialEndsAt 
+    ? Math.max(0, Math.ceil((trialEndsAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
   // 🚨 IMPORTANT: Return data object, NOT JSX
   return {
     subscription,
@@ -104,6 +114,9 @@ export const useSubscription = (): UseSubscriptionReturn => {
     isInTrial,
     isExpired,
     isPendingPayment,
+    daysUntilTrialEnd,
+    trialEndsAt,
+    nextBillingDate,
     refetch: fetchSubscription
   };
 };
