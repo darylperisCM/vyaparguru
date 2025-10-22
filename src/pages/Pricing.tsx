@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Star } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { useAuth } from "@/context/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const pricingFeatures = [
   {
@@ -45,6 +47,56 @@ const pricingFeatures = [
 ];
 
 export default function Pricing() {
+  const { isAuthenticated } = useAuth();
+  const { subscription, hasAccess } = useSubscription();
+  
+  // Smart button logic to prevent conversion loop
+  const getCallToAction = () => {
+    // If user is not logged in, show sign up
+    if (!isAuthenticated) {
+      return {
+        route: "/auth/sign-up",
+        text: "Start Free Trial",
+        textHindi: "मुफ्त परीक्षण शुरू करें",
+        description: "No credit card required • 3-day free trial",
+        descriptionHindi: "कोई क्रेडिट कार्ड आवश्यक नहीं • 3-दिन का मुफ्त परीक्षण"
+      };
+    }
+    
+    // If user has active subscription, go to dashboard
+    if (hasAccess) {
+      return {
+        route: "/dashboard",
+        text: "Go to Dashboard",
+        textHindi: "डैशबोर्ड पर जाएं",
+        description: "Continue using your active subscription",
+        descriptionHindi: "अपनी सक्रिय सदस्यता का उपयोग जारी रखें"
+      };
+    }
+    
+    // If user has expired trial or no subscription, show payment option
+    if (subscription?.status === 'trial_expired' || !subscription) {
+      return {
+        route: "/dashboard",
+        text: "Subscribe Now",
+        textHindi: "अब सदस्यता लें",
+        description: "Your trial has ended • Subscribe to continue",
+        descriptionHindi: "आपका परीक्षण समाप्त हो गया है • जारी रखने के लिए सदस्यता लें"
+      };
+    }
+    
+    // Default fallback
+    return {
+      route: "/dashboard",
+      text: "Continue",
+      textHindi: "जारी रखें",
+      description: "Access your account",
+      descriptionHindi: "अपने खाते तक पहुंचें"
+    };
+  };
+
+  const cta = getCallToAction();
+
   return (
     <>
       <Helmet>
@@ -126,16 +178,16 @@ export default function Pricing() {
 
               <div className="space-y-3">
                 <Button variant="hero" size="xl" className="w-full" asChild>
-                  <NavLink to="/auth/sign-up">
-                    Start Free Trial • मुफ्त परीक्षण शुरू करें
+                  <NavLink to={cta.route}>
+                    {cta.text} • {cta.textHindi}
                   </NavLink>
                 </Button>
                 
                 <p className="text-center text-sm text-muted-foreground">
-                  No credit card required • 3-day free trial
+                  {cta.description}
                 </p>
                 <p className="text-center text-xs hindi-text text-muted-foreground">
-                  कोई क्रेडिट कार्ड आवश्यक नहीं • 3-दिन का मुफ्त परीक्षण
+                  {cta.descriptionHindi}
                 </p>
               </div>
             </CardContent>
@@ -212,8 +264,8 @@ export default function Pricing() {
             व्यापारिक अंग्रेजी में महारत हासिल करने के लिए तैयार हैं?
           </p>
           <Button variant="secondary" size="xl" asChild>
-            <NavLink to="/auth/sign-up">
-              Start Your Free Trial Today • आज अपना मुफ्त परीक्षण शुरू करें
+            <NavLink to={cta.route}>
+              {cta.text} • {cta.textHindi}
             </NavLink>
           </Button>
         </div>
