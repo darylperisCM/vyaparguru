@@ -53,6 +53,65 @@ export type Database = {
         }
         Relationships: []
       }
+      conversion_events: {
+        Row: {
+          conversion_action: string
+          conversion_value: number
+          created_at: string | null
+          currency: string
+          event_type: string
+          fired_at: string | null
+          id: string
+          payment_id: string | null
+          razorpay_event: string | null
+          should_fire: boolean | null
+          timestamp: string | null
+          transaction_id: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          conversion_action: string
+          conversion_value: number
+          created_at?: string | null
+          currency?: string
+          event_type: string
+          fired_at?: string | null
+          id?: string
+          payment_id?: string | null
+          razorpay_event?: string | null
+          should_fire?: boolean | null
+          timestamp?: string | null
+          transaction_id?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          conversion_action?: string
+          conversion_value?: number
+          created_at?: string | null
+          currency?: string
+          event_type?: string
+          fired_at?: string | null
+          id?: string
+          payment_id?: string | null
+          razorpay_event?: string | null
+          should_fire?: boolean | null
+          timestamp?: string | null
+          transaction_id?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversion_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       email_drafts: {
         Row: {
           content: string
@@ -396,6 +455,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          processed: boolean | null
+          processed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          processed?: boolean | null
+          processed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          processed?: boolean | null
+          processed_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
     }
     Views: {
