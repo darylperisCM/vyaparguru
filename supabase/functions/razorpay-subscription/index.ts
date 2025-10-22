@@ -232,7 +232,7 @@ serve(async (req) => {
         throw new Error('Failed to fetch plans from Razorpay');
       }
 
-      // Create subscription (trial is managed by our app, not Razorpay)
+      // Create subscription - start immediately to charge first payment
       const subscriptionResponse = await fetch(`${RAZORPAY_API_URL}/subscriptions`, {
         method: 'POST',
         headers: {
@@ -243,6 +243,7 @@ serve(async (req) => {
           plan_id: planId,
           customer_notify: 1,
           total_count: 120, // 10 years of monthly charges
+          start_at: Math.floor(Date.now() / 1000), // Start immediately and charge first payment
           notes: {
             user_id: userId
           }
