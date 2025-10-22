@@ -152,8 +152,8 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          period: 'monthly',
-          interval: 1,
+          period: 'daily',
+          interval: 30,
           item: {
             name: 'VyaparGuru - व्यापार गुरु',
             amount: PLAN_AMOUNT,
@@ -197,7 +197,7 @@ serve(async (req) => {
         const plansData = await listPlansResponse.json();
         // CRITICAL: Check if existing plan has correct amount (₹99 = 9900 paise)
         const existingPlan = plansData.items?.find((p: any) => 
-          p.item.amount === PLAN_AMOUNT && p.period === 'monthly'
+          p.item.amount === PLAN_AMOUNT && p.period === 'daily' && p.interval === 30
         );
 
         if (existingPlan) {
@@ -214,8 +214,8 @@ serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              period: 'monthly',
-              interval: 1,
+              period: 'daily',
+              interval: 30,
               item: {
                 name: 'VyaparGuru - व्यापार गुरु',
                 amount: PLAN_AMOUNT,
