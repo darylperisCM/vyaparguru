@@ -88,9 +88,11 @@ export const useSubscription = (): UseSubscriptionReturn => {
     subscription?.trial_ends_at && 
     new Date(subscription.trial_ends_at) > new Date();
   
-  const isExpired = subscription?.status === 'trial' && 
-    subscription?.trial_ends_at && 
-    new Date(subscription.trial_ends_at) <= new Date();
+ const isExpired = subscription?.status === 'trial_expired' ||
+    (subscription?.status === 'trial' && 
+     subscription?.trial_ends_at && 
+     new Date(subscription.trial_ends_at) <= new Date());
+
   
   const isPendingPayment = subscription?.status === 'pending' || 
     subscription?.status === 'payment_failed';
