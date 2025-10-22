@@ -13,7 +13,7 @@ interface Subscription {
   next_billing_date: string | null;
   cancelled_at: string | null;
   created_at: string;
-  updated_at: string;
+  plan_name: string | null;
 }
 
 interface UseSubscriptionReturn {
@@ -68,6 +68,12 @@ export const useSubscription = (): UseSubscriptionReturn => {
       if (subscriptionError) {
         console.error('[useSubscription] Database error:', subscriptionError);
         throw new Error(`Failed to fetch subscription: ${subscriptionError.message}`);
+      }
+      
+      // DEFENSIVE CHECK: Warn if user has no subscription record
+      if (!data && user) {
+        console.error('[useSubscription] ⚠️ CRITICAL WARNING: User has no subscription record! User ID:', user.id.substring(0, 8) + '***');
+        console.error('[useSubscription] This should not happen - all users should have subscription records created automatically.');
       }
       
       setSubscription(data);

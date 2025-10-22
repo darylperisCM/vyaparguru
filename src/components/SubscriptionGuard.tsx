@@ -40,11 +40,35 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
     setProcessingPayment(true);
 
     try {
-      let subscriptionId = subscription?.rzp_subscription_id;
+      // CRITICAL: Ensure subscription record exists before proceeding
+      if (!subscription) {
+        console.log('[SubscriptionGuard] No subscription record found, fetching latest data...');
+        toast({
+          title: "Initializing payment...",
+          description: "Please wait a moment.",
+        });
+        
+        await refetch();
+        
+        // If still no subscription after refetch, this is a critical error
+        if (!subscription) {
+          console.error('[SubscriptionGuard] CRITICAL: No subscription record exists for user');
+          toast({
+            title: "Error",
+            description: "Unable to initialize subscription. Please refresh and try again.",
+            variant: "destructive",
+          });
+          setProcessingPayment(false);
+          return;
+        }
+        console.log('[SubscriptionGuard] Subscription record loaded successfully');
+      }
+
+      let subscriptionId = subscription.rzp_subscription_id;
 
       // If no Razorpay subscription ID, create it first
       if (!subscriptionId) {
-        console.log('Creating Razorpay subscription');
+        console.log('[SubscriptionGuard] Creating Razorpay subscription');
         
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
@@ -60,15 +84,20 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
           }
         });
 
-        if (subError || !subData?.subscription_id) {
-          console.error('Failed to create Razorpay subscription');
+        if (subError || !subData?.subscriptionId) {
+          console.error('[SubscriptionGuard] Failed to create Razorpay subscription:', subError);
+          toast({
+            title: "Payment Error",
+            description: "Failed to initialize payment. Please try again.",
+            variant: "destructive",
+          });
           setProcessingPayment(false);
           setShowPaymentModal(false);
           return;
         }
 
-        subscriptionId = subData.subscription_id;
-        console.log('Razorpay subscription created');
+        subscriptionId = subData.subscriptionId;
+        console.log('[SubscriptionGuard] Razorpay subscription created:', subscriptionId);
       }
 
       // Load Razorpay script
