@@ -28,12 +28,18 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
     }
   }, [isAuthenticated, authLoading, navigate]);
 
-  // FIXED: More explicit check for expired trials
+  // FIXED: Check for expired trials (status='trial' but date has passed)
   useEffect(() => {
-    if (!loading && !hasAccess && subscription?.status === 'trial_expired') {
-      setShowPaymentModal(true);
+    if (!loading && !hasAccess && subscription) {
+      // Show payment modal if trial is expired or subscription is expired
+      const isTrialStatus = subscription.status === 'trial' || subscription.status === 'trial_expired';
+      const isExpiredStatus = subscription.status === 'expired';
+      
+      if (isTrialStatus || isExpiredStatus) {
+        setShowPaymentModal(true);
+      }
     }
-  }, [hasAccess, loading, subscription?.status]);
+  }, [hasAccess, loading, subscription]);
 
   const handlePayment = async (retryCount = 0) => {
     const MAX_RETRIES = 3;
