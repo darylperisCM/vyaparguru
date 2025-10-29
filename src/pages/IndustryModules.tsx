@@ -21,6 +21,7 @@ import {
   Filter
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useIndustryProgress } from '@/hooks/useIndustryProgress';
 
 interface Industry {
   id: string;
@@ -67,7 +68,7 @@ export default function IndustryModules() {
       description: 'Shopping, sales, customer service',
       vocabularyCount: 150,
       scenarioCount: 25,
-      progress: 35
+      progress: 0
     },
     {
       id: 'manufacturing',
@@ -77,7 +78,7 @@ export default function IndustryModules() {
       description: 'Production, quality, supply chain',
       vocabularyCount: 80,
       scenarioCount: 30,
-      progress: 20
+      progress: 0
     },
     {
       id: 'services',
@@ -87,7 +88,7 @@ export default function IndustryModules() {
       description: 'Consulting, maintenance, support',
       vocabularyCount: 100,
       scenarioCount: 20,
-      progress: 50
+      progress: 0
     },
     {
       id: 'hospitality',
@@ -97,7 +98,7 @@ export default function IndustryModules() {
       description: 'Hotels, restaurants, events',
       vocabularyCount: 100,
       scenarioCount: 35,
-      progress: 10
+      progress: 0
     },
     {
       id: 'healthcare',
@@ -107,7 +108,7 @@ export default function IndustryModules() {
       description: 'Medical, pharmacy, wellness',
       vocabularyCount: 100,
       scenarioCount: 40,
-      progress: 5
+      progress: 0
     },
     {
       id: 'logistics',
@@ -117,7 +118,7 @@ export default function IndustryModules() {
       description: 'Shipping, delivery, warehouse',
       vocabularyCount: 100,
       scenarioCount: 22,
-      progress: 65
+      progress: 0
     }
   ];
 
@@ -837,26 +838,24 @@ export default function IndustryModules() {
     });
   };
 
-  const handleMarkProgress = (itemType: 'vocabulary' | 'scenario', itemId?: string) => {
-    // Mock progress tracking - will be replaced with Supabase
-    const progressKey = `beg_industry_progress_${selectedIndustry}`;
-    const existingProgress = JSON.parse(localStorage.getItem(progressKey) || '{}');
+  // Initialize progress tracking hook
+  const {
+    markVocabularyLearned,
+    markScenarioCompleted,
+    isVocabularyLearned,
+    isScenarioCompleted,
+    getIndustryProgress,
+    loading: progressLoading
+  } = useIndustryProgress(vocabularyData, scenarioData);
+
+  const handleMarkProgress = async (itemType: 'vocabulary' | 'scenario', itemId?: string) => {
+    if (!selectedIndustry || !itemId) return;
     
     if (itemType === 'vocabulary') {
-      existingProgress.vocabularyViewed = (existingProgress.vocabularyViewed || 0) + 1;
-    } else if (itemId) {
-      existingProgress.scenariosCompleted = existingProgress.scenariosCompleted || [];
-      if (!existingProgress.scenariosCompleted.includes(itemId)) {
-        existingProgress.scenariosCompleted.push(itemId);
-      }
+      await markVocabularyLearned(selectedIndustry, itemId);
+    } else if (itemType === 'scenario') {
+      await markScenarioCompleted(selectedIndustry, itemId);
     }
-    
-    localStorage.setItem(progressKey, JSON.stringify(existingProgress));
-    
-    toast({
-      title: "Progress Updated",
-      description: "Your learning progress has been saved"
-    });
   };
 
   const selectedIndustryData = industries.find(ind => ind.id === selectedIndustry);
@@ -902,41 +901,48 @@ export default function IndustryModules() {
         {!selectedIndustry ? (
           /* Industry Selection */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {industries.map((industry) => (
-              <Card 
-                key={industry.id}
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
-                onClick={() => handleIndustrySelect(industry.id)}
-              >
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <industry.icon className="h-8 w-8 text-primary" />
-                  </div>
-                  <CardTitle className="flex flex-col gap-1">
-                    <span>{industry.name}</span>
-                    <span className="text-sm font-normal text-muted-foreground">{industry.nameHindi}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4 text-center">
-                    {industry.description}
-                  </p>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span>Progress</span>
-                      <span>{industry.progress}%</span>
+            {industries.map((industry) => {
+              const industryProgress = getIndustryProgress(industry.id);
+              return (
+                <Card 
+                  key={industry.id}
+                  className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
+                  onClick={() => handleIndustrySelect(industry.id)}
+                >
+                  <CardHeader className="text-center">
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <industry.icon className="h-8 w-8 text-primary" />
                     </div>
-                    <Progress value={industry.progress} className="h-2" />
+                    <CardTitle className="flex flex-col gap-1">
+                      <span>{industry.name}</span>
+                      <span className="text-sm font-normal text-muted-foreground">{industry.nameHindi}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4 text-center">
+                      {industry.description}
+                    </p>
                     
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{industry.vocabularyCount} words</span>
-                      <span>{industry.scenarioCount} scenarios</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span>{progressLoading ? '...' : `${industryProgress.overallProgress}%`}</span>
+                      </div>
+                      <Progress 
+                        value={industryProgress.overallProgress} 
+                        className="h-2"
+                        animated
+                      />
+                      
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{industry.vocabularyCount} words</span>
+                        <span>{industry.scenarioCount} scenarios</span>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         ) : (
           /* Industry Content */
@@ -1004,47 +1010,57 @@ export default function IndustryModules() {
 
                 {/* Vocabulary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredVocabulary.map((item) => (
-                    <Card key={item.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-lg">{item.hindi}</h3>
-                              <Badge 
-                                variant={item.category === 'Basic' ? 'secondary' : 
-                                       item.category === 'Intermediate' ? 'default' : 'destructive'}
-                                className="text-xs"
-                              >
-                                {item.category}
-                              </Badge>
+                  {filteredVocabulary.map((item) => {
+                    const isLearned = isVocabularyLearned(selectedIndustry, item.id);
+                    return (
+                      <Card key={item.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold text-lg">{item.hindi}</h3>
+                                <Badge 
+                                  variant={item.category === 'Basic' ? 'secondary' : 
+                                         item.category === 'Intermediate' ? 'default' : 'destructive'}
+                                  className="text-xs"
+                                >
+                                  {item.category}
+                                </Badge>
+                                {isLearned && (
+                                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Learned
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-primary font-medium">{item.english}</p>
                             </div>
-                            <p className="text-primary font-medium">{item.english}</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopyVocabulary(item)}
+                            >
+                              <Star className="h-4 w-4" />
+                            </Button>
                           </div>
+                          
+                          <div className="mt-3 p-2 bg-accent/20 rounded text-sm">
+                            <strong>Example:</strong> {item.example}
+                          </div>
+                          
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            onClick={() => handleCopyVocabulary(item)}
+                            className="w-full mt-3"
+                            onClick={() => handleMarkProgress('vocabulary', item.id)}
+                            disabled={isLearned}
                           >
-                            <Star className="h-4 w-4" />
+                            {isLearned ? 'Already Learned' : 'Mark as Learned'}
                           </Button>
-                        </div>
-                        
-                        <div className="mt-3 p-2 bg-accent/20 rounded text-sm">
-                          <strong>Example:</strong> {item.example}
-                        </div>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full mt-3"
-                          onClick={() => handleMarkProgress('vocabulary')}
-                        >
-                          Mark as Learned
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
                 
                 {filteredVocabulary.length === 0 && (
@@ -1056,48 +1072,54 @@ export default function IndustryModules() {
             ) : (
               /* Scenarios Section */
               <div className="space-y-4">
-                {currentScenarios.map((scenario) => (
-                  <Card key={scenario.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-lg">{scenario.title}</h3>
-                            <span className="text-sm text-muted-foreground">({scenario.titleHindi})</span>
-                            <Badge 
-                              variant={scenario.difficulty === 'beginner' ? 'secondary' : 
-                                     scenario.difficulty === 'intermediate' ? 'default' : 'destructive'}
-                            >
-                              {scenario.difficulty}
-                            </Badge>
-                            {scenario.completed && (
-                              <CheckCircle className="h-5 w-5 text-success" />
-                            )}
+                {currentScenarios.map((scenario) => {
+                  const isCompleted = isScenarioCompleted(selectedIndustry, scenario.id);
+                  return (
+                    <Card key={scenario.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-semibold text-lg">{scenario.title}</h3>
+                              <span className="text-sm text-muted-foreground">({scenario.titleHindi})</span>
+                              <Badge 
+                                variant={scenario.difficulty === 'beginner' ? 'secondary' : 
+                                       scenario.difficulty === 'intermediate' ? 'default' : 'destructive'}
+                              >
+                                {scenario.difficulty}
+                              </Badge>
+                              {isCompleted && (
+                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Completed
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-muted-foreground mb-4">{scenario.description}</p>
                           </div>
-                          <p className="text-muted-foreground mb-4">{scenario.description}</p>
                         </div>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline"
-                          onClick={() => toast({ title: "Coming Soon", description: "Practice scenarios will be available in the next update" })}
-                        >
-                          <PlayCircle className="h-4 w-4 mr-2" />
-                          Practice
-                        </Button>
                         
-                        <Button 
-                          variant="ghost"
-                          onClick={() => handleMarkProgress('scenario', scenario.id)}
-                          disabled={scenario.completed}
-                        >
-                          {scenario.completed ? 'Completed' : 'Mark Complete'}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline"
+                            onClick={() => toast({ title: "Coming Soon", description: "Practice scenarios will be available in the next update" })}
+                          >
+                            <PlayCircle className="h-4 w-4 mr-2" />
+                            Practice
+                          </Button>
+                          
+                          <Button 
+                            variant="ghost"
+                            onClick={() => handleMarkProgress('scenario', scenario.id)}
+                            disabled={isCompleted}
+                          >
+                            {isCompleted ? 'Completed' : 'Mark Complete'}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>
