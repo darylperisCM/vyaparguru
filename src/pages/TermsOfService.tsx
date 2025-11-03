@@ -225,12 +225,13 @@ export default function TermsOfService() {
 
               <section className="mb-6">
                 <h2 className="text-xl font-semibold text-foreground mb-4">13. CONTACT INFORMATION</h2>
-                <div className="bg-muted p-4 rounded-lg">
-                  <p className="text-foreground font-medium mb-2">VyaparGuru.info</p>
-                  <p className="text-muted-foreground">Email: <a href="mailto:support@vyaparguru.info" className="text-primary hover:underline">support@vyaparguru.info</a></p>
-                  <p className="text-muted-foreground">Feedback: <a href="mailto:feedback@vyaparguru.info" className="text-primary hover:underline">feedback@vyaparguru.info</a></p>
-                  <p className="text-muted-foreground">For legal notices: <a href="mailto:legal@vyaparguru.info" className="text-primary hover:underline">legal@vyaparguru.info</a></p>
-                </div>
+            <div className="bg-muted p-4 rounded-lg">
+              <p className="text-foreground font-medium mb-2">VyaparGuru.info</p>
+              <p className="text-muted-foreground">Email: <a href="mailto:support@vyaparguru.info" className="text-primary hover:underline">support@vyaparguru.info</a></p>
+              <p className="text-muted-foreground">Feedback: <a href="mailto:feedback@vyaparguru.info" className="text-primary hover:underline">feedback@vyaparguru.info</a></p>
+              <p className="text-muted-foreground">For legal notices: <a href="mailto:legal@vyaparguru.info" className="text-primary hover:underline">legal@vyaparguru.info</a></p>
+              <p className="text-muted-foreground">Phone: <a href="tel:+918446499017" className="text-primary hover:underline">+91 8446499017</a></p>
+            </div>
               </section>
             </CardContent>
           </Card>
